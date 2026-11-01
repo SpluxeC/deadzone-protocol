@@ -1,26 +1,43 @@
 # Deadzone Protocol
 
-Phase 1 browser playable prototype (not the complete game). Includes top-down character movement, collision, stamina/sprinting, mouse aiming and pistol shooting, magazine reloads, basic melee, slow zombies with sight and sound pursuit, scavenging supply crates, camera follow and zoom, landscape touchscreen virtual sticks, and local browser autosaving.
+Single-player top-down military zombie survival browser game for PC and landscape mobile.
 
-## Run locally
+## Development status
+
+**Phase 1:** playable surface-survival prototype: movement, stamina, pistol aim/fire/reload, basic melee, slow zombie pursuit, crates, pause, camera, mobile dual virtual sticks, local browser autosave.
+
+**Phase 2 foundation:** player-selected permanent Command Center site, basic resource costs, building footprints for Barracks, Storage, Workshop and Medical facilities, FOB boundary visualization, building management panel. Buildings are currently placed instantly as a prototype; approved construction queues, labor, upgrades, demolition, defensive structures and production are not complete.
+
+**Phase 3 foundation:** discoverable named survivors, capacity-limited recruitment at the FOB, simple following/holding and a personnel panel. Full recruit profiles, personalities, injuries, tactical AI, medical AI and work assignments are not complete.
+
+Later milestones: full FOB economy and production, NPC squads, procedural catacomb dungeons, exploration regions, attacks, research, postgame. Follow the approved game-design handoff; do not treat prototype shortcuts as final game rules.
+
+## Run
 
 ```sh
 npm install
 npm run dev
 ```
 
-For a production bundle: `npm run build`. No deployment has been configured.
+Build/typecheck:
 
-## Controls
+```sh
+npx tsc --noEmit
+npm run build
+```
 
-Desktop: WASD move, Shift sprint, mouse aim, hold left mouse to shoot, R reload, E scavenge, Space melee, Esc pause; mouse wheel zoom.
+## PC controls
 
-Mobile: hold in landscape, left joystick to move, right joystick to aim, FIRE, LOOT, RELOAD and pause buttons.
+WASD move, mouse aim, hold click to shoot, Shift sprint, R reload, E scavenge, Space melee, Esc pause. B opens building panel. P opens personnel panel. N recruits a nearby survivor when the Command Center, Barracks bed, food and water requirements are met.
 
-## Save behavior and limitations
+## Mobile
 
-The prototype autosaves the character, ammunition, supplies, defeated zombies, and collected supply caches to local browser storage. New Campaign resets this Phase 1 save. This simple prototype does not yet implement full multi-slot campaigns, cloud sync, medical systems, proper equipment loss/recovery, NPCs, FOB construction, procedural dungeons, or the full approved gameplay specification. Those belong to later development phases.
+Use landscape orientation. Left stick moves; right stick aims; FIRE, LOOT and RELOAD buttons perform actions. The FOB and personnel panels are available through top-right buttons. More touch polish is needed.
 
-## QA status
+## Saving
 
-Files have been committed to GitHub. A clean package installation and production build have not yet been verified in this environment. Developers should run `npm install && npm run build` before deployment and test both PC and mobile controls.
+Local autosave preserves the player, cleared caches, zombie kills and the initial FOB/recruits state. This is still a single-save prototype, not the approved multi-campaign and optional cloud-sync implementation. The save code accepts the Phase 1 format and migrates basic data into the expanded format.
+
+## Verification
+
+TypeScript source has been checked locally against the expanded development copy. A fresh dependency installation and Vite production build could not be completed in the local environment because package installation timed out. The GitHub Actions workflow should perform both tests in GitHub once available. Deployment has not been configured.
