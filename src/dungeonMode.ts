@@ -29,5 +29,5 @@ for(const [i,p]of map.enemies.entries())if(!state.killed.includes(i)&&explored.h
 if(explored.has(map.extraction.y*map.width+map.extraction.x)){ctx.fillStyle='#43dca0';ctx.fillRect(map.extraction.x*tile+2,map.extraction.y*tile+2,16,16)}
 ctx.fillStyle='#d9f2df';ctx.beginPath();ctx.arc(state.x*tile+10,state.y*tile+10,7,0,Math.PI*2);ctx.fill();
 host.querySelector('#d-status')!.textContent='HP '+state.health+' · AMMO '+state.ammo+' · LOOT '+state.looted.length+' · KILLS '+state.killed.length;
-requestAnimationFrame(render)}requestAnimationFrame(render);
+requestAnimationFrame(render)}commit();requestAnimationFrame(render);
 }
