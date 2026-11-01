@@ -47,3 +47,10 @@ TypeScript source has been checked locally against the expanded development copy
 ## Outstanding quality gates
 
 A clean npm installation and production Vite build remain unverified because the execution environment cannot fetch registry packages. GitHub Actions has a TypeScript check, seeded dungeon tests and a build job; do not claim a working deployment without a passing run and browser test. The dungeon prototype's recovery and rewards are simplified and not yet the approved final expedition-failure mechanics.
+
+## November gameplay reliability update
+
+- Dungeon fog of war now conceals unexplored rooms, enemies and loot, with discovery state saved across browser restarts.
+- Dungeon incapacitation now ends the run as a loss rather than silently resetting its enemies and loot. The prototype returns the player injured and removes its currently tracked equipped ammunition/medical supplies; full gear inventory and NPC casualty handling remain unfinished.
+- An active dungeon run is resumable after browser reopening from the Dungeon button or G shortcut. Starting a genuinely new campaign clears the pending run.
+- The seeded dungeon generator is validated independently; browser production build and mobile playtests still require CI confirmation.
