@@ -62,3 +62,7 @@ Dungeon exploration and shooting now respect intervening walls. The active dunge
 ## FOB resource economy increment
 
 Farm and water collector facilities now have blueprint construction costs and timed completion. Once completed, they add food and water at each existing FOB consumption interval; recruited personnel consume both. These are simplified renewable-production prototypes, not full farming, rain, purification, weather, worker assignment or storage-capacity systems. The construction loop can skip materials-blocked projects while preserving the queue order for buildable projects. Build and browser verification still pending.
+
+## Construction and storage correction
+
+Fixed repeated farm/water pricing keys and included those facilities in the actual construction progression cost table. Building labor advances the first project that is currently buildable; projects blocked by missing materials can be bypassed. Food and water production now respects a base capacity of 20 units each plus 20 units per completed storage building (prototype balance only). The rest of the advanced central storage and refund protection systems are not implemented. The committed code still needs a passing browser build and gameplay test.
