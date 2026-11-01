@@ -1,20 +1,20 @@
 import {generateDungeon} from './dungeon';
-type State={seed:number;x:number;y:number;looted:number[];killed:number[];health:number;ammo:number};
+type State={seed:number;x:number;y:number;looted:number[];killed:number[];health:number;ammo:number;explored?:number[]};
 const KEY='deadzone-active-dungeon-v1';
 /** Phase 4 playable solo dungeon prototype. Surface remains paused until extraction. */
 export function launchDungeon(onExit:(success:boolean,loot:number)=>void){
 let saved:State|null=null;try{saved=JSON.parse(localStorage.getItem(KEY)||'null')}catch{}
 const map=generateDungeon(saved?.seed??Math.floor(Math.random()*2147483647));
 const state:State=saved??{seed:map.seed,x:map.entrance.x,y:map.entrance.y,looted:[],killed:[],health:100,ammo:80};
-const explored=new Set<number>(); const see=()=>{for(let y=Math.max(0,state.y-5);y<=Math.min(map.height-1,state.y+5);y++)for(let x=Math.max(0,state.x-5);x<=Math.min(map.width-1,state.x+5);x++)if((x-state.x)**2+(y-state.y)**2<=25)explored.add(y*map.width+x)};see();
+const explored=new Set<number>(state.explored??[]); const see=()=>{for(let y=Math.max(0,state.y-5);y<=Math.min(map.height-1,state.y+5);y++)for(let x=Math.max(0,state.x-5);x<=Math.min(map.width-1,state.x+5);x++)if((x-state.x)**2+(y-state.y)**2<=25)explored.add(y*map.width+x)};see();
 const host=document.createElement('div');host.style.cssText='position:fixed;inset:0;background:#0b1319;z-index:20;display:grid;grid-template-rows:auto 1fr auto;color:white';
 host.innerHTML='<header style="padding:7px;background:#1e302e">CATACOMBS · <span id="d-status"></span> · Reach green extraction after looting. WASD/arrow move, SPACE shoot, E loot.</header><canvas id="d-map" style="width:100%;height:100%;object-fit:contain;touch-action:none"></canvas><footer style="display:flex;justify-content:center;gap:8px;padding:5px"><button data-dir="left">◀</button><button data-dir="up">▲</button><button data-dir="down">▼</button><button data-dir="right">▶</button><button id="d-action">SHOOT</button><button id="d-loot">LOOT / EXTRACT</button></footer>';
 document.body.append(host);const canvas=host.querySelector('canvas')!,ctx=canvas.getContext('2d')!,keys=new Set<string>();
-function commit(){localStorage.setItem(KEY,JSON.stringify(state))}
+function commit(){state.explored=[...explored];localStorage.setItem(KEY,JSON.stringify(state))}
 function finish(){const count=state.looted.length;localStorage.removeItem(KEY);window.removeEventListener('keydown',down,true);window.removeEventListener('keyup',up,true);host.remove();onExit(true,count)}
 function action(){const loot=map.loot.findIndex(p=>p.x===state.x&&p.y===state.y);if(loot>=0&&!state.looted.includes(loot)){state.looted.push(loot);commit();return}if(state.x===map.extraction.x&&state.y===map.extraction.y){finish();return}}
-function shoot(){if(state.ammo<=0)return;state.ammo--;shots++;const enemy=map.enemies.findIndex((p,i)=>!state.killed.includes(i)&&Math.abs(state.x-p.x)+Math.abs(state.y-p.y)<=3);if(enemy>=0)state.killed.push(enemy);commit()}
-function step(dx:number,dy:number){const x=state.x+dx,y=state.y+dy;if(map.tiles[y*map.width+x]===0){state.x=x;state.y=y;const enemy=map.enemies.findIndex((p,i)=>!state.killed.includes(i)&&Math.abs(x-p.x)+Math.abs(y-p.y)<=1);if(enemy>=0){state.health-=10;if(state.health<=0){state.health=100;state.x=map.entrance.x;state.y=map.entrance.y;state.looted=[];state.killed=[];state.ammo=60}}see();commit()} }
+function shoot(){if(state.ammo<=0)return;state.ammo--;const enemy=map.enemies.findIndex((p,i)=>!state.killed.includes(i)&&Math.abs(state.x-p.x)+Math.abs(state.y-p.y)<=3);if(enemy>=0)state.killed.push(enemy);commit()}
+function step(dx:number,dy:number){const x=state.x+dx,y=state.y+dy;if(x<0||y<0||x>=map.width||y>=map.height)return;if(map.tiles[y*map.width+x]===0){state.x=x;state.y=y;const enemy=map.enemies.findIndex((p,i)=>!state.killed.includes(i)&&Math.abs(x-p.x)+Math.abs(y-p.y)<=1);if(enemy>=0){state.health-=10;if(state.health<=0){state.health=100;state.x=map.entrance.x;state.y=map.entrance.y;state.looted=[];state.killed=[];state.ammo=60}}see();commit()} }
 function down(e:KeyboardEvent){if(!host.isConnected)return;e.stopImmediatePropagation();const m:{[key:string]:[number,number]}={KeyW:[0,-1],ArrowUp:[0,-1],KeyS:[0,1],ArrowDown:[0,1],KeyA:[-1,0],ArrowLeft:[-1,0],KeyD:[1,0],ArrowRight:[1,0]};if(m[e.code]){e.preventDefault();keys.add(e.code);if(!e.repeat)step(...m[e.code])}if(!e.repeat&&e.code==='KeyE')action();if(!e.repeat&&e.code==='Space'){e.preventDefault();shoot()}}
 function up(e:KeyboardEvent){keys.delete(e.code)}
 window.addEventListener('keydown',down,true);window.addEventListener('keyup',up,true);
