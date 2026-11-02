@@ -86,3 +86,7 @@ The personnel panel now provides Focus Fire (desktop shortcut 4), which designat
 ## Individual tactical orders
 
 The personnel panel now includes per-soldier Follow, Hold and Regroup commands. These update each recruit's persisted order and movement state without changing the rest of the squad. The existing per-soldier following toggle now updates the saved order consistently. Full command wheel, custom formations and individual destination selection remain pending. GitHub source commit verified; browser build and gameplay verification remain outstanding.
+
+## Medical and squad separation increment
+
+Recruited NPCs now take nonlethal injuries when struck by surface zombies (surface casualties are currently capped at 1 HP; proper stabilization/incapacitation remains to be implemented). The completed Medical Tent allows manual medkit-based treatment of the most injured recruit, or the player if recruits are healthy. Press M or use Medical Aid in the personnel panel. Treatment restores up to 35 HP and consumes one medkit; no automatic healing or tactical revival yet. Follow/Regroup movement adds local separation steering around other hired soldiers to reduce overlap. This does not replace dynamic pathfinding or solid-entity collision. All mechanics require a successful browser playtest before release.
