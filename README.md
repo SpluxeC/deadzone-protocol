@@ -136,3 +136,7 @@ Waiting-list enlistment now uses the same operational Command Center prerequisit
 ## Formation and tactical visibility increment
 
 Recruited followers now support player-facing Column, Line and Diamond goal positions, selectable in the Personnel panel. The chosen formation is persisted in the existing local campaign save with a Column default for old saves. Regroup continues to reduce spacing. Recruited personnel have a small on-map HP bar, damaged FOB buildings show a condition bar, and the HUD labels the current formation. This is goal-position steering, not yet full collision-free formation pathfinding. Committed to main for the existing live playtest publishing workflow; build success and in-browser behavior for this revision have not been independently verified.
+
+## Battlefield medical and zombie targeting update
+
+Assigned living Medic recruits now perform limited automatic field first aid every eight active gameplay seconds: if an injured recruited ally is within 85 world units and below 40 HP, a medkit is consumed and 35 HP restored. This is preliminary field aid, not rescue/carry or incapacitation stabilization. Surface zombies may notice a recruited soldier at close range when the player is not their visible target. Player incapacitation returns to the established FOB when available, sets magazine to zero and applies the current reserve-ammo penalty. HUD shows wounded recruit count. Existing save clocks migrate with a zero default. These changes are committed but browser behavior still needs playtesting.
