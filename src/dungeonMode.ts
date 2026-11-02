@@ -2,10 +2,10 @@ import {generateDungeon} from './dungeon';
 type State={seed:number;x:number;y:number;looted:number[];killed:number[];health:number;ammo:number;tier?:number;bossHp?:number;explored?:number[]};
 const KEY='deadzone-active-dungeon-v1';
 /** Phase 4 playable solo dungeon prototype. Surface remains paused until extraction. */
-export function launchDungeon(onExit:(success:boolean,loot:number)=>void){
+export function launchDungeon(onExit:(success:boolean,loot:number)=>void,tier=1){
 let saved:State|null=null;try{saved=JSON.parse(localStorage.getItem(KEY)||'null')}catch{}
 const map=generateDungeon(saved?.seed??Math.floor(Math.random()*2147483647));
-const state:State=saved??{seed:map.seed,x:map.entrance.x,y:map.entrance.y,looted:[],killed:[],health:100,ammo:80,tier:1,bossHp:0};
+const state:State=saved??{seed:map.seed,x:map.entrance.x,y:map.entrance.y,looted:[],killed:[],health:100,ammo:80,tier,bossHp:tier>=3?4:0};
 const explored=new Set<number>(state.explored??[]);
 const lineClear=(ax:number,ay:number,bx:number,by:number)=>{const steps=Math.max(Math.abs(bx-ax),Math.abs(by-ay))*4;for(let i=1;i<steps;i++){const t=i/steps,x=Math.floor(ax+(bx-ax)*t),y=Math.floor(ay+(by-ay)*t);if(x<0||y<0||x>=map.width||y>=map.height||map.tiles[y*map.width+x]===1)return false}return true};
 const see=()=>{for(let y=Math.max(0,state.y-5);y<=Math.min(map.height-1,state.y+5);y++)for(let x=Math.max(0,state.x-5);x<=Math.min(map.width-1,state.x+5);x++)if((x-state.x)**2+(y-state.y)**2<=25&&lineClear(state.x,state.y,x,y))explored.add(y*map.width+x)};see();
@@ -17,7 +17,7 @@ function finish(){const count=state.looted.length;if((state.tier??1)>=3&&(state.
 function fail(){localStorage.removeItem(KEY);window.removeEventListener('keydown',down,true);window.removeEventListener('keyup',up,true);host.remove();onExit(false,0)}
 function action(){const loot=map.loot.findIndex(p=>p.x===state.x&&p.y===state.y);if(loot>=0&&!state.looted.includes(loot)){state.looted.push(loot);commit();return}if(state.x===map.extraction.x&&state.y===map.extraction.y){finish();return}}
 function shoot(){if(state.ammo<=0)return;state.ammo--;const enemy=map.enemies.findIndex((p,i)=>!state.killed.includes(i)&&Math.abs(state.x-p.x)+Math.abs(state.y-p.y)<=3&&lineClear(state.x,state.y,p.x,p.y));if(enemy>=0)state.killed.push(enemy);else if((state.tier??1)>=3&&Math.abs(state.x-map.extraction.x)+Math.abs(state.y-map.extraction.y)<=3&&lineClear(state.x,state.y,map.extraction.x,map.extraction.y))state.bossHp=Math.max(0,(state.bossHp??0)-1);commit()}
-function step(dx:number,dy:number){const x=state.x+dx,y=state.y+dy;if(x<0||y<0||x>=map.width||y>=map.height)return;if(map.tiles[y*map.width+x]===0){state.x=x;state.y=y;const enemy=map.enemies.findIndex((p,i)=>!state.killed.includes(i)&&Math.abs(x-p.x)+Math.abs(y-p.y)<=1);if(enemy>=0){state.health-=10;if(state.health<=0){fail();return}}see();commit()} }
+function step(dx:number,dy:number){const x=state.x+dx,y=state.y+dy;if(x<0||y<0||x>=map.width||y>=map.height)return;if(map.tiles[y*map.width+x]===0){state.x=x;state.y=y;const enemy=map.enemies.findIndex((p,i)=>!state.killed.includes(i)&&Math.abs(x-p.x)+Math.abs(y-p.y)<=1);if((state.tier??1)>=3&&(state.bossHp??0)>0&&Math.abs(x-map.extraction.x)+Math.abs(y-map.extraction.y)<=1){state.health-=15;if(state.health<=0){fail();return}}if(enemy>=0){state.health-=10;if(state.health<=0){fail();return}}see();commit()} }
 function down(e:KeyboardEvent){if(!host.isConnected)return;e.stopImmediatePropagation();const m:{[key:string]:[number,number]}={KeyW:[0,-1],ArrowUp:[0,-1],KeyS:[0,1],ArrowDown:[0,1],KeyA:[-1,0],ArrowLeft:[-1,0],KeyD:[1,0],ArrowRight:[1,0]};if(m[e.code]){e.preventDefault();keys.add(e.code);if(!e.repeat)step(...m[e.code])}if(!e.repeat&&e.code==='KeyE')action();if(!e.repeat&&e.code==='Space'){e.preventDefault();shoot()}}
 function up(e:KeyboardEvent){keys.delete(e.code)}
 window.addEventListener('keydown',down,true);window.addEventListener('keyup',up,true);
@@ -26,7 +26,7 @@ host.querySelector<HTMLButtonElement>('#d-action')!.onclick=shoot;host.querySele
 function render(){if(!host.isConnected)return;const tile=20;canvas.width=map.width*tile;canvas.height=map.height*tile;for(let y=0;y<map.height;y++)for(let x=0;x<map.width;x++){ctx.fillStyle=map.tiles[y*map.width+x]?'#111b20':'#405046';ctx.fillRect(x*tile,y*tile,tile-1,tile-1);if(!explored.has(y*map.width+x)){ctx.fillStyle='#05090d';ctx.fillRect(x*tile,y*tile,tile,tile)}}
 for(const [i,p]of map.loot.entries())if(!state.looted.includes(i)&&explored.has(p.y*map.width+p.x)){ctx.fillStyle='#e2b34b';ctx.fillRect(p.x*tile+5,p.y*tile+5,10,10)}
 for(const [i,p]of map.enemies.entries())if(!state.killed.includes(i)&&explored.has(p.y*map.width+p.x)){ctx.fillStyle='#ab5e5b';ctx.fillRect(p.x*tile+4,p.y*tile+4,12,12)}
-if(explored.has(map.extraction.y*map.width+map.extraction.x)){ctx.fillStyle='#43dca0';ctx.fillRect(map.extraction.x*tile+2,map.extraction.y*tile+2,16,16)}
+if(explored.has(map.extraction.y*map.width+map.extraction.x)){ctx.fillStyle=(state.tier??1)>=3&&(state.bossHp??0)>0?'#ed955c':'#43dca0';ctx.fillRect(map.extraction.x*tile+2,map.extraction.y*tile+2,16,16)}
 ctx.fillStyle='#d9f2df';ctx.beginPath();ctx.arc(state.x*tile+10,state.y*tile+10,7,0,Math.PI*2);ctx.fill();
 host.querySelector('#d-status')!.textContent='HP '+state.health+' · AMMO '+state.ammo+' · LOOT '+state.looted.length+' · KILLS '+state.killed.length+((state.tier??1)>=3?' · GUARDIAN '+(state.bossHp??0)+' HP':'');
 requestAnimationFrame(render)}commit();requestAnimationFrame(render);
