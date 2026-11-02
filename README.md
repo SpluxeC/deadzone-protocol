@@ -124,3 +124,7 @@ The preview workflow now installs dependencies and builds the Vite site with `/d
 ## Playtest deploy artifact check and save-load fixes
 
 The branch-based preview workflow now validates that `dist/index.html` is compiled (not source TypeScript), uses the `/deadzone-protocol/assets/` base, and includes JS/CSS before publishing to `gh-pages`. This check helps surface malformed builds in GitHub Actions logs; a successful deployment is still unconfirmed. Continuing a saved game is now guarded against duplicate activation, saved facilities are replaced rather than duplicated on reload, and absent legacy taken/dead arrays are handled safely.
+
+## Playtest gameplay improvements
+
+Fixed the Personnel panel structure so squad commands and assignments appear only on the Personnel page rather than also under construction. Direct recruitment now requires a completed, operational Command Center. Completed non-Command-Center facilities can be demolished from the FOB directory after confirmation, recovering 50% of original scrap and wood rounded down; demolition is blocked during raids and when removing barracks would strand recruited residents. The management panel has improved touch targets and spacing on mobile. These changes have been committed to main for automatic preview publication; production build and browser interaction must still be verified.
