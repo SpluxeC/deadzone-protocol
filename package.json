@@ -8,7 +8,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
-    "test": "node --experimental-strip-types --test src/dungeon.test.ts",
+    "test": "node --experimental-strip-types --test src/*.test.ts",
     "verify": "npm run typecheck && npm test && npm run build"
   },
   "devDependencies": {
