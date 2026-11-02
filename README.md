@@ -132,3 +132,7 @@ Fixed the Personnel panel structure so squad commands and assignments appear onl
 ## Live playtest gameplay pass — personnel, squad and HUD
 
 Waiting-list enlistment now uses the same operational Command Center prerequisite as recruiting an NPC directly. Regroup command uses a tighter radial follow goal to bring the squad together, and focus-fire selection ignores enemies already reduced to zero health. The surface HUD includes food, water and wood supplies alongside ammunition, medkits and scrap, while the construction directory summarizes operational buildings, blueprints and damaged facilities. All edits were committed to main, where the existing branch-publishing workflow can build the live site. No browser smoke test of this revision was performed by the assistant.
+
+## Formation and tactical visibility increment
+
+Recruited followers now support player-facing Column, Line and Diamond goal positions, selectable in the Personnel panel. The chosen formation is persisted in the existing local campaign save with a Column default for old saves. Regroup continues to reduce spacing. Recruited personnel have a small on-map HP bar, damaged FOB buildings show a condition bar, and the HUD labels the current formation. This is goal-position steering, not yet full collision-free formation pathfinding. Committed to main for the existing live playtest publishing workflow; build success and in-browser behavior for this revision have not been independently verified.
