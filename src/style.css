@@ -12,3 +12,11 @@
 @media(pointer:coarse) and (max-height:420px){#modal article{max-height:calc(100dvh - 12px);padding:12px 20px}#modal h1{font-size:25px;margin:5px 0}#modal .menu-lead{margin-bottom:10px}#modal .menu-buttons{margin:7px 0;gap:5px}#modal .menu-buttons button{min-height:34px}#modal .menu-footer{margin-top:8px}#game-actions{top:32px}#management{top:68px;max-height:calc(100dvh - 73px)}}
 @media(pointer:coarse) and (orientation:portrait){#rotate{display:grid;position:fixed;inset:0;place-items:center;text-align:center;background:#091419;z-index:20;padding:24px;font-size:21px}}
 @media(prefers-reduced-motion:reduce){button{transition:none}}
+
+/* Tactical base-building rows: clear cost, icon, and an always-visible description. */
+#management .build-option{display:flex;flex-direction:column;gap:3px;margin:7px 0;padding:9px 10px;border:1px solid #526e5c;border-left:3px solid #b96a55;background:linear-gradient(115deg,#253733,#172523);border-radius:7px}
+#management .build-option button{margin:0;text-align:left;font-weight:750;background:#344b44;min-height:38px;white-space:normal}
+#management .build-option .build-description{margin:3px 1px 0;color:#d0dbcc;font-size:11px;line-height:1.4;overflow-wrap:break-word}
+#status #supplies{font-variant-numeric:tabular-nums;letter-spacing:.015em}
+#status #hp::before{content:'✚ ';color:#df615e}#status #st::before{content:'⚡ ';color:#eccb70}#status #ammo::before{content:'▰ ';color:#d7b46f}
+@media(pointer:coarse){#management .build-option{margin:5px 0;padding:6px 8px}#management .build-option .build-description{font-size:10px;line-height:1.3}}
