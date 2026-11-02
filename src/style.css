@@ -20,3 +20,10 @@
 #status #supplies{font-variant-numeric:tabular-nums;letter-spacing:.015em}
 #status #hp::before{content:'✚ ';color:#df615e}#status #st::before{content:'⚡ ';color:#eccb70}#status #ammo::before{content:'▰ ';color:#d7b46f}
 @media(pointer:coarse){#management .build-option{margin:5px 0;padding:6px 8px}#management .build-option .build-description{font-size:10px;line-height:1.3}}
+
+/* Hand-illustrated resource inventory row, independent from font/emoji rendering. */
+#status #supplies{display:flex;align-items:center;gap:8px;min-width:160px;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;padding:2px 8px;white-space:nowrap}
+#status #supplies::-webkit-scrollbar{display:none}
+.resource-count{display:inline-flex!important;gap:3px;align-items:center;min-width:max-content;background:transparent!important;border:0!important;padding:1px!important;box-shadow:none!important;color:#f1e9d5;font-size:11px!important}
+.resource-icon{display:inline-block;flex:none;width:20px;height:20px;filter:drop-shadow(0 1px 1px #0008)}
+@media(pointer:coarse){#status #supplies{gap:5px}.resource-count{font-size:10px!important}.resource-icon{width:15px;height:15px}}
