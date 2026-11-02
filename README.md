@@ -108,3 +108,7 @@ A first prototype FOB wave now triggers periodically while the player is present
 ## Attack warning, shelter, and damage safeguards
 
 FOB attacks now give a warning 35 seconds before the simplified wave, with warning state persisted. Noncombat assigned workers within the FOB move toward an existing intact Command Center, Barracks, or Medical Tent during an attack rather than continuing their normal follow behavior. Destroyed guard posts no longer fire, and destroyed farms/water collectors/storage buildings no longer produce or increase capacity. If all proposed attack spawn locations are blocked, the wave is postponed instead of declaring a false victory. The current wave spawn geometry and shelter/navigation logic are provisional and still need a full playtest. A local npm registry connectivity check failed with EAI_AGAIN, so the production build is not verified.
+
+## Current validation and FOB fixes
+
+The active-wave timer no longer accumulates toward the following attack while the current horde is alive. Cancelling an unfinished Command Center is prohibited if dependent FOB blueprints have already been placed; this prevents leaving buildings behind without an established FOB. `npm run verify` now runs TypeScript checking, seeded dungeon tests and a Vite production build, and GitHub Actions runs the same command. A passing CI run has **not** been confirmed. The repository still needs a clean dependency install, compilation and real PC/mobile gameplay smoke tests before it can be called reliably playable.
