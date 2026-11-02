@@ -148,3 +148,15 @@ During active FOB waves, recruited defenders within the base perimeter are incap
 ## FOB casualty rescue and wave recovery increment
 
 Assigned living medics who are not incapacitated can now stabilize nearby downed defenders during active FOB battles, consuming one medkit and restoring 24 HP, after which the soldier resumes an eligible follow order. This is an initial field-stabilization feature, not full evacuation or carrying. FOB wave logic now resolves an attack even when the Command Center has already been disabled, preventing an indefinitely stuck battle state. After the warning threshold, the HUD shows a countdown in seconds to the next FOB wave. Existing local saves retain compatibility. These improvements are committed to main; the updated build and browser interactions still require verification.
+
+## Three-phase delivery increment (November 2026)
+
+This batch advances the requested six remaining major milestones in three grouped implementation passes. It is **not** the full completion of all six.
+
+**Pass 1 — combat and FOB defense.** Staffed guard posts prioritize active attacking zombies instead of unrelated nearby zombies. Previously implemented rotating spawn directions, wave scaling, squad formations and medic stabilization remain in place. Full obstacle-navigation AI, evacuation/carrying and coordinated guard-position assignments remain open.
+
+**Pass 2 — equipment and dungeons.** An operational Workshop provides immediate ammo (3 scrap for 36 rounds), medkit (5 scrap for one), and armor-repair prototype (7 scrap for 45 player HP) crafting. Workshop actions are blocked during base attacks. Dungeon extraction awards salvage, up to 48 rounds based on crates, and a first-clear bonus of two medkits and eight scrap. Clears and recovered-crate counts persist. This is not yet a queued manufacturing system, full inventory, boss dungeon or expansive scavenging world.
+
+**Pass 3 — saves and campaign.** Main-menu slot selector lets players switch between three local campaign saves, including the active dungeon checkpoint. Existing single-slot saves default to slot 1. A persisted interim victory marker triggers after three successfully defended FOB waves and three dungeon extractions with a functioning Command Center. Endless survival remains possible afterward. This is a provisional, playable campaign milestone **not** the agreed final dungeon, victory ceremony, or complete endgame. Additional QA, independent save-slot regression testing, mobile UX, gear loss rules, boss progression and actual live deployment verification remain required.
+
+All features in this batch were committed to `main`; the automatic GitHub Pages workflow should publish them after a successful build. The browser build has not been verified in this session.
