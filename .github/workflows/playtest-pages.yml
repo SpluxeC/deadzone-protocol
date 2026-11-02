@@ -18,6 +18,8 @@ jobs:
         with:
           node-version: '22'
       - run: npm install --no-audit --no-fund
+      - name: Verify types and regression tests before publishing
+        run: npm run typecheck && npm test
       - run: npm run build -- --base=/deadzone-protocol/
       - name: Validate published game files
         run: node scripts/check-playtest.mjs
