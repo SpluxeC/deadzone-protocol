@@ -120,3 +120,7 @@ Simulation clocks for food/water, construction, medical treatment and guards now
 ## Branch-based live playtest publishing
 
 The preview workflow now installs dependencies and builds the Vite site with `/deadzone-protocol/` as the base path before publishing compiled `dist` files to `gh-pages`. It deliberately does not gate preview publishing on the separate strict `npm run verify` suite, which still runs in CI. GitHub Pages should use **Deploy from a branch → gh-pages → /(root)**. The site's intended address is `https://spluxec.github.io/deadzone-protocol/`, but availability and a successful build were not independently verified in this change. The HUD now retains clear FOB attack warning/active indicators.
+
+## Playtest deploy artifact check and save-load fixes
+
+The branch-based preview workflow now validates that `dist/index.html` is compiled (not source TypeScript), uses the `/deadzone-protocol/assets/` base, and includes JS/CSS before publishing to `gh-pages`. This check helps surface malformed builds in GitHub Actions logs; a successful deployment is still unconfirmed. Continuing a saved game is now guarded against duplicate activation, saved facilities are replaced rather than duplicated on reload, and absent legacy taken/dead arrays are handled safely.
