@@ -128,3 +128,7 @@ The branch-based preview workflow now validates that `dist/index.html` is compil
 ## Playtest gameplay improvements
 
 Fixed the Personnel panel structure so squad commands and assignments appear only on the Personnel page rather than also under construction. Direct recruitment now requires a completed, operational Command Center. Completed non-Command-Center facilities can be demolished from the FOB directory after confirmation, recovering 50% of original scrap and wood rounded down; demolition is blocked during raids and when removing barracks would strand recruited residents. The management panel has improved touch targets and spacing on mobile. These changes have been committed to main for automatic preview publication; production build and browser interaction must still be verified.
+
+## Live playtest gameplay pass — personnel, squad and HUD
+
+Waiting-list enlistment now uses the same operational Command Center prerequisite as recruiting an NPC directly. Regroup command uses a tighter radial follow goal to bring the squad together, and focus-fire selection ignores enemies already reduced to zero health. The surface HUD includes food, water and wood supplies alongside ammunition, medkits and scrap, while the construction directory summarizes operational buildings, blueprints and damaged facilities. All edits were committed to main, where the existing branch-publishing workflow can build the live site. No browser smoke test of this revision was performed by the assistant.
