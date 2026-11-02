@@ -144,3 +144,7 @@ Assigned living Medic recruits now perform limited automatic field first aid eve
 ## FOB defender incapacitation slice
 
 During active FOB waves, recruited defenders within the base perimeter are incapacitated at 1 HP rather than dying. Incapacitated personnel stop moving/fighting and are shown as down in the map, HUD and Personnel panel. When an attack resolves as victory or Command Center defeat, those defenders recover at 25 HP, remain injured and resume their saved Follow/Hold/Regroup movement status. Outside FOB battles, the existing surface expedition permadeath rule remains unchanged. These prototype changes have been committed to main; deployment and live-browser functionality of this revision have not been independently confirmed.
+
+## FOB casualty rescue and wave recovery increment
+
+Assigned living medics who are not incapacitated can now stabilize nearby downed defenders during active FOB battles, consuming one medkit and restoring 24 HP, after which the soldier resumes an eligible follow order. This is an initial field-stabilization feature, not full evacuation or carrying. FOB wave logic now resolves an attack even when the Command Center has already been disabled, preventing an indefinitely stuck battle state. After the warning threshold, the HUD shows a countdown in seconds to the next FOB wave. Existing local saves retain compatibility. These improvements are committed to main; the updated build and browser interactions still require verification.
