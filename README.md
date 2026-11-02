@@ -112,3 +112,7 @@ FOB attacks now give a warning 35 seconds before the simplified wave, with warni
 ## Current validation and FOB fixes
 
 The active-wave timer no longer accumulates toward the following attack while the current horde is alive. Cancelling an unfinished Command Center is prohibited if dependent FOB blueprints have already been placed; this prevents leaving buildings behind without an established FOB. `npm run verify` now runs TypeScript checking, seeded dungeon tests and a Vite production build, and GitHub Actions runs the same command. A passing CI run has **not** been confirmed. The repository still needs a clean dependency install, compilation and real PC/mobile gameplay smoke tests before it can be called reliably playable.
+
+## Save/recovery and regression batch
+
+Simulation clocks for food/water, construction, medical treatment and guards now persist through the existing version-2 local save. Loading an old version-2 save fills missing clocks with zero. Loading a save with a stale active siege ends that dangling siege, and inactive saves discard stale special wave enemies. Siege defeat removes the failed wave's attackers to prevent residual attacks after defeat. Dungeon tests now check 200 more deterministic layouts for unique floor loot/enemy placements and verify a larger map. The repository verification command and workflow exist, but **no passing build or CI result was observed** during this change set.
