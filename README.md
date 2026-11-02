@@ -140,3 +140,7 @@ Recruited followers now support player-facing Column, Line and Diamond goal posi
 ## Battlefield medical and zombie targeting update
 
 Assigned living Medic recruits now perform limited automatic field first aid every eight active gameplay seconds: if an injured recruited ally is within 85 world units and below 40 HP, a medkit is consumed and 35 HP restored. This is preliminary field aid, not rescue/carry or incapacitation stabilization. Surface zombies may notice a recruited soldier at close range when the player is not their visible target. Player incapacitation returns to the established FOB when available, sets magazine to zero and applies the current reserve-ammo penalty. HUD shows wounded recruit count. Existing save clocks migrate with a zero default. These changes are committed but browser behavior still needs playtesting.
+
+## FOB defender incapacitation slice
+
+During active FOB waves, recruited defenders within the base perimeter are incapacitated at 1 HP rather than dying. Incapacitated personnel stop moving/fighting and are shown as down in the map, HUD and Personnel panel. When an attack resolves as victory or Command Center defeat, those defenders recover at 25 HP, remain injured and resume their saved Follow/Hold/Regroup movement status. Outside FOB battles, the existing surface expedition permadeath rule remains unchanged. These prototype changes have been committed to main; deployment and live-browser functionality of this revision have not been independently confirmed.
