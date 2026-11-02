@@ -19,6 +19,8 @@ jobs:
           node-version: '22'
       - run: npm install --no-audit --no-fund
       - run: npm run build -- --base=/deadzone-protocol/
+      - name: Validate published game files
+        run: node scripts/check-playtest.mjs
       - name: Publish built site to gh-pages branch
         uses: peaceiris/actions-gh-pages@v4
         with:
