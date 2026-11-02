@@ -116,3 +116,7 @@ The active-wave timer no longer accumulates toward the following attack while th
 ## Save/recovery and regression batch
 
 Simulation clocks for food/water, construction, medical treatment and guards now persist through the existing version-2 local save. Loading an old version-2 save fills missing clocks with zero. Loading a save with a stale active siege ends that dangling siege, and inactive saves discard stale special wave enemies. Siege defeat removes the failed wave's attackers to prevent residual attacks after defeat. Dungeon tests now check 200 more deterministic layouts for unique floor loot/enemy placements and verify a larger map. The repository verification command and workflow exist, but **no passing build or CI result was observed** during this change set.
+
+## Branch-based live playtest publishing
+
+The preview workflow now installs dependencies and builds the Vite site with `/deadzone-protocol/` as the base path before publishing compiled `dist` files to `gh-pages`. It deliberately does not gate preview publishing on the separate strict `npm run verify` suite, which still runs in CI. GitHub Pages should use **Deploy from a branch → gh-pages → /(root)**. The site's intended address is `https://spluxec.github.io/deadzone-protocol/`, but availability and a successful build were not independently verified in this change. The HUD now retains clear FOB attack warning/active indicators.
