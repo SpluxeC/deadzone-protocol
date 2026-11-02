@@ -82,3 +82,7 @@ Follow and Regroup now use bounded grid breadth-first search against permanent b
 ## Combat coordination increment
 
 The personnel panel now provides Focus Fire (desktop shortcut 4), which designates the nearest currently visible zombie within 340 world units. Recruited fighters prioritize that target when within their own line-of-sight and firing range, reverting to autonomous threat selection otherwise. The shared target clears when killed. Following soldiers now take separated radial positions around the player rather than all aiming at exactly one point. These are prototype coordination rules; full tactical wheel, player-selected target designation, formations, NPC-to-NPC collision, and mobile combat validation are outstanding.
+
+## Individual tactical orders
+
+The personnel panel now includes per-soldier Follow, Hold and Regroup commands. These update each recruit's persisted order and movement state without changing the rest of the squad. The existing per-soldier following toggle now updates the saved order consistently. Full command wheel, custom formations and individual destination selection remain pending. GitHub source commit verified; browser build and gameplay verification remain outstanding.
