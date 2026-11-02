@@ -70,3 +70,7 @@ Fixed repeated farm/water pricing keys and included those facilities in the actu
 ## NPC job assignment foundation
 
 Recruited survivors can be assigned auto, guard, builder, farmer or water roles from the management panel. The selected role is saved with the recruit. Builder/auto roles contribute to construction progress; farmer/water/auto roles contribute to corresponding resource output. Guard-role NPCs can attack nearby zombies while holding their position, and following soldiers continue fighting. These are simplified role priorities, not yet complete schedule rotation, morale-free work AI, guarding posts, emergency shelter, or true individual work production. This change has been pushed but not browser-build verified.
+
+## Squad command increment
+
+The personnel panel includes squad-wide Follow, Hold and Regroup commands. On desktop, press 1, 2 or 3 respectively. Orders are saved per recruit; Follow moves personnel toward the player, Hold keeps their current location, and Regroup uses faster movement toward the player. Existing basic soldier threat engagement remains, but the approved tactical wheel, formations, independent pathfinding, medical response and per-soldier command overrides remain pending. Assigning a non-guard work role sets that survivor to holding position until given a squad order.
