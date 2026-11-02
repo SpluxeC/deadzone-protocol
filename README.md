@@ -78,3 +78,7 @@ The personnel panel includes squad-wide Follow, Hold and Regroup commands. On de
 ## NPC obstacle navigation update
 
 Follow and Regroup now use bounded grid breadth-first search against permanent building walls rather than always walking directly at the player. Routes are recalculated at most every quarter-second per soldier or when the player moves significantly, reducing per-frame pathfinding cost. If no safe route exists, soldiers do not take a direct shortcut through walls. This is a foundation only: avoidance of other soldiers/zombies, formations, door interactions, dynamic obstructions and technical stuck recovery still need implementation and browser verification.
+
+## Combat coordination increment
+
+The personnel panel now provides Focus Fire (desktop shortcut 4), which designates the nearest currently visible zombie within 340 world units. Recruited fighters prioritize that target when within their own line-of-sight and firing range, reverting to autonomous threat selection otherwise. The shared target clears when killed. Following soldiers now take separated radial positions around the player rather than all aiming at exactly one point. These are prototype coordination rules; full tactical wheel, player-selected target designation, formations, NPC-to-NPC collision, and mobile combat validation are outstanding.
