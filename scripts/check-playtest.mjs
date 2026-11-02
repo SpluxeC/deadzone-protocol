@@ -1,0 +1,11 @@
+import {readFileSync,readdirSync,existsSync} from 'node:fs';
+import assert from 'node:assert/strict';
+const html=readFileSync('dist/index.html','utf8');
+assert.match(html,/<title>Deadzone Protocol<\/title>/i,'Expected game page title');
+assert.match(html,/\/deadzone-protocol\/assets\//,'Built asset URLs must use the GitHub Pages project prefix');
+assert.doesNotMatch(html,/src\/main\.ts/,'Source TypeScript must not be deployed');
+assert.ok(existsSync('dist/assets'),'Built asset directory is missing');
+const assets=readdirSync('dist/assets');
+assert.ok(assets.some(f=>f.endsWith('.js')),'JavaScript game bundle is missing');
+assert.ok(assets.some(f=>f.endsWith('.css')),'Stylesheet bundle is missing');
+console.log('Playtest artifact check passed: built HTML, asset prefix, JS and CSS present.');
