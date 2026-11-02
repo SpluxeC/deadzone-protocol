@@ -1,0 +1,12 @@
+type Resource='wood'|'scrap'|'food'|'water'|'med'|'armor'|'ammo';
+const symbols:Record<Resource,string>={
+wood:'<path d="M3 13 11 7 21 10 13 17Z" fill="#8e603b" stroke="#d3a66e"/><path d="m3 13 0 4 10 4 0-4" fill="#69462d"/><path d="m13 17 8-7v4l-8 7" fill="#ad7847"/><ellipse cx="11.2" cy="17.8" rx="2" ry="1.5" fill="#dec290"/>',
+scrap:'<path d="M3 18 15 4l4 4L7 21Z" fill="#84969b" stroke="#c1cacc"/><path d="M5 8h13v3H5z" fill="#68797c" transform="rotate(21 11 10)"/><circle cx="16" cy="16" r="5" fill="#39494c" stroke="#b2bdbf" stroke-width="2"/><circle cx="16" cy="16" r="1.5" fill="#cbd2d0"/>',
+food:'<ellipse cx="9" cy="6" rx="6" ry="3" fill="#c4cbc0"/><path d="M3 6v12q6 5 12 0V6Z" fill="#8a5d44" stroke="#c6b7a1"/><ellipse cx="9" cy="18" rx="6" ry="3" fill="#ad8366"/><path d="M4 10h10v6H4z" fill="#a24e3e"/><path d="M7 11h4v4H7z" fill="#e0bc8f"/><ellipse cx="18" cy="11" rx="4" ry="2" fill="#c9d3cb"/><path d="M14 11v9q4 3 8 0v-9" fill="#718567"/>',
+water:'<path d="M12 2C9 8 5 12 5 16a7 7 0 0 0 14 0c0-4-4-8-7-14Z" fill="#3d93c4" stroke="#a5d7eb"/><path d="M8 16q0 4 4 5" fill="none" stroke="#d3f3ff" stroke-width="2" stroke-linecap="round"/>',
+med:'<rect x="2" y="6" width="20" height="16" rx="3" fill="#63715b" stroke="#b0bba7"/><rect x="8" y="3" width="8" height="5" rx="1" fill="#9ca892"/><path d="M10 10h4v3h3v4h-3v3h-4v-3H7v-4h3Z" fill="#e5ddd0"/><path d="M11 11h2v3h3v2h-3v3h-2v-3H8v-2h3Z" fill="#be4c46"/>',
+armor:'<path d="M12 2 21 5v8c0 5-4 8-9 10-5-2-9-5-9-10V5Z" fill="#576269" stroke="#c2cacb"/><path d="m12 6 5 2v5c0 3-2 5-5 6-3-1-5-3-5-6V8Z" fill="#343f48"/><path d="m12 7 0 10" stroke="#aebdc4" stroke-width="2"/>',
+ammo:'<path d="M3 9h5v12H3zM10 5h5v16h-5zM17 8h5v13h-5z" fill="#b8873f" stroke="#e0c579"/><path d="M3 9 5.5 3 8 9M10 5l2.5-4L15 5M17 8l2.5-5L22 8" fill="#c49a57" stroke="#e3d1a1"/><path d="M3 18h5m2 0h5m2 0h5" stroke="#6a5131" stroke-width="2"/>'
+};
+export function resourceIcon(key:Resource){return '<svg class="resource-icon" role="img" aria-label="'+key+'" viewBox="0 0 24 24" width="20" height="20" xmlns="http://www.w3.org/2000/svg">'+symbols[key]+'</svg>'}
+export function resourceHud(values:{wood:number;scrap:number;food:number;water:number;med:number;armor:number;ammo:number}){return (Object.keys(values) as Resource[]).map(k=>'<span class="resource-count" title="'+k+'">'+resourceIcon(k)+'<b>'+Math.max(0,Math.round(values[k]))+'</b></span>').join('')}
