@@ -6,12 +6,13 @@ export function findSupportTarget(allies:CombatAlly[],enemies:CombatEnemy[],kill
  let best:{allyId:number;enemyIndex:number;distance:number}|null=null;
  for(const ally of living){
   const ax=ally.x??player.x,ay=ally.y??player.y;
-  enemies.forEach((enemy,index)=>{
-   if(killed.includes(index))return;
+  for(let index=0;index<enemies.length;index++){
+   const enemy=enemies[index];
+   if(killed.includes(index))continue;
    const distance=Math.hypot(ax-enemy.x,ay-enemy.y);
-   if(distance>range||!canSee(ax,ay,enemy.x,enemy.y))return;
+   if(distance>range||!canSee(ax,ay,enemy.x,enemy.y))continue;
    if(!best||distance<best.distance)best={allyId:ally.id,enemyIndex:index,distance};
-  });
+  }
  }
  return best?{allyId:best.allyId,enemyIndex:best.enemyIndex}:null;
 }
