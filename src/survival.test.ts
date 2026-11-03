@@ -11,3 +11,6 @@ test('disabled production causes shortages but never negative resources',()=>{
 test('capacity is respected when supply generation is high',()=>{
  assert.deepEqual(produceSupplies({food:19,water:20},{population:0,farms:10,collectors:10,storage:0,farmStaff:4,waterStaff:4}),{food:20,water:20});
 });
+
+import {shortageDamage,applyShortageHealth} from './survival.ts';
+test('food and water shortages weaken survivors but never kill them directly',()=>{assert.equal(shortageDamage(5,5),0);assert.equal(shortageDamage(0,5),2);assert.equal(shortageDamage(0,0),4);assert.equal(applyShortageHealth(26,4),22);assert.equal(applyShortageHealth(21,4),20);assert.equal(applyShortageHealth(70,0),70)});
