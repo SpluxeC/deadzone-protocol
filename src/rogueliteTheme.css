@@ -61,17 +61,25 @@
 #rogue{position:relative}
 #rogue:has(#overlay:not([hidden])) footer{display:none!important}
 #mobile-sticks,#rotate-phone{display:none}
-#mobile-squad,#mobile-actions,#mobile-weapon-swap{display:none}
+#mobile-squad,#mobile-actions,#mobile-weapon-swap,#mobile-medkit-revive,#mobile-inventory-team{display:none}
 #rogue #interact.in-range{background:#2b7551;border-color:#95e5ad;color:#f4ffea;box-shadow:0 0 12px #7dec9c66}
 @media (pointer:coarse){
  #rogue footer{position:absolute!important;top:55px;right:max(8px,env(safe-area-inset-right));bottom:auto;left:auto;max-width:38vw;width:auto;max-height:47vh!important;padding:5px!important;gap:4px!important;background:#102022dd!important;border:1px solid #486b63;border-radius:9px;display:flex;flex-direction:row;flex-wrap:wrap;justify-content:flex-end;align-content:flex-start;overflow-y:auto;overscroll-behavior:contain}
  #rogue footer button{padding:7px 9px!important;min-width:0!important;font-size:10px!important;white-space:nowrap}
- #rogue footer #weapon-primary,#rogue footer #weapon-secondary,#rogue footer #weapon-melee,#rogue footer #reload,#rogue footer #interact,#rogue footer #orders,#rogue footer #squad-panel,#rogue footer #shoot,#rogue footer #moveup,#rogue footer #movedown,#rogue footer #moveleft,#rogue footer #moveright{display:none!important}
+ #rogue footer #heal,#rogue footer #revive,#rogue footer #inventory,#rogue footer #weapon-primary,#rogue footer #weapon-secondary,#rogue footer #weapon-melee,#rogue footer #reload,#rogue footer #interact,#rogue footer #orders,#rogue footer #squad-panel,#rogue footer #shoot,#rogue footer #moveup,#rogue footer #movedown,#rogue footer #moveleft,#rogue footer #moveright{display:none!important}
  #rogue #playarea{touch-action:none}
  #mobile-sticks{position:absolute;inset:0;z-index:5;display:flex;justify-content:space-between;align-items:flex-end;pointer-events:none;padding:0 max(16px,env(safe-area-inset-right)) max(10px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));box-sizing:border-box}
  #rogue #playarea:has(#overlay:not([hidden])) #mobile-sticks{display:none!important}
- #mobile-squad{display:flex;position:absolute;bottom:max(18px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);flex-direction:column;gap:5px;align-items:center;pointer-events:auto;max-width:calc(100% - 250px)}
- #rogue #mobile-squad button{padding:6px 10px!important;font-size:10px!important;white-space:nowrap;background:#28483de8;border-color:#8cb6a0}
+ #mobile-squad{display:flex;position:absolute;bottom:max(11px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);flex-direction:row;flex-wrap:nowrap;justify-content:center;gap:3px;align-items:center;pointer-events:auto;max-width:calc(100% - 360px);z-index:6}
+ #rogue #mobile-squad button{padding:6px 6px!important;min-height:35px;font-size:9px!important;white-space:nowrap;background:#28483de8;border-color:#8cb6a0;touch-action:none}
+ #rogue #mobile-squad button.selected{background:#41866b!important;border-color:#b9f6c8!important;box-shadow:0 0 9px #75e5a36b}
+ #mobile-sticks .analog-left{position:relative}
+ #rogue #mobile-inventory-team{display:block;position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);pointer-events:auto;touch-action:none;user-select:none;white-space:nowrap;min-height:37px;padding:7px 9px!important;font-size:10px!important;background:#425850;border:2px solid #aac8ad;color:#fff}
+ #rogue #mobile-medkit-revive{display:block;position:absolute;left:calc(max(16px,env(safe-area-inset-left)) + clamp(92px,21vh,148px) + 13px);bottom:max(34px,calc(env(safe-area-inset-bottom) + 34px));pointer-events:auto;touch-action:none;user-select:none;min-height:43px;min-width:88px;padding:8px 8px!important;font-size:10px!important;background:#33584b;border:2px solid #94baa3;color:#fff}
+ #rogue #mobile-medkit-revive.holding{background:#45657b;border-color:#b6e0f9}
+ @keyframes deadzone-low-health{0%,100%{background:#662a27;box-shadow:0 0 0 #f33}50%{background:#c33730;box-shadow:0 0 18px #ff6358}}
+ #rogue #mobile-medkit-revive.low-health{animation:deadzone-low-health .85s ease-in-out infinite;border-color:#ff9c8f}
+ @media(prefers-reduced-motion:reduce){#rogue #mobile-medkit-revive.low-health{animation:none;background:#aa312c;border-color:#ff9c8f}}
  #mobile-actions{display:flex;position:absolute;right:calc(max(16px,env(safe-area-inset-right)) + clamp(92px,21vh,148px) + 13px);bottom:max(30px,calc(env(safe-area-inset-bottom) + 30px));flex-direction:column;gap:8px;pointer-events:none;align-items:stretch}
  #rogue #mobile-actions button{pointer-events:auto;touch-action:none;user-select:none;min-width:76px;min-height:43px;padding:8px 9px!important;font-size:11px!important;letter-spacing:.05em;background:#2c4741;border:2px solid #7a9e8e;color:#f0f7ee;white-space:nowrap}
  #rogue #mobile-interact{background:#233b36;border-color:#516b61;color:#95aba0;opacity:.7}
@@ -93,7 +101,10 @@
  #rogue footer{top:39px;max-height:43vh!important}
  #mobile-sticks .analog-base{--stick-size:clamp(82px,27vh,120px)}
  #mobile-sticks{padding-bottom:max(3px,env(safe-area-inset-bottom))}
- #mobile-squad{bottom:max(7px,env(safe-area-inset-bottom));gap:3px}
+ #mobile-squad{bottom:max(5px,env(safe-area-inset-bottom));gap:2px;max-width:calc(100% - 300px)}
+ #rogue #mobile-squad button{font-size:8px!important;padding:4px 4px!important;min-height:27px}
+ #rogue #mobile-inventory-team{bottom:calc(100% + 5px);min-height:27px;padding:4px 6px!important;font-size:9px!important}
+ #rogue #mobile-medkit-revive{left:calc(max(16px,env(safe-area-inset-left)) + clamp(82px,27vh,120px) + 7px);bottom:max(24px,calc(env(safe-area-inset-bottom) + 24px));min-height:32px;min-width:72px;padding:5px 5px!important;font-size:9px!important}
  #mobile-actions{right:calc(max(16px,env(safe-area-inset-right)) + clamp(82px,27vh,120px) + 7px);bottom:max(20px,calc(env(safe-area-inset-bottom) + 20px));gap:5px}
  #rogue #mobile-actions button{min-height:32px;min-width:64px;padding:5px 6px!important;font-size:9px!important}
  #rogue #mobile-weapon-swap{bottom:calc(100% + 5px);min-height:27px;padding:4px 6px!important;font-size:9px!important}
