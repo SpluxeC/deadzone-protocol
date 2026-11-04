@@ -1,0 +1,52 @@
+/* Deadzone Protocol — responsive tactical HUD / Phase 6 original visual pass */
+#rogue{background:#071014!important;color:#e2e6dd!important;font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif!important;letter-spacing:.013em}
+#rogue header{min-height:49px;box-sizing:border-box;padding:9px clamp(10px,2vw,24px)!important;background:linear-gradient(135deg,#1b302f,#101d25)!important;border-bottom:1px solid #668175!important;box-shadow:0 5px 26px #0009;z-index:4}
+#rogue header strong{font-size:clamp(14px,1.8vw,20px);letter-spacing:.11em;text-shadow:0 2px 7px #000b}
+#rogue header small{font-size:10px;font-weight:600;letter-spacing:.18em}
+#rogue #stats{font-size:clamp(10px,1.3vw,13px);color:#cddbd3;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;max-width:58%}
+#rogue #playarea{background:radial-gradient(ellipse at 50% 45%,#213735,#091417 68%)!important;overflow:hidden}
+#rogue #rogue-canvas{display:block;image-rendering:auto}
+#rogue footer{position:relative;z-index:4;background:linear-gradient(#192f30,#0e1b22)!important;border-top:1px solid #617d73;padding:7px!important;box-shadow:0 -6px 28px #0009;max-height:130px;overflow-y:auto}
+#rogue button{background:linear-gradient(#304d4a,#203735)!important;border:1px solid #587870!important;border-bottom-color:#152823!important;border-radius:7px!important;padding:9px 12px!important;color:#e1eade!important;box-shadow:inset 0 1px #bdd2c11a,0 2px 7px #0005;letter-spacing:.045em;transition:background .14s,transform .14s}
+#rogue button:hover{background:linear-gradient(#3f675a,#2d4a46)!important}
+#rogue button:active{transform:translateY(1px)}
+#rogue button:focus-visible{outline:2px solid #d3cc92;outline-offset:2px}
+#rogue button:disabled{opacity:.4;filter:grayscale(.45)}
+#rogue #shoot{background:linear-gradient(#a66548,#85442e)!important;border-color:#c88b69!important}
+#rogue #exit{background:linear-gradient(#3f775f,#235543)!important;border-color:#78ad8c!important}
+#rogue #overlay{z-index:9;background:linear-gradient(165deg,#091216ed,#142626ed)!important;backdrop-filter:blur(8px);scrollbar-color:#5e7c73 #182925}
+#rogue #overlay[hidden]{display:none!important}
+#rogue #overlay article{max-width:min(650px,100%);padding:clamp(16px,2.8vw,28px);background:linear-gradient(155deg,#213a37,#14252b)!important;border:1px solid #77938a!important;box-shadow:0 22px 70px #000b,inset 0 1px #b9e3b014!important;border-radius:13px!important}
+#rogue #overlay h1{font-size:clamp(20px,3.4vw,29px);letter-spacing:.075em;font-weight:850;text-transform:uppercase;color:#eff4e8}
+#rogue #overlay h2{font-size:13px;letter-spacing:.11em;text-transform:uppercase;color:#cfe8d8;padding:10px 0 4px;border-bottom:1px solid #53736988}
+#rogue #overlay p{font-size:13px;color:#c5d1c9}
+#rogue #overlay select{display:block;width:100%;max-width:420px;background:#102227;color:#e7f3e7;border:1px solid #719383;border-radius:5px;margin-top:5px}
+#rogue #overlay label{font-size:12px;color:#d0ddce;font-weight:650;letter-spacing:.035em}
+#rogue #overlay .shop button{font-size:12px;min-height:58px;text-align:left;line-height:1.6}
+#rogue #overlay .menurow button{flex:1 1 auto}
+#rogue #toast{font-size:12px!important;font-weight:750;letter-spacing:.08em;text-transform:uppercase;z-index:5;background:#1c3330f0!important;color:#f7edda;border:1px solid #6e9281;box-shadow:0 4px 19px #0009}
+#combat-hud{position:absolute;z-index:3;top:11px;left:11px;min-width:220px;max-width:min(310px,calc(100vw - 32px));background:linear-gradient(145deg,#0c1e21ed,#1b302dec);border:1px solid #53756a;border-radius:9px;padding:10px 12px;color:#e5efe2;pointer-events:none;box-shadow:0 7px 28px #0008;box-sizing:border-box}
+#combat-hud .hud-label{font-size:10px;font-weight:800;letter-spacing:.14em;color:#b6d1bd;display:flex;justify-content:space-between;gap:8px;padding-bottom:7px;border-bottom:1px solid #6e8a7b70}
+#combat-hud .hud-meter{display:grid;grid-template-columns:47px 1fr 30px;align-items:center;gap:7px;font-size:10px;font-weight:700;margin-top:7px}
+#combat-hud .hud-meter div{height:7px;background:#28373a;border:1px solid #57706b;box-shadow:inset 0 1px 4px #0009;border-radius:3px;overflow:hidden}
+#combat-hud .hud-meter i{display:block;width:100%;height:100%;background:#8bd0a8;transition:width .1s linear}
+#combat-hud .hud-meter b{text-align:right;font-size:11px}
+#combat-hud .hud-meta{font-size:10px;color:#d1d9cc;margin-top:7px;letter-spacing:.025em;line-height:1.3}
+#combat-hud #hud-weapon{margin-top:10px;color:#eccf99;font-weight:750}
+@media(max-width:780px){
+ #rogue header{padding:6px 9px!important;gap:3px}
+ #rogue header strong{font-size:12px}
+ #rogue header small{display:none}
+ #rogue #stats{font-size:9px;max-width:48%}
+ #rogue footer{max-height:106px;gap:3px!important}
+ #rogue footer button{padding:7px 8px!important;font-size:10px!important;min-width:44px}
+ #combat-hud{top:5px;left:5px;min-width:156px;max-width:185px;padding:6px 8px}
+ #combat-hud .hud-label{font-size:8px;padding-bottom:4px}
+ #combat-hud .hud-meter{grid-template-columns:35px 1fr 23px;gap:4px;font-size:8px;margin-top:4px}
+ #combat-hud .hud-meter b{font-size:9px}
+ #combat-hud .hud-meta{font-size:8px;margin-top:4px}
+ #rogue #overlay article{padding:13px}
+ #rogue #overlay .shop{grid-template-columns:repeat(auto-fit,minmax(135px,1fr))}
+}
+@media(max-height:550px){#combat-hud{transform:scale(.85);transform-origin:top left}#rogue footer{max-height:78px}}
+@media(prefers-reduced-motion:reduce){#rogue button,#combat-hud .hud-meter i{transition:none}}
