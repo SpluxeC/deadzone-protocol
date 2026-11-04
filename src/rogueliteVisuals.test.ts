@@ -10,7 +10,7 @@ test('all 5 specialists and 5 infected have distinct sprite atlas cells',()=>{
  assert.equal(spriteSize,96);
  const art=readFileSync(new URL('./assets/deadzone-sprites.svg',import.meta.url),'utf-8');
  assert.match(art,/<svg /);assert.match(art,/viewBox="0 0 1344 96"/);
- assert.equal((art.match(/<g transform="translate\(/g)||[]).length,14);
+ assert.equal((art.match(/<g transform="translate\(\d+ 0\)"/g)||[]).length,14);
 });
 test('world-to-screen transformations are reversible while camera follows player',()=>{
  const map=generateDungeon(2311,42,32);
