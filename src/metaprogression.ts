@@ -82,5 +82,5 @@ export function progressAchievements(p:ProfileV5,m:RunPerformance):{names:string
  for(const [key,valid] of Object.entries(checks) as [AchievementId,boolean][])if(valid&&!p.achievements.includes(key)){p.achievements.push(key);reward+=achievements[key].reward;names.push(achievements[key].label)}
  p.tokens+=reward;return {names,reward};
 }
-export function performancePayout(p:RunPerformance):number{return Math.min(120,Math.floor(p.killsTotal/20)*2+Math.min(12,p.flawlessWaves)*3+Math.floor(p.lootedTotal/8)*2)}
+export function performancePayout(p:RunPerformance):number{return Math.min(120,(p.killsTotal>0?2:0)+Math.floor(p.killsTotal/20)*2+Math.min(12,p.flawlessWaves)*3+Math.floor(p.lootedTotal/8)*2)}
 export function eligibleRecruit(p:ProfileV5,role:ClassId):boolean{return role==='rifleman'||p.unlocked.includes(('class'+role.charAt(0).toUpperCase()+role.slice(1)) as UnlockId)}
