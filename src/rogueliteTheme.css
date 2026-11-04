@@ -61,18 +61,22 @@
 #rogue{position:relative}
 #rogue:has(#overlay:not([hidden])) footer{display:none!important}
 #mobile-sticks,#rotate-phone{display:none}
-#mobile-squad,#mobile-interact{display:none}
+#mobile-squad,#mobile-actions,#mobile-weapon-swap{display:none}
 #rogue #interact.in-range{background:#2b7551;border-color:#95e5ad;color:#f4ffea;box-shadow:0 0 12px #7dec9c66}
 @media (pointer:coarse){
  #rogue footer{position:absolute!important;top:55px;right:max(8px,env(safe-area-inset-right));bottom:auto;left:auto;max-width:38vw;width:auto;max-height:47vh!important;padding:5px!important;gap:4px!important;background:#102022dd!important;border:1px solid #486b63;border-radius:9px;display:flex;flex-direction:row;flex-wrap:wrap;justify-content:flex-end;align-content:flex-start;overflow-y:auto;overscroll-behavior:contain}
  #rogue footer button{padding:7px 9px!important;min-width:0!important;font-size:10px!important;white-space:nowrap}
- #rogue footer #orders,#rogue footer #squad-panel,#rogue footer #shoot,#rogue footer #moveup,#rogue footer #movedown,#rogue footer #moveleft,#rogue footer #moveright{display:none!important}
+ #rogue footer #weapon-primary,#rogue footer #weapon-secondary,#rogue footer #weapon-melee,#rogue footer #reload,#rogue footer #interact,#rogue footer #orders,#rogue footer #squad-panel,#rogue footer #shoot,#rogue footer #moveup,#rogue footer #movedown,#rogue footer #moveleft,#rogue footer #moveright{display:none!important}
  #rogue #playarea{touch-action:none}
  #mobile-sticks{position:absolute;inset:0;z-index:5;display:flex;justify-content:space-between;align-items:flex-end;pointer-events:none;padding:0 max(16px,env(safe-area-inset-right)) max(10px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));box-sizing:border-box}
  #rogue #playarea:has(#overlay:not([hidden])) #mobile-sticks{display:none!important}
  #mobile-squad{display:flex;position:absolute;bottom:max(18px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);flex-direction:column;gap:5px;align-items:center;pointer-events:auto;max-width:calc(100% - 250px)}
  #rogue #mobile-squad button{padding:6px 10px!important;font-size:10px!important;white-space:nowrap;background:#28483de8;border-color:#8cb6a0}
- #rogue #mobile-interact{display:block;position:absolute;right:calc(max(16px,env(safe-area-inset-right)) + clamp(92px,21vh,148px) + 13px);bottom:max(34px,calc(env(safe-area-inset-bottom) + 34px));pointer-events:auto;min-width:75px;min-height:42px;padding:8px 9px!important;font-size:11px!important;letter-spacing:.06em;background:#233b36;border:2px solid #516b61;color:#95aba0;opacity:.7}
+ #mobile-actions{display:flex;position:absolute;right:calc(max(16px,env(safe-area-inset-right)) + clamp(92px,21vh,148px) + 13px);bottom:max(30px,calc(env(safe-area-inset-bottom) + 30px));flex-direction:column;gap:8px;pointer-events:none;align-items:stretch}
+ #rogue #mobile-actions button{pointer-events:auto;touch-action:none;user-select:none;min-width:76px;min-height:43px;padding:8px 9px!important;font-size:11px!important;letter-spacing:.05em;background:#2c4741;border:2px solid #7a9e8e;color:#f0f7ee;white-space:nowrap}
+ #rogue #mobile-interact{background:#233b36;border-color:#516b61;color:#95aba0;opacity:.7}
+ #rogue #mobile-weapon-swap{display:block;position:absolute;bottom:calc(100% + 9px);left:50%;transform:translateX(-50%);pointer-events:auto;touch-action:none;user-select:none;white-space:nowrap;min-height:37px;padding:7px 10px!important;font-size:10px!important;background:#425850;border:2px solid #aac8ad;color:#fff}
+ #mobile-sticks .analog-right{position:relative}
  #rogue #mobile-interact.in-range{background:#28764c;border-color:#a7ef9b;color:#fff;opacity:1;box-shadow:0 0 17px #6bf58caa, inset 0 0 8px #a2ff7c44}
  #mobile-sticks .analog-group{display:flex;flex-direction:column;align-items:center;gap:3px;pointer-events:none}
  #mobile-sticks .analog-base{--stick-size:clamp(92px,21vh,148px);width:var(--stick-size);height:var(--stick-size);position:relative;pointer-events:auto;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;border-radius:50%;background:radial-gradient(circle,#233d3ebd 0 20%,#13272bdf 75%,#0a191cbf);border:2px solid #729f8da8;box-shadow:inset 0 0 0 7px #253c3866,inset 0 4px 16px #0007,0 5px 24px #0009}
@@ -90,7 +94,9 @@
  #mobile-sticks .analog-base{--stick-size:clamp(82px,27vh,120px)}
  #mobile-sticks{padding-bottom:max(3px,env(safe-area-inset-bottom))}
  #mobile-squad{bottom:max(7px,env(safe-area-inset-bottom));gap:3px}
- #rogue #mobile-interact{right:calc(max(16px,env(safe-area-inset-right)) + clamp(82px,27vh,120px) + 7px);bottom:max(24px,calc(env(safe-area-inset-bottom) + 24px));min-height:32px;min-width:65px;padding:5px 6px!important;font-size:9px!important}
+ #mobile-actions{right:calc(max(16px,env(safe-area-inset-right)) + clamp(82px,27vh,120px) + 7px);bottom:max(20px,calc(env(safe-area-inset-bottom) + 20px));gap:5px}
+ #rogue #mobile-actions button{min-height:32px;min-width:64px;padding:5px 6px!important;font-size:9px!important}
+ #rogue #mobile-weapon-swap{bottom:calc(100% + 5px);min-height:27px;padding:4px 6px!important;font-size:9px!important}
  #rogue #mobile-squad button{padding:3px 7px!important;font-size:9px!important}
  #combat-hud{top:5px;max-width:160px;padding:5px 7px;transform:scale(.85);transform-origin:top left}
  #rogue #toast{max-width:38vw;left:50%;font-size:9px!important}
