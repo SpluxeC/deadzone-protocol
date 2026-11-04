@@ -1,4 +1,4 @@
-/** Persistent, two-state dungeon exploration: unknown is black, visited is fully visible. */
+/** Persistent exploration: unknown terrain stays visible but dim; visited terrain is fully visible. */
 import type {DungeonLayout} from './dungeon.ts';
 import type {View} from './rogueliteVisuals.ts';
 
@@ -36,10 +36,26 @@ export function updateFog(map:DungeonLayout,fog:FogState,explorers:readonly Expl
 export function exploredIndices(fog:FogState):number[]{
  const out:number[]=[];for(let i=0;i<fog.explored.length;i++)if(fog.explored[i])out.push(i);return out;
 }
-export function fogAlpha(fog:FogState,index:number):number{return fog.explored[index]?0:1}
+export const UNKNOWN_TERRAIN_ALPHA=.78;
+export function fogAlpha(fog:FogState,index:number):number{return fog.explored[index]?0:UNKNOWN_TERRAIN_ALPHA}
+/** Whether game entities should be visible at this world-space tile. */
+export function discoveredAt(map:DungeonLayout,fog:FogState,x:number,y:number):boolean{
+ const tx=Math.floor(x+.5),ty=Math.floor(y+.5);
+ return tx>=0&&ty>=0&&tx<map.width&&ty<map.height&&fog.explored[ty*map.width+tx]===1;
+}
+/** Hide effects and moving objects inside still-unknown terrain without concealing the map shape. */
+export function clipToExplored(ctx:CanvasRenderingContext2D,map:DungeonLayout,v:View,fog:FogState):void{
+ const t=v.tile;
+ ctx.beginPath();
+ for(let y=v.minY;y<v.maxY;y++)for(let x=v.minX;x<v.maxX;x++){
+  if(!fog.explored[y*map.width+x])continue;
+  ctx.rect(Math.floor(v.ox+(x-.5)*t),Math.floor(v.oy+(y-.5)*t),Math.ceil(t)+1,Math.ceil(t)+1);
+ }
+ ctx.clip();
+}
 export function renderFog(ctx:CanvasRenderingContext2D,map:DungeonLayout,v:View,fog:FogState):void{
  const t=v.tile,w=map.width;
- ctx.save();ctx.fillStyle='#010408';
+ ctx.save();ctx.fillStyle=`rgba(2,7,12,${UNKNOWN_TERRAIN_ALPHA})`;
  for(let y=v.minY;y<v.maxY;y++)for(let x=v.minX;x<v.maxX;x++){
   if(fog.explored[y*w+x])continue;
   ctx.fillRect(Math.floor(v.ox+(x-.5)*t),Math.floor(v.oy+(y-.5)*t),Math.ceil(t)+1,Math.ceil(t)+1);
