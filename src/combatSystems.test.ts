@@ -33,3 +33,6 @@ test('armor absorbs hits, overflow damages health',()=>{
  assert.deepEqual(incomingDamage(13,20),{hpDamage:0,armor:7});
  assert.deepEqual(incomingDamage(13,4),{hpDamage:9,armor:0});
 });
+
+import {bossAttack,bossImpact} from './combatSystems.ts';
+test('boss patterns rotate every five waves and give distinct dodge zones',()=>{assert.equal(bossAttack(5),'slam');assert.equal(bossAttack(10),'charge');assert.equal(bossAttack(15),'shockwave');assert.equal(bossAttack(20),'slam');assert.equal(bossImpact('slam',2),19);assert.equal(bossImpact('slam',3),0);assert.equal(bossImpact('charge',2),0);assert.equal(bossImpact('shockwave',3),14)});
