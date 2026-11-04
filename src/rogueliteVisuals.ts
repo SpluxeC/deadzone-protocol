@@ -9,8 +9,8 @@ const atlas=typeof Image==='undefined'?null:new Image();
 let ready=false;
 if(atlas){atlas.onload=()=>{ready=true};atlas.onerror=()=>{ready=false};atlas.src=spriteUrl}
 export const spriteReady=()=>ready;
-export function camera(map:DungeonLayout,player:Point,width:number,height:number):View{
- const tile=Math.max(18,Math.min(40,Math.min(width/23,height/15)));
+export function camera(map:DungeonLayout,player:Point,width:number,height:number,zoom=1):View{
+ const tile=Math.max(10,Math.min(85,Math.max(18,Math.min(40,Math.min(width/23,height/15)))*zoom));
  const worldWidth=map.width*tile,worldHeight=map.height*tile;
  const ox=worldWidth<width?(width-worldWidth)/2:Math.min(0,Math.max(width-worldWidth,width/2-player.x*tile));
  const oy=worldHeight<height?(height-worldHeight)/2:Math.min(0,Math.max(height-worldHeight,height/2-player.y*tile));
