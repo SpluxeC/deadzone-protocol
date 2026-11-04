@@ -210,3 +210,56 @@
    Keep the analog stick's more restrictive touch-action:none intact. */
 #rogue #overlay,#rogue #overlay button,#rogue #overlay select,#rogue header,#rogue footer{touch-action:manipulation}
 #rogue,#rogue button{-webkit-tap-highlight-color:transparent}
+
+/* MENU CHROME V2: explicit JS class instead of :has() for older iOS/Android engines.
+   No health, armor, weapon, wave, squad, credit or menu button outside any open panel. */
+#rogue.menu-open>header,
+#rogue[data-menu-open="true"]>header{display:none!important}
+#rogue.menu-open>footer,
+#rogue[data-menu-open="true"]>footer{display:none!important}
+#rogue.menu-open #playarea,
+#rogue[data-menu-open="true"] #playarea{flex:1 1 auto;min-height:0;height:100dvh}
+#rogue.menu-open #mobile-sticks,
+#rogue[data-menu-open="true"] #mobile-sticks{display:none!important}
+
+/* Main navigation is centered and cannot be pushed below the phone viewport. */
+@media (orientation:landscape) and (max-height:540px) and (max-width:1100px){
+ #rogue.menu-open #overlay{inset:0!important;padding:max(3px,env(safe-area-inset-top)) max(6px,env(safe-area-inset-right)) max(3px,env(safe-area-inset-bottom)) max(6px,env(safe-area-inset-left))!important}
+ #rogue.menu-open #overlay:has(>.main-menu-screen),
+ #rogue.menu-open #overlay:has(>.prepare-run-screen),
+ #rogue.menu-open #overlay:has(>.progression-screen){overflow:hidden!important;align-items:center;justify-content:center}
+ #rogue.menu-open #overlay .main-menu-screen,
+ #rogue.menu-open #overlay .prepare-run-screen,
+ #rogue.menu-open #overlay .progression-screen{
+  margin:auto!important;
+  max-width:min(850px,100%)!important;
+  width:100%;
+  max-height:100%!important;
+  padding:clamp(5px,1.8vh,10px)!important;
+  overflow:hidden!important;
+  display:flex;flex-direction:column;justify-content:center;
+  gap:clamp(2px,.7vh,6px);
+ }
+ #rogue.menu-open #overlay .main-menu-screen h1,
+ #rogue.menu-open #overlay .prepare-run-screen h1,
+ #rogue.menu-open #overlay .progression-screen h1{font-size:clamp(16px,4.8vh,23px);line-height:1.1;margin:0}
+ #rogue.menu-open #overlay .main-menu-screen p,
+ #rogue.menu-open #overlay .prepare-run-screen p,
+ #rogue.menu-open #overlay .progression-screen p{font-size:clamp(10px,2.1vh,12px);line-height:1.18;margin:0}
+ #rogue.menu-open #overlay .prep-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(2px,.75vh,7px) 8px}
+ #rogue.menu-open #overlay .prep-grid label{min-width:0;margin:0;font-size:clamp(10px,2.1vh,12px)}
+ #rogue.menu-open #overlay select{margin:2px 0 0;min-height:clamp(26px,5.8vh,33px);padding:3px 6px;font-size:clamp(11px,2.5vh,13px)}
+ #rogue.menu-open #overlay .main-menu-screen label{display:flex;align-items:center;gap:8px;margin:0}
+ #rogue.menu-open #overlay .main-menu-screen label select{max-width:180px;margin:0}
+ #rogue.menu-open #overlay .menurow{margin:1px 0 0;gap:5px}
+ #rogue.menu-open #overlay .main-menu-screen .menurow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
+ #rogue.menu-open #overlay .main-menu-screen button,
+ #rogue.menu-open #overlay .prepare-run-screen button,
+ #rogue.menu-open #overlay .progression-screen button{min-height:clamp(28px,7vh,36px);padding:3px 6px!important;font-size:clamp(10px,2.2vh,12px)!important}
+ #rogue.menu-open #overlay .prepare-run-screen #loadout-preview{min-height:23px}
+ #rogue.menu-open #overlay .progression-screen .shop{grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
+ #rogue.menu-open #overlay .progression-screen .shop button{min-height:clamp(34px,10vh,55px)}
+ #rogue.menu-open #overlay .progression-screen .shop button small{font-size:clamp(9px,1.9vh,11px);line-height:1.12}
+ #rogue.menu-open #overlay .achievement-item{padding:4px;font-size:clamp(9px,2vh,11px)}
+ #rogue.menu-open #overlay .progression-category{margin:0;gap:8px}
+}
