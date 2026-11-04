@@ -73,10 +73,31 @@ overlay.querySelector<HTMLButtonElement>('#save-menu')!.onclick=()=>{save();menu
 function death(){if(!run)return;const result=permanentPayout(run.cleared,run.bosses);profile.tokens+=result;profile.bestWave=Math.max(profile.bestWave,run.wave);profile.runs++;const wave=run.wave,clearedCount=run.cleared;run=null;save();paused=true;overlay.hidden=false;overlay.innerHTML=`<article><h1>RUN OVER</h1><p>Reached wave ${wave}. Cleared ${clearedCount} waves. Earned <b>${result} Legacy Tokens</b> for future starting unlocks.</p><div class="menurow"><button id="again">NEW RUN</button><button id="back">MAIN MENU</button></div></article>`;overlay.querySelector<HTMLButtonElement>('#again')!.onclick=newRun;overlay.querySelector<HTMLButtonElement>('#back')!.onclick=menu}
 function moveUnit(u:{x:number;y:number},vx:number,vy:number,step:number){if(isFloor(u.x+vx*step,u.y))u.x+=vx*step;if(isFloor(u.x,u.y+vy*step))u.y+=vy*step}
 function update(dt:number){if(!run||!plan||paused||run.stage!=='fight')return;
-shotCooldown=Math.max(0,shotCooldown-dt);if((run.reloadTimer??0)>0){run.reloadTimer=Math.max(0,(run.reloadTimer??0)-dt);if(run.reloadTimer===0)finishReload()}const p=run.player;let dx=0,dy=0;if(keys.has('KeyW')||keys.has('ArrowUp')||touch.has('up'))dy--;if(keys.has('KeyS')||keys.has('ArrowDown')||touch.has('down'))dy++;if(keys.has('KeyA')||keys.has('ArrowLeft')||touch.has('left'))dx--;if(keys.has('KeyD')||keys.has('ArrowRight')||touch.has('right'))dx++;const len=Math.hypot(dx,dy);if(len)moveUnit(p,dx/len,dy/len,dt*(keys.has('ShiftLeft')?4:3));if(keys.has('Space')||firePressed){const nearest=run.enemies.filter(e=>e.alive&&canSee(p.x,p.y,e.x,e.y)).sort((a,b)=>Math.hypot(a.x-p.x,a.y-p.y)-Math.hypot(b.x-p.x,b.y-p.y))[0];if(nearest){const length=Math.hypot(nearest.x-p.x,nearest.y-p.y)||1;aim={x:(nearest.x-p.x)/length,y:(nearest.y-p.y)/length}}shoot()}
+shotCooldown=Math.max(0,shotCooldown-dt);if((run.reloadTimer??0)>0){run.reloadTimer=Math.max(0,(run.reloadTimer??0)-dt);if(run.reloadTimer===0)finishReload()}const p=run.player;let dx=0,dy=0;if(keys.has('KeyW')||keys.has('ArrowUp')||touch.has('up'))dy--;if(keys.has('KeyS')||keys.has('ArrowDown')||touch.has('down'))dy++;if(keys.has('KeyA')||keys.has('ArrowLeft')||touch.has('left'))dx--;if(keys.has('KeyD')||keys.has('ArrowRight')||touch.has('right'))dx++;const len=Math.hypot(dx,dy);if(len)moveUnit(p,dx/len,dy/len,dt*(keys.has('ShiftLeft')?4:3));if(keys.has('Space')||firePressed){const nearest=run.enemies.filter(e=>e.alive&&canSee(p.x,p.y,e.x,e.y)&&Math.hypot(e.x-p.x,e.y-p.y)<=weaponStats(run!.activeSlot??'primary',run!.weaponTier).range).sort((a,b)=>Math.hypot(a.x-p.x,a.y-p.y)-Math.hypot(b.x-p.x,b.y-p.y))[0];if(nearest){const length=Math.hypot(nearest.x-p.x,nearest.y-p.y)||1;aim={x:(nearest.x-p.x)/length,y:(nearest.y-p.y)/length}}shoot()}
 spawnClock+=dt;if(run.spawned<plan.total&&spawnClock>1.45){spawnClock=0;const active=run.enemies.filter(e=>e.alive).length;if(active<Math.min(22,8+Math.ceil(run.wave/2)))spawnOne(false)}
 allyClock+=dt;for(const a of run.allies){const d=Math.hypot(p.x-a.x,p.y-a.y);if(d>1.4)moveUnit(a,(p.x-a.x)/d,(p.y-a.y)/d,dt*2.3);if(allyClock>.95&&run.squadAmmo>0){const target=run.enemies.filter(e=>e.alive&&Math.hypot(a.x-e.x,a.y-e.y)<5&&canSee(a.x,a.y,e.x,e.y)).sort((x,y)=>Math.hypot(a.x-x.x,a.y-x.y)-Math.hypot(a.x-y.x,a.y-y.y))[0];if(target){target.hp-=1;run.squadAmmo--;if(target.hp<=0)defeat(target)}}}if(allyClock>.95)allyClock=0;
-attackClock+=dt;for(const e of run.enemies){if(!e.alive)continue;const dist=Math.hypot(p.x-e.x,p.y-e.y),near=dist>0?dist:1;if(dist>.7){const vx=(p.x-e.x)/near,vy=(p.y-e.y)/near;moveUnit(e,vx,vy,dt*e.speed);if(dist>1.4&&Math.abs(vx)>Math.abs(vy))moveUnit(e,0,Math.sign(vy),dt*e.speed*.38)}else if(attackClock>.72){let damage=e.boss?16:7;if(run.armor>0){const blocked=Math.min(run.armor,damage);run.armor-=blocked;damage-=blocked}run.hp=Math.max(0,run.hp-damage)}}if(attackClock>.72)attackClock=0;if(run.hp<=0){death();return}
+pathClock-=dt;if(pathClock<=0||!pathField){pathField=distanceField(plan.map,run.player);pathClock=.32}
+for(const e of run.enemies){if(!e.alive)continue;
+ const stats=zombieStats(e.kind??(e.boss?'boss':'shambler'));
+ e.attack=Math.max(0,e.attack-dt);
+ if((e.windup??0)>0){e.windup=Math.max(0,(e.windup??0)-dt);if(e.windup===0){const distance=Math.hypot(e.x-p.x,e.y-p.y);if(distance<2.4){const hit=incomingDamage(19,run.armor);run.armor=hit.armor;run.hp=Math.max(0,run.hp-hit.hpDamage)}for(const a of run.allies){if(Math.hypot(a.x-e.x,a.y-e.y)<2.4)a.hp=Math.max(0,a.hp-15)}bossPulse=.28}continue}
+ const nearestAlly=run.allies.filter(a=>a.hp>0).sort((a,b)=>Math.hypot(a.x-e.x,a.y-e.y)-Math.hypot(b.x-e.x,b.y-e.y))[0];
+ const playerDist=Math.hypot(p.x-e.x,p.y-e.y);
+ const allyDist=nearestAlly?Math.hypot(nearestAlly.x-e.x,nearestAlly.y-e.y):Infinity;
+ const target=nearestAlly&&allyDist+.35<playerDist?nearestAlly:p,dist=Math.hypot(target.x-e.x,target.y-e.y);
+ if(e.boss&&e.attack===0&&playerDist<2.5){e.windup=.85;e.attack=4.2;notice('BOSS SLAM — GET CLEAR!');continue}
+ if(dist<=stats.reach&&e.attack===0){e.attack=stats.attackInterval;if(target===p){const hit=incomingDamage(stats.damage,run.armor);run.armor=hit.armor;run.hp=Math.max(0,run.hp-hit.hpDamage)}else{const ally=target as Ally;ally.hp=Math.max(0,ally.hp-stats.damage)}continue}
+ if(dist>stats.reach*.8){const direct=canSee(e.x,e.y,target.x,target.y);const waypoint=direct?target:nextZombieWaypoint(plan.map,pathField!,e);
+  const vx=waypoint.x-e.x,vy=waypoint.y-e.y,len=Math.hypot(vx,vy);if(len>.03){
+   const nearby=run.enemies.find(other=>other!==e&&other.alive&&Math.hypot(other.x-e.x,other.y-e.y)<.36);
+   const avoid=nearby?Math.sign(e.x-nearby.x||((run.spawned%2)*2-1))*.18:0;
+   moveUnit(e,(vx+avoid)/Math.max(.01,len),vy/Math.max(.01,len),dt*stats.speed)
+  }
+ }
+}
+run.allies=run.allies.filter(a=>a.hp>0);
+bossPulse=Math.max(0,bossPulse-dt);
+if(run.hp<=0){death();return}
 if(performance.now()-lastSave>1200){lastSave=performance.now();save()}
 }
 function draw(){const width=canvas.clientWidth||innerWidth,height=canvas.clientHeight||innerHeight;const ratio=Math.min(2,devicePixelRatio||1);const cw=Math.max(320,Math.floor(width*ratio)),ch=Math.max(180,Math.floor(height*ratio));if(canvas.width!==cw||canvas.height!==ch){canvas.width=cw;canvas.height=ch}ctx.fillStyle='#0b1517';ctx.fillRect(0,0,cw,ch);
@@ -87,10 +108,10 @@ const box=(x:number,y:number,color:string,r=.32)=>{ctx.fillStyle=color;ctx.fillR
 for(const [i,l]of map.loot.entries())if(!run.looted.includes(i))box(l.x,l.y,'#b89443',.30);
 for(const sp of plan.spawnPoints)box(sp.x,sp.y,'#704941',.18);
 const exit=map.extraction;box(exit.x,exit.y,cleared()?'#50dba1':'#9c7660',.43);
-for(const e of run.enemies)if(e.alive){box(e.x,e.y,e.boss?'#e77736':'#be5e59',e.boss?.55:.31);if(e.boss){ctx.fillStyle='#d3d6c7';ctx.fillRect(ox+(e.x-.5)*tile,oy+(e.y-.72)*tile,tile*(e.hp/e.maxHp),tile*.1)}}
+for(const e of run.enemies)if(e.alive){const kind=e.kind??(e.boss?'boss':'shambler'),info=zombieStats(kind);box(e.x,e.y,info.color,e.boss?.53:kind==='bruiser'?.43:kind==='armored'?.36:kind==='runner'?.26:.31);if(e.boss){ctx.fillStyle='#d3d6c7';ctx.fillRect(ox+(e.x-.5)*tile,oy+(e.y-.72)*tile,tile*Math.max(0,e.hp/e.maxHp),tile*.1);if((e.windup??0)>0){ctx.beginPath();ctx.arc(ox+e.x*tile,oy+e.y*tile,tile*2.4,0,Math.PI*2);ctx.strokeStyle='#ff8e5688';ctx.lineWidth=Math.max(1,tile*.11);ctx.stroke()}}}
 for(const a of run.allies)box(a.x,a.y,'#71b7dc',.3);
 box(run.player.x,run.player.y,'#f2e5c6',.36);ctx.strokeStyle='#f1e4ad';ctx.lineWidth=Math.max(1,tile*.12);ctx.beginPath();ctx.moveTo(ox+run.player.x*tile,oy+run.player.y*tile);ctx.lineTo(ox+(run.player.x+aim.x*.75)*tile,oy+(run.player.y+aim.y*.75)*tile);ctx.stroke();
-stats.textContent='WAVE '+run.wave+' · '+(cleared()?'CLEAR — FIND ELEVATOR':'ENEMIES LEFT '+remaining())+' · HP '+run.hp+' · ARMOR '+run.armor+' · AMMO '+run.mag+'/'+run.reserve+' · ₡'+run.credits+' · TEAM '+run.allies.length;
+stats.textContent='WAVE '+run.wave+' · '+(cleared()?'CLEAR — FIND ELEVATOR':'ENEMIES LEFT '+remaining())+' · HP '+run.hp+' · ARMOR '+run.armor+' · '+(run.activeSlot??'primary').toUpperCase()+' '+((run.activeSlot??'primary')==='melee'?'MELEE':(run.activeSlot??'primary')==='secondary'?(run.sideMag??12)+'/'+(run.sideReserve??48):run.mag+'/'+run.reserve)+((run.reloadTimer??0)>0?' RELOADING':'')+' · ₡'+run.credits+' · TEAM '+run.allies.length;
 }
 function frame(now:number){const dt=Math.min(.05,(now-last)/1000);last=now;update(dt);draw();if(noticeUntil<now)toastEl.textContent='';requestAnimationFrame(frame)}
 window.addEventListener('keydown',e=>{if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code))e.preventDefault();keys.add(e.code);if(e.repeat)return;if(e.code==='Digit1')equip('primary');if(e.code==='Digit2')equip('secondary');if(e.code==='Digit3')equip('melee');if(e.code==='KeyR')reload();if(e.code==='KeyH')heal();if(e.code==='KeyE'){search();elevator()}if(e.code==='Escape')menu()});window.addEventListener('keyup',e=>keys.delete(e.code));window.addEventListener('blur',()=>{keys.clear();firePressed=false;touch.clear()});
