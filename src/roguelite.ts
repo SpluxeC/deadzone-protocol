@@ -62,22 +62,37 @@ function loadRun(){try{const r=JSON.parse(localStorage.getItem(store('run'))||'n
  for(const a of run.allies){const p=nearestWalkable(plan.map,a);a.x=p.x;a.y=p.y;}
  ensureEquipment(run);fog=createFog(plan.map,run.explored??[]);for(const enemy of run.enemies){
  const p=nearestWalkable(plan.map,enemy);enemy.x=p.x;enemy.y=p.y;enemy.kind??=enemy.boss?'boss':'shambler';enemy.attack??=0;enemy.windup??=0;enemy.phase??=0;enemy.aggro??=0;enemy.suppressed??=0;enemy.scoutMarked??=0;}return true}catch{return false}}
-function menu(){combatFx=[];paused=true;overlay.hidden=false;overlay.innerHTML=`<article><h1>DEADZONE <span style="color:#f18567">PROTOCOL</span></h1><p>Wave-based dungeon roguelite. Clear finite hordes, find the elevator, buy upgrades, and descend into a new procedural floor. The old FOB campaign remains preserved in source code.</p><label>Save slot <select id="slot-select"><option value="1">SLOT 01</option><option value="2">SLOT 02</option><option value="3">SLOT 03</option></select></label><p id="career"></p><div class="menurow"><button id="continue-run">CONTINUE RUN</button><button id="new-run">NEW RUN</button><button id="upgrades">PERMANENT UNLOCKS</button></div></article>`;
+function menu(){combatFx=[];paused=true;overlay.hidden=false;overlay.innerHTML=`<article class="main-menu-screen"><h1>DEADZONE <span style="color:#f18567">PROTOCOL</span></h1><p>Wave-based dungeon roguelite. Clear finite hordes, find the elevator, buy upgrades, and descend into a new procedural floor. The old FOB campaign remains preserved in source code.</p><label>Save slot <select id="slot-select"><option value="1">SLOT 01</option><option value="2">SLOT 02</option><option value="3">SLOT 03</option></select></label><p id="career"></p><div class="menurow"><button id="continue-run">CONTINUE RUN</button><button id="new-run">NEW RUN</button><button id="upgrades">PERMANENT UNLOCKS</button></div></article>`;
 const sel=overlay.querySelector<HTMLSelectElement>('#slot-select')!;sel.value=String(slot);const refresh=()=>{loadProfile();const active=localStorage.getItem(store('run'));overlay.querySelector('#career')!.textContent='BEST WAVE '+profile.bestWave+' · LEGACY TOKENS '+profile.tokens+' · RUNS '+profile.runs+(active?' · RUN IN PROGRESS':'');(overlay.querySelector<HTMLButtonElement>('#continue-run'))!.disabled=!active};refresh();
 sel.onchange=()=>{slot=Number(sel.value);run=null;plan=null;refresh()};
 overlay.querySelector<HTMLButtonElement>('#continue-run')!.onclick=()=>{if(!loadRun()){notice('No valid run found');return}paused=false;if(run!.stage==='shop')shop();else overlay.hidden=true};
 overlay.querySelector<HTMLButtonElement>('#new-run')!.onclick=()=>{if(localStorage.getItem(store('run'))&&!confirm('Start a new run? Current run progress will be lost.'))return;preRun()};
 overlay.querySelector<HTMLButtonElement>('#upgrades')!.onclick=permanentShop;
 }
-function permanentShop(){loadProfile();paused=true;overlay.hidden=false;
- const groups=[...new Set(Object.values(unlocks).map(x=>x.group))];
- const rows=groups.map(g=>'<h2>'+g+'</h2><div class="shop">'+Object.entries(unlocks).filter(([_,x])=>x.group===g).map(([id,x])=>'<button id="unlock-'+id+'">'+x.label+'<br>'+x.description+'<br>'+(profile.unlocked.includes(id as UnlockId)?'UNLOCKED':x.cost+' TOKENS')+'</button>').join('')+'</div>').join('');
- overlay.innerHTML=`<article><h1>PERMANENT PROGRESSION</h1><p><strong>${profile.tokens} LEGACY TOKENS</strong> · Best wave ${profile.bestWave} · Runs ${profile.runs}. Permanent unlocks survive death. Starting weapons remain Common tier.</p><h2>Core Bonuses</h2><div class="shop"><button id="credit-unlock">STARTING CREDITS +50<br>25 tokens (max +200)</button><button id="ally-unlock">UNLOCK ONE STARTING TEAMMATE<br>75 tokens</button></div>${rows}<h2>ACHIEVEMENTS</h2><p>${Object.entries(achievements).map(([id,x])=>(profile.achievements.includes(id as keyof typeof achievements)?'✓ ':'○ ')+x.label+' ('+x.reward+' tokens)').join(' · ')}</p><div class="menurow"><button id="back-menu">BACK TO MENU</button></div></article>`;
- overlay.querySelector<HTMLButtonElement>('#credit-unlock')!.disabled=profile.tokens<25||profile.startingCredits>=200;
- overlay.querySelector<HTMLButtonElement>('#ally-unlock')!.disabled=profile.tokens<75||profile.startAlly;
- overlay.querySelector<HTMLButtonElement>('#credit-unlock')!.onclick=()=>{profile.tokens-=25;profile.startingCredits+=50;save();permanentShop()};
- overlay.querySelector<HTMLButtonElement>('#ally-unlock')!.onclick=()=>{profile.tokens-=75;profile.startAlly=true;save();permanentShop()};
- for(const id of Object.keys(unlocks) as UnlockId[]){const b=overlay.querySelector<HTMLButtonElement>('#unlock-'+id)!;b.disabled=profile.unlocked.includes(id)||profile.tokens<unlocks[id].cost;b.onclick=()=>{if(buyUnlock(profile,id)){save();permanentShop()}}}
+function permanentShop(section='Core Bonuses'){loadProfile();paused=true;overlay.hidden=false;
+ const groups=['Core Bonuses',...new Set(Object.values(unlocks).map(x=>x.group)),'Achievements'];
+ if(!groups.includes(section))section='Core Bonuses';
+ const choices=groups.map(g=>'<option value="'+g+'"'+(section===g?' selected':'')+'>'+g+'</option>').join('');
+ const selection=section==='Core Bonuses'
+  ?'<div class="shop"><button id="credit-unlock">STARTING CREDITS +50 · 25 TOKENS (max +200)</button><button id="ally-unlock">UNLOCK ONE STARTING TEAMMATE · 75 TOKENS</button></div>'
+  :section==='Achievements'
+  ?'<div class="achievement-grid">'+Object.entries(achievements).map(([id,x])=>'<div class="achievement-item">'+(profile.achievements.includes(id as keyof typeof achievements)?'✓ ':'○ ')+x.label+' · '+x.reward+' tokens</div>').join('')+'</div>'
+  :'<div class="shop">'+Object.entries(unlocks).filter(([_,x])=>x.group===section).map(([id,x])=>'<button id="unlock-'+id+'">'+x.label+' · '+(profile.unlocked.includes(id as UnlockId)?'UNLOCKED':x.cost+' TOKENS')+'<small>'+x.description+'</small></button>').join('')+'</div>';
+ overlay.innerHTML=`<article class="progression-screen"><h1>PERMANENT PROGRESSION</h1><p><strong>${profile.tokens} LEGACY TOKENS</strong> · Best wave ${profile.bestWave} · Runs ${profile.runs}</p><label class="progression-category">Category <select id="progression-group">${choices}</select></label>${selection}<div class="menurow"><button id="back-menu">BACK TO MENU</button></div></article>`;
+ overlay.querySelector<HTMLSelectElement>('#progression-group')!.onchange=e=>permanentShop((e.target as HTMLSelectElement).value);
+ if(section==='Core Bonuses'){
+  overlay.querySelector<HTMLButtonElement>('#credit-unlock')!.disabled=profile.tokens<25||profile.startingCredits>=200;
+  overlay.querySelector<HTMLButtonElement>('#ally-unlock')!.disabled=profile.tokens<75||profile.startAlly;
+  overlay.querySelector<HTMLButtonElement>('#credit-unlock')!.onclick=()=>{profile.tokens-=25;profile.startingCredits+=50;save();permanentShop(section)};
+  overlay.querySelector<HTMLButtonElement>('#ally-unlock')!.onclick=()=>{profile.tokens-=75;profile.startAlly=true;save();permanentShop(section)};
+ }else if(section!=='Achievements'){
+  for(const id of Object.keys(unlocks) as UnlockId[]){
+   const b=overlay.querySelector<HTMLButtonElement>('#unlock-'+id);
+   if(!b)continue;
+   b.disabled=profile.unlocked.includes(id)||profile.tokens<unlocks[id].cost;
+   b.onclick=()=>{if(buyUnlock(profile,id)){save();permanentShop(section)}};
+  }
+ }
  overlay.querySelector<HTMLButtonElement>('#back-menu')!.onclick=menu;
 }
 function runPerformance(r:Run):RunPerformance{return {cleared:r.cleared,bosses:r.bosses,killsTotal:r.killsTotal??0,lootedTotal:r.lootedTotal??0,flawlessWaves:r.flawlessWaves??0,bestSquad:r.bestSquad??0}}
@@ -85,13 +100,15 @@ function updateAchievements(r:Run){const award=progressAchievements(profile,runP
 function preRun(){loadProfile();paused=true;overlay.hidden=false;const p=profile;const c=sanitizeChoice(p,p.chosen);p.chosen=c;
  const options=(values:string[],selected:string,labels:Record<string,string>={})=>values.map(v=>'<option value="'+v+'"'+(v===selected?' selected':'')+'>'+(labels[v]??v.replace(/([A-Z])/g,' $1'))+'</option>').join('');
  const kit=startingKit(p);
- overlay.innerHTML=`<article><h1>PREPARE NEW RUN</h1><p>Choose only from your permanent unlocks. All starting weapons and attachments are Common tier. In-run gear and credits reset on death.</p>
+ overlay.innerHTML=`<article class="prepare-run-screen"><h1>PREPARE NEW RUN</h1><p>Choose only from your permanent unlocks. All starting weapons and attachments are Common tier. In-run gear and credits reset on death.</p>
+ <div class="prep-grid">
  <label>Primary Weapon<select id="start-primary">${options(allowedPrimary(p),c.primary,Object.fromEntries(Object.entries(weaponDefs).map(([id,w])=>[id,w.name])))}</select></label>
  <label>Secondary Weapon<select disabled><option>Service Pistol</option></select></label>
  <label>Melee Weapon<select id="start-melee">${options(allowedMelee(p),c.melee,{knife:'Survival Knife',axe:'Fire Axe'})}</select></label>
  <label>Optic<select id="start-optic">${options(p.unlocked.includes('starterRedDot')?['none','redDot']:['none'],c.optic,{none:'None',redDot:'Red Dot Sight'})}</select></label>
  <label>Underbarrel<select id="start-grip">${options(p.unlocked.includes('starterGrip')?['none','grip']:['none'],c.underbarrel,{none:'None',grip:'Foregrip'})}</select></label>
  <label>Starting Squad<select id="start-ally">${options(allowedTeammates(p),c.teammate,{none:'Start Solo',rifleman:'Rifleman',medic:'Medic',heavy:'Heavy Gunner',scout:'Scout',engineer:'Engineer'})}</select></label>
+ </div>
  <p id="loadout-preview">${gearIcon(c.primary)}${gearIcon("pistol")}${gearIcon(c.melee)} Starting: ${kit.credits} credits · ${kit.armor} armor · ${kit.medkits} medkits · ${kit.capacity} backpack slots.</p>
  <div class="menurow"><button id="launch-run">DEPLOY INTO WAVE 1</button><button id="prep-back">BACK</button></div></article>`;
  const read=()=>{p.chosen=sanitizeChoice(p,{primary:overlay.querySelector<HTMLSelectElement>('#start-primary')!.value as WeaponId,secondary:'pistol',melee:overlay.querySelector<HTMLSelectElement>('#start-melee')!.value as 'knife'|'axe',optic:overlay.querySelector<HTMLSelectElement>('#start-optic')!.value as 'none'|'redDot',underbarrel:overlay.querySelector<HTMLSelectElement>('#start-grip')!.value as 'none'|'grip',teammate:overlay.querySelector<HTMLSelectElement>('#start-ally')!.value as 'none'|keyof typeof CLASS_INFO});save()};
