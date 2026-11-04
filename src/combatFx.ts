@@ -24,7 +24,7 @@ export function shotProfile(model:WeaponId):ShotProfile|null{
 export function makeAttackFx(model:WeaponId,x:number,y:number,dx:number,dy:number,range:number,hitDistances?:readonly number[]):CombatFx[]{
  const length=Math.hypot(dx,dy)||1,ux=dx/length,uy=dy/length;
  if(model==='knife'||model==='axe')
-  return [{kind:'swing',model,x,y,dx:ux,dy:uy,age:0,duration:model==='axe'?.37:.23,distance:model==='axe'?1.6:1.25,angleOffset:0}];
+  return [{kind:'swing',model,x,y,dx:ux,dy:uy,age:0,duration:model==='axe'?.37:.23,distance:range,angleOffset:0}];
  const profile=shots[model],maximum=Math.max(0,range);
  return Array.from({length:profile.count},(_,i)=>{
   const offset=profile.count===1?0:(i/(profile.count-1)*2-1)*profile.spread;
@@ -44,7 +44,7 @@ export function drawCombatFx(ctx:CanvasRenderingContext2D,v:View,effects:readonl
   ctx.save();
   ctx.translate(px,py);ctx.rotate(Math.atan2(fx.dy,fx.dx));
   if(fx.kind==='swing'){
-   const axe=fx.model==='axe',radius=v.tile*(axe?1.15:.83);
+   const axe=fx.model==='axe',radius=v.tile*Math.max(.55,fx.distance-.18);
    const sweep=axe?2.15:1.55,origin=axe?-1.05:-.78,head=origin+sweep*progress;
    ctx.globalAlpha=Math.min(1,(1-progress)*1.5);
    ctx.lineCap='round';
