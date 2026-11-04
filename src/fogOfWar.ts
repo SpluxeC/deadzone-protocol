@@ -64,9 +64,14 @@ export function exploredIndices(fog:FogState):number[]{
 export function renderFog(ctx:CanvasRenderingContext2D,map:DungeonLayout,v:View,fog:FogState):void{
  const t=v.tile,w=map.width;
  ctx.save();
- // Outside the known dungeon remains completely black.
- ctx.fillStyle='#010306';ctx.fillRect(0,0,v.width,v.height);
- // Cut out dungeon tiles using the original frame copied to an offscreen canvas by the caller.
+ for(let y=v.minY;y<v.maxY;y++)for(let x=v.minX;x<v.maxX;x++){
+  const a=fogAlpha(fog,y*w+x);
+  if(a<=0)continue;
+  ctx.fillStyle='rgba(1,4,8,'+a.toFixed(3)+')';
+  // One-pixel overlap avoids seams while pinch-zooming.
+  ctx.fillRect(Math.floor(v.ox+x*t),Math.floor(v.oy+y*t),Math.ceil(t)+1,Math.ceil(t)+1);
+ }
+ // Unknown/off-map regions are already the dark background of the renderer.
  ctx.restore();
 }
 export function fogAlpha(fog:FogState,index:number):number{
