@@ -141,3 +141,72 @@
  #rotate-phone p{margin:0;color:#c4d7c9;font-size:14px}
  #rogue footer,#mobile-sticks{display:none!important}
 }
+
+/* Mobile landscape: every main navigation / preparation / progression page is one screen.
+   Long in-game inventory and armory panels remain scrollable. */
+#rogue #overlay .prep-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 12px}
+#rogue #overlay .prep-grid label{margin:0;min-width:0}
+#rogue #overlay .prep-grid select{width:100%;max-width:none}
+#rogue #overlay .progression-category{display:flex;align-items:center;gap:12px;margin:6px 0 10px}
+#rogue #overlay .progression-category select{flex:1;max-width:none;margin:0}
+#rogue #overlay .progression-screen .shop{grid-template-columns:repeat(2,minmax(0,1fr))}
+#rogue #overlay .progression-screen .shop button small{display:block;font-size:11px;font-weight:400;line-height:1.3;color:#c7d7cc}
+#rogue #overlay .achievement-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
+#rogue #overlay .achievement-item{padding:8px;border:1px solid #49685e;border-radius:5px;background:#172b28;font-size:11px}
+
+@media(pointer:coarse) and (orientation:landscape){
+ #rogue:has(#overlay:not([hidden])) header{display:none!important}
+ #rogue #overlay:has(> .main-menu-screen),
+ #rogue #overlay:has(> .prepare-run-screen),
+ #rogue #overlay:has(> .progression-screen){
+  padding:max(5px,env(safe-area-inset-top)) max(8px,env(safe-area-inset-right)) max(5px,env(safe-area-inset-bottom)) max(8px,env(safe-area-inset-left))!important;
+  overflow:hidden!important;
+  align-items:center!important;justify-content:center!important;
+  touch-action:manipulation;
+ }
+ #rogue #overlay .main-menu-screen,
+ #rogue #overlay .prepare-run-screen,
+ #rogue #overlay .progression-screen{
+  display:flex;flex-direction:column;justify-content:center;
+  width:min(850px,100%);max-width:none;max-height:100%;
+  overflow:hidden;padding:clamp(7px,1.6vh,12px)!important;gap:clamp(3px,.9vh,8px);
+  box-sizing:border-box;
+ }
+ #rogue #overlay .main-menu-screen h1,
+ #rogue #overlay .prepare-run-screen h1,
+ #rogue #overlay .progression-screen h1{
+  margin:0;font-size:clamp(16px,3.2vh,23px);line-height:1.12;
+ }
+ #rogue #overlay .main-menu-screen p,
+ #rogue #overlay .prepare-run-screen p,
+ #rogue #overlay .progression-screen p{
+  margin:0;font-size:clamp(10px,1.9vh,12px);line-height:1.22;
+ }
+ #rogue #overlay .main-menu-screen label{margin:0;display:flex;gap:12px;align-items:center}
+ #rogue #overlay .main-menu-screen label select{width:150px;max-width:50%;margin:0}
+ #rogue #overlay .main-menu-screen .menurow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));margin:2px 0 0;gap:6px}
+ #rogue #overlay .main-menu-screen .menurow button{min-width:0}
+ #rogue #overlay .prep-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(3px,1vh,7px) 9px}
+ #rogue #overlay .prep-grid label{font-size:clamp(10px,2vh,12px);line-height:1.15}
+ #rogue #overlay select{margin-top:2px;min-height:clamp(27px,5.5vh,34px);padding:3px 6px;font-size:clamp(11px,2.1vh,13px)}
+ #rogue #overlay .prepare-run-screen #loadout-preview{display:flex;align-items:center;gap:3px;min-height:24px;white-space:normal}
+ #rogue #overlay .prepare-run-screen #loadout-preview .gear-mini{width:23px;height:23px;background-size:552px 23px;margin-right:2px}
+ #rogue #overlay .menurow{margin:2px 0 0;gap:6px}
+ #rogue #overlay .main-menu-screen button,
+ #rogue #overlay .prepare-run-screen button,
+ #rogue #overlay .progression-screen button{
+  min-height:clamp(28px,6vh,36px);padding:4px 7px!important;font-size:clamp(10px,2vh,12px)!important;line-height:1.13;
+ }
+ #rogue #overlay .progression-category{margin:0;gap:8px}
+ #rogue #overlay .progression-screen .shop{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
+ #rogue #overlay .progression-screen .shop button{min-height:clamp(38px,9vh,55px);line-height:1.13;text-align:left}
+ #rogue #overlay .progression-screen .shop button small{font-size:clamp(9px,1.7vh,11px);line-height:1.14}
+ #rogue #overlay .achievement-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:3px}
+ #rogue #overlay .achievement-item{padding:clamp(3px,1vh,6px);font-size:clamp(9px,1.8vh,11px)}
+ #rogue #overlay .progression-screen .menurow{display:flex}
+ #rogue #overlay .progression-screen .menurow button{flex:1}
+}
+/* Modern mobile engines recognize manipulation as excluding double-tap zoom.
+   Keep the analog stick's more restrictive touch-action:none intact. */
+#rogue #overlay,#rogue #overlay button,#rogue #overlay select,#rogue header,#rogue footer{touch-action:manipulation}
+#rogue,#rogue button{-webkit-tap-highlight-color:transparent}
