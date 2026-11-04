@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {generateDungeon} from './dungeon.ts';
 import {walkableTile,canOccupy,nearestWalkable} from './tileCollision.ts';
-import {createFog,fogAlpha} from './fogOfWar.ts';
+import {createFog,fogAlpha,UNKNOWN_TERRAIN_ALPHA} from './fogOfWar.ts';
 
 test('tile centers and actor collision agree for walkable and solid cells',()=>{
  for(let seed=1;seed<=40;seed++){
@@ -32,10 +32,10 @@ test('old save actors in walls are repaired onto reachable floor tiles',()=>{
  assert.equal(canOccupy(map,fixed.x,fixed.y),true);
  assert.deepEqual(nearestWalkable(map,fixed),fixed);
 });
-test('explored tiles are completely visible, undiscovered tiles are black',()=>{
+test('explored tiles are completely visible, undiscovered tiles are darkened',()=>{
  const map=generateDungeon(777,32,24,2),fog=createFog(map);
  const index=map.entrance.y*map.width+map.entrance.x;
- assert.equal(fogAlpha(fog,index),1);
+ assert.equal(fogAlpha(fog,index),UNKNOWN_TERRAIN_ALPHA);
  fog.explored[index]=1;
  assert.equal(fogAlpha(fog,index),0);
 });
