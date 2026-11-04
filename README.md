@@ -313,3 +313,10 @@ The default dungeon roguelite renderer has been rebuilt around original, source-
 
 ### Phase 6 equipment art addendum
 A second original asset atlas, `src/assets/deadzone-gear.svg`, now supplies 24 image cells for all eleven weapon models, nine attachment models, medical supplies, armor, ammunition and currency. `src/gearIcons.ts` maps the game catalogs to the image cells. Icons display directly in the rotating Armory, weapon/attachment inventory listings, equipped loadout and configurable pre-run equipment preview. A dedicated regression test checks catalog coverage, atlas dimensions, and one-to-one sprite references.
+
+## Mobile landscape twin-stick controls (November 4, 2026)
+
+- **Left thumb:** bottom-left analog stick controls proportional 360° walking. **Right thumb:** bottom-right analog stick controls 360° aiming and auto-fires while displaced beyond the deadzone. Both have independent pointer capture and reset on release, cancellation, or window focus loss. Touch input no longer depends on old four directional arrows.
+- **Landscape required on touch devices:** a full-screen rotate-device prompt blocks portrait gameplay. Browser APIs cannot reliably force phone rotation, so the player must physically rotate their device. Desktop keyboard and mouse support remains unchanged.
+- **Clear main menu:** gameplay controls and their instructional paragraph are hidden when a menu/overlay is shown. On mobile landscape, remaining action buttons sit in a compact upper-right cluster so both lower corners are reserved for joysticks.
+- **Tests:** `src/mobileControls.test.ts` verifies deadzone, analog displacement/speed, 360° aim direction, clamping and invalid-input handling.
