@@ -62,3 +62,15 @@ export function incomingDamage(hit:number,armor:number):{hpDamage:number;armor:n
  const blocked=Math.min(Math.max(0,armor),Math.max(0,hit));
  return {hpDamage:Math.max(0,hit-blocked),armor:Math.max(0,armor-blocked)};
 }
+
+export type BossAttack='slam'|'charge'|'shockwave';
+/** Boss patterns alternate every five waves; all attacks are windup-telegraphed. */
+export function bossAttack(wave:number):BossAttack{
+ const index=Math.max(0,Math.floor(wave/5)-1)%3;
+ return index===0?'slam':index===1?'charge':'shockwave';
+}
+export function bossImpact(attack:BossAttack,distance:number):number {
+ if(attack==='charge')return distance<1.25?24:0;
+ if(attack==='shockwave')return distance<3.2?14:0;
+ return distance<2.4?19:0;
+}
