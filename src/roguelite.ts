@@ -8,7 +8,7 @@ import {camera,toWorld,renderDungeon,drawSprite,drawBar,drawHazard,hudColor,type
 import {gearIcon} from './gearIcons';
 import {makeAttackFx,ageCombatFx,drawCombatFx,shotProfile,type CombatFx} from './combatFx';
 import {traceBullet,meleeHits,unit,penetrationFor} from './hitDetection';
-import {createFog,updateFog,renderFog,exploredIndices,type FogState,type Explorer} from './fogOfWar';
+import {createFog,updateFog,renderFog,exploredIndices,discoveredAt,clipToExplored,type FogState,type Explorer} from './fogOfWar';
 import {normalizeStick,stickKnob,type StickVector} from './mobileControls';
 import {walkableTile,canOccupy,nearestWalkable} from './tileCollision';
 import './rogueliteTheme.css';
@@ -452,11 +452,14 @@ function draw(){
  if(!plan||!run){ctx.fillStyle='#081115';ctx.fillRect(0,0,cw,ch);stats.textContent='READY';lastView=null;return}
  const r=run,m=plan.map,v=camera(m,r.player,cw,ch,cameraZoom);lastView=v;
  renderDungeon(ctx,m,v,r.wave);
+ // Unknown floor and wall tiles remain visible, darkened; entities do not.
+ if(fog)renderFog(ctx,m,v,fog);
+ const isKnown=(x:number,y:number)=>!fog||discoveredAt(m,fog,x,y);
  const now=performance.now(),bob=Math.sin(now/340)*v.tile*.025;
- for(const sp of plan.spawnPoints)drawSprite(ctx,'spawn',v,sp.x,sp.y,{scale:.71,alpha:.72});
- for(const [i,l] of m.loot.entries())if(!r.looted.includes(i))drawSprite(ctx,'crate',v,l.x,l.y,{scale:.94,glow:'#deae69'});
- drawSprite(ctx,'elevator',v,m.extraction.x,m.extraction.y,{scale:1.18,alpha:cleared()?1:.5,glow:cleared()?'#3beaa6':undefined,bob:cleared()?bob:0});
- for(const e of r.enemies){if(!e.alive)continue;const kind=(e.kind??(e.boss?'boss':'shambler')) as SpriteKind;
+ for(const sp of plan.spawnPoints)if(isKnown(sp.x,sp.y))drawSprite(ctx,'spawn',v,sp.x,sp.y,{scale:.71,alpha:.72});
+ for(const [i,l] of m.loot.entries())if(!r.looted.includes(i)&&isKnown(l.x,l.y))drawSprite(ctx,'crate',v,l.x,l.y,{scale:.94,glow:'#deae69'});
+ if(isKnown(m.extraction.x,m.extraction.y))drawSprite(ctx,'elevator',v,m.extraction.x,m.extraction.y,{scale:1.18,alpha:cleared()?1:.5,glow:cleared()?'#3beaa6':undefined,bob:cleared()?bob:0});
+ for(const e of r.enemies){if(!e.alive||!isKnown(e.x,e.y))continue;const kind=(e.kind??(e.boss?'boss':'shambler')) as SpriteKind;
   const direction=Math.atan2(r.player.y-e.y,r.player.x-e.x);
   drawSprite(ctx,kind,v,e.x,e.y,{angle:direction,scale:e.boss?1.67:kind==='bruiser'?1.32:kind==='runner'?.93:1.12,bob:e.boss?bob:0,glow:e.boss?'#e77b44':undefined});
   if(e.maxHp>2)drawBar(ctx,v,e.x,e.y,e.hp/e.maxHp,e.boss?'#ff9c73':'#dc9b83',e.boss?1.3:.78);
@@ -464,13 +467,16 @@ function draw(){
   if(e.boss&&(e.windup??0)>0)drawHazard(ctx,v,e.x,e.y,bossAttack(r.wave)==='shockwave'?3.2:bossAttack(r.wave)==='charge'?1.25:2.4);
  }
  for(const a of r.allies){
+  if(!isKnown(a.x,a.y))continue;
   const dir=allyDirection(a),direction=Math.atan2(dir.y,dir.x);
   drawSprite(ctx,a.role,v,a.x,a.y,{angle:direction,scale:a.role==='heavy'?1.25:1.08,down:a.downed>0,alpha:a.dead?.3:1,glow:a.role==='medic'?'#69e8a1':undefined});
   if(a.hp<a.maxHp||a.downed>0)drawBar(ctx,v,a.x,a.y,a.downed>0?a.downed/ALLY_BLEEDOUT:a.hp/a.maxHp,a.downed>0?'#f1c17e':hudColor(a.hp/a.maxHp));
  }
  drawSprite(ctx,'player',v,r.player.x,r.player.y,{angle:Math.atan2(aim.y,aim.x),scale:1.25,down:(r.playerDowned??0)>0,glow:'#b3d8b4',bob});
+ // A bullet effect cannot reveal enemies or objects through unexplored tiles.
+ ctx.save();if(fog)clipToExplored(ctx,m,v,fog);
  drawCombatFx(ctx,v,combatFx);
- if(fog)renderFog(ctx,m,v,fog);
+ ctx.restore();
  if((r.playerDowned??0)>0){ctx.font='bold '+Math.max(13,v.tile*.48)+'px system-ui';ctx.textAlign='center';ctx.fillStyle='#ff9b83';ctx.fillText('DOWNED '+Math.ceil(r.playerDowned??0)+'s',v.ox+r.player.x*v.tile,v.oy+(r.player.y-1)*v.tile)}
  else{ctx.strokeStyle='rgba(255,231,185,.76)';ctx.lineWidth=Math.max(1,v.tile*.04);ctx.beginPath();ctx.moveTo(v.ox+(r.player.x+aim.x*.5)*v.tile,v.oy+(r.player.y+aim.y*.5)*v.tile);ctx.lineTo(v.ox+(r.player.x+aim.x*1.5)*v.tile,v.oy+(r.player.y+aim.y*1.5)*v.tile);ctx.stroke()}
  const w=activeWeapon(r),ammoType=w?weaponDefs[w.model].ammo:null,eq=ensureEquipment(r);
