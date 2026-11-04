@@ -1,16 +1,18 @@
 export type DungeonLayout={width:number;height:number;seed:number;tiles:number[];entrance:{x:number;y:number};extraction:{x:number;y:number};loot:{x:number;y:number}[];enemies:{x:number;y:number}[]};
 /** Seeded procedural connected dungeon: 0=floor, 1=wall. */
-export function generateDungeon(seed:number,width=42,height=30):DungeonLayout{
+export function generateDungeon(seed:number,width=42,height=30,layoutVersion:1|2=2):DungeonLayout{
 if(!Number.isInteger(seed)||width<22||height<18)throw Error('Invalid dungeon parameters');
 let state=seed>>>0;const rand=()=>((state=(Math.imul(state,1664525)+1013904223)>>>0)/4294967296);
 const tiles=new Array<number>(width*height).fill(1);
 const carve=(x:number,y:number)=>{if(x>0&&y>0&&x<width-1&&y<height-1)tiles[y*width+x]=0};
+// New layouts have 3-tile-wide corridors; legacy layouts preserve exact original geometry.
+const carvePassage=(x:number,y:number)=>{const radius=layoutVersion===2?1:0;for(let dy=-radius;dy<=radius;dy++)for(let dx=-radius;dx<=radius;dx++)carve(x+dx,y+dy)};
 const rooms:{x:number;y:number;w:number;h:number;cx:number;cy:number}[]=[];
-for(let i=0;i<65&&rooms.length<12;i++){
-const w=4+Math.floor(rand()*5),h=4+Math.floor(rand()*5),x=2+Math.floor(rand()*(width-w-3)),y=2+Math.floor(rand()*(height-h-3));
+for(let i=0;i<(layoutVersion===2?90:65)&&rooms.length<(layoutVersion===2?9:12);i++){
+const w=(layoutVersion===2?6:4)+Math.floor(rand()*5),h=(layoutVersion===2?6:4)+Math.floor(rand()*5),x=2+Math.floor(rand()*(width-w-3)),y=2+Math.floor(rand()*(height-h-3));
 if(rooms.some(r=>x<=r.x+r.w+1&&x+w+1>=r.x&&y<=r.y+r.h+1&&y+h+1>=r.y))continue;
 const cx=x+Math.floor(w/2),cy=y+Math.floor(h/2);for(let yy=y;yy<y+h;yy++)for(let xx=x;xx<x+w;xx++)carve(xx,yy);
-if(rooms.length){let px=rooms[rooms.length-1].cx,py=rooms[rooms.length-1].cy;if(rand()<.5){while(px!==cx){px+=Math.sign(cx-px);carve(px,py)}while(py!==cy){py+=Math.sign(cy-py);carve(px,py)}}else{while(py!==cy){py+=Math.sign(cy-py);carve(px,py)}while(px!==cx){px+=Math.sign(cx-px);carve(px,py)}}}
+if(rooms.length){let px=rooms[rooms.length-1].cx,py=rooms[rooms.length-1].cy;if(rand()<.5){while(px!==cx){px+=Math.sign(cx-px);carvePassage(px,py)}while(py!==cy){py+=Math.sign(cy-py);carvePassage(px,py)}}else{while(py!==cy){py+=Math.sign(cy-py);carvePassage(px,py)}while(px!==cx){px+=Math.sign(cx-px);carvePassage(px,py)}}}
 rooms.push({x,y,w,h,cx,cy});
 }
 if(rooms.length<2)throw Error('Unable to generate connected rooms');
