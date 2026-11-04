@@ -77,5 +77,5 @@ export function renderFog(ctx:CanvasRenderingContext2D,map:DungeonLayout,v:View,
 export function fogAlpha(fog:FogState,index:number):number{
  if(fog.explored[index]===0)return 1;
  const discovery=fog.revealed[index];
- return Math.min(1,Math.max(.09,1-discovery*.18-fog.light[index]*.76));
+ return Math.min(1,Math.max(.09,1-discovery*(.18+fog.light[index]*.76)));
 }
