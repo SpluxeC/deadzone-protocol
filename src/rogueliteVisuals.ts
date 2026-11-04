@@ -39,7 +39,7 @@ export function renderDungeon(ctx:CanvasRenderingContext2D,map:DungeonLayout,v:V
    ctx.fillStyle=r<.5?'#132126':'#16272a';ctx.fillRect(px,py,Math.ceil(t)+1,Math.ceil(t)+1);
    ctx.strokeStyle='#33484a';ctx.lineWidth=Math.max(1,t*.055);ctx.strokeRect(px+t*.035,py+t*.06,t*.91,t*.89);
    ctx.fillStyle='rgba(2,8,10,.45)';ctx.fillRect(px+t*.1,py+t*.22,t*.8,t*.15);
-   if(below){ctx.fillStyle='#40575a';ctx.fillRect(px,py+t*.7,t,t*.24);ctx.fillStyle='rgba(2,7,8,.55)';ctx.fillRect(px,py+t*.94,t,t*.23)}
+   if(below){ctx.fillStyle='#40575a';ctx.fillRect(px,py+t*.7,t,t*.24);ctx.fillStyle='rgba(2,7,8,.55)';ctx.fillRect(px,py+t*.94,t,t*.06)}
    if(right){ctx.fillStyle='#34494a';ctx.fillRect(px+t*.76,py,t*.2,t)}
    if(r>.92){ctx.strokeStyle='#52605b';ctx.lineWidth=t*.037;ctx.beginPath();ctx.moveTo(px+t*.25,py+t*.3);ctx.lineTo(px+t*.65,py+t*.6);ctx.stroke()}
   }
