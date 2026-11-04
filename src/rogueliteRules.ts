@@ -1,16 +1,26 @@
 import {generateDungeon, type DungeonLayout} from './dungeon.ts';
 export type WavePlan={wave:number;map:DungeonLayout;total:number;initial:number;reinforcements:number;boss:boolean;spawnPoints:{x:number;y:number}[]};
-export function waveDimensions(wave:number):{width:number;height:number}{
- const w=Math.max(1,Math.floor(wave));return {width:Math.min(64,32+Math.floor((w-1)/4)*6),height:Math.min(48,24+Math.floor((w-1)/4)*4)};
+export type LayoutVersion=1|2|3;
+export function waveDimensions(wave:number,layoutVersion:LayoutVersion=3):{width:number;height:number}{
+ const w=Math.max(1,Math.floor(wave));
+ const legacy={width:Math.min(64,32+Math.floor((w-1)/4)*6),height:Math.min(48,24+Math.floor((w-1)/4)*4)};
+ // Double each axis for new runs; legacy v1/v2 saves keep their original geometry.
+ return layoutVersion===3?{width:legacy.width*2,height:legacy.height*2}:legacy;
 }
-export function waveEnemyCount(wave:number):number{return Math.min(110,10+Math.max(1,Math.floor(wave))*3)}
-export function makeWave(seed:number,wave:number,layoutVersion:1|2=2):WavePlan{
- const n=Math.max(1,Math.floor(wave)),dims=waveDimensions(n);
+export function waveEnemyCount(wave:number,layoutVersion:LayoutVersion=3):number{
+ const legacy=Math.min(110,10+Math.max(1,Math.floor(wave))*3);
+ return layoutVersion===3?legacy*2:legacy;
+}
+export function makeWave(seed:number,wave:number,layoutVersion:LayoutVersion=3):WavePlan{
+ const n=Math.max(1,Math.floor(wave)),dims=waveDimensions(n,layoutVersion);
  const map=generateDungeon(seed,dims.width,dims.height,layoutVersion);
- const total=waveEnemyCount(n),initial=Math.min(total,Math.max(5,Math.floor(total*.55)));
+ const total=waveEnemyCount(n,layoutVersion),initial=Math.min(total,Math.max(5,Math.floor(total*.55)));
  const floor=map.tiles.map((tile,i)=>tile===0?{x:i%map.width,y:Math.floor(i/map.width)}:null).filter((v):v is {x:number;y:number}=>v!==null);
  const distant=floor.filter(p=>Math.hypot(p.x-map.entrance.x,p.y-map.entrance.y)>=9&&Math.hypot(p.x-map.extraction.x,p.y-map.extraction.y)>2);
- const spawnPoints=(distant.length?distant:floor).filter((_,i)=>i%Math.max(1,Math.floor(floor.length/12))===0).slice(0,12);
+ const pool=distant.length?distant:floor;
+ const targetCount=layoutVersion===3?24:12;
+ // Distribute spawn points across the enlarged map, avoiding clustered reinforcements.
+ const spawnPoints=pool.filter((_,i)=>i%Math.max(1,Math.floor(pool.length/targetCount))===0).slice(0,targetCount);
  return {wave:n,map,total,initial,reinforcements:total-initial,boss:n%5===0,spawnPoints:spawnPoints.length?spawnPoints:[map.extraction]};
 }
 export function killPayout(wave:number,boss=false):number{return boss?180+wave*12:12+Math.floor(Math.max(1,wave)/5)*3}
