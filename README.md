@@ -282,3 +282,18 @@ The active roguelite entry point now uses `src/squadSystems.ts` to manage the ap
 - **Tests and verification:** `src/squadSystems.test.ts` covers specialist starting gear, class restrictions, recruitment, healing/revival rules, permanent casualties, legacy save migration, class tier upgrades and timed rescue priorities.
 
 **Testing limitation:** automated TypeScript, unit tests and Vite production builds pass; complete manual browser combat playthrough and balancing are not yet done. Phase 5 metaprogression depth, Phase 6 artwork and Phase 7 final playtesting remain future milestones.
+
+## Phase 5 — Hybrid Permanent Progression (November 4, 2026)
+
+The roguelite now uses `src/metaprogression.ts` and the permanent-profile UI in `src/roguelite.ts` to implement approved long-term progression and customizable new-run loadouts.
+
+- **Durable save migration:** Existing `deadzone-roguelite-v1-slot-<n>-profile` data from Phases 1–4 is loaded and migrated in place, retaining earned legacy tokens, best wave, run count, previously purchased starting credit bonuses and the starter teammate entitlement. Old active-run saves still use the same key and work without the new performance fields.
+- **Permanent unlock store:** Spend legacy tokens to unlock starting SMG/assault rifle/shotgun/marksman rifle/fire axe, starting red-dot optic and grip, modest extra armor/medkit/backpack capacity, four additional recruitable specialist classes, and an expanded rotating Armory catalog. The prior +50 starting credits (max +200) and single starting teammate unlock remain intact.
+- **Pre-run loadout screen:** Before deploying into a new run, select an unlocked Common-tier primary, sidearm (pistol), melee, compatible optic and grip, and an optional single starting teammate chosen from unlocked classes. The preparation screen revalidates selections against purchased unlocks; gear, ammo reserves, starting backpack and survival bonuses initialize on deployment. Higher-tier equipment remains exclusive to in-run acquisition and upgrades.
+- **Metaprogression economy:** Separate in-run Armory credits from persistent legacy tokens. Every wave and every boss pay permanent tokens, and a bounded end-of-run bonus pays for kills, scavenging and flawless clears. Runs ending after at least one kill award a modest minimum bonus.
+- **Nine one-time achievements:** First Clearance, Boss Breaker, Dedicated Survivor, Ten Deep, Against All Odds, Scavenger, Untouchable, Team Player and Exterminator. Each has an independent reward paid once per profile, with completed achievements retained across runs and resume sessions.
+- **Wave performance:** A run tracks total infected killed, crates looted, completed waves without taking damage, and the largest squad successfully present at a wave clear. A run-ending summary itemizes wave/boss rewards, performance tokens and newly earned achievement tokens.
+- **Armory specialization:** Advanced class recruit offers require permanent class unlocks; Riflemen remain available as the baseline choice. An expanded Armory catalog purchase adds two extra rotating equipment offers per wave.
+- **Coverage:** `src/metaprogression.test.ts` verifies old-profile migration, unlock eligibility, starter loadout tier caps, class restrictions, one-time achievement payout and short-run rewards. Automated CI typechecks, unit tests and production builds validate the integrated game.
+
+The game is still undergoing further development. Phase 6 art integration and Phase 7 full manual playtesting, visual polish and balance remain outstanding. The legacy FOB campaign code remains preserved.
