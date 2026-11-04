@@ -21,15 +21,15 @@ const shots:Record<Exclude<WeaponId,'knife'|'axe'>,ShotProfile>={
 export function shotProfile(model:WeaponId):ShotProfile|null{
  return model==='knife'||model==='axe'?null:shots[model];
 }
-export function makeAttackFx(model:WeaponId,x:number,y:number,dx:number,dy:number,range:number):CombatFx[]{
+export function makeAttackFx(model:WeaponId,x:number,y:number,dx:number,dy:number,range:number,hitDistances?:readonly number[]):CombatFx[]{
  const length=Math.hypot(dx,dy)||1,ux=dx/length,uy=dy/length;
  if(model==='knife'||model==='axe')
   return [{kind:'swing',model,x,y,dx:ux,dy:uy,age:0,duration:model==='axe'?.37:.23,distance:model==='axe'?1.6:1.25,angleOffset:0}];
- const profile=shots[model],distance=Math.min(range,profile.distance);
+ const profile=shots[model],maximum=Math.min(range,profile.distance);
  return Array.from({length:profile.count},(_,i)=>{
   const offset=profile.count===1?0:(i/(profile.count-1)*2-1)*profile.spread;
-  // Gun-specific spread is visual only: no new hit/miss calculations.
   const theta=Math.atan2(uy,ux)+offset;
+  const distance=Math.max(0,Math.min(maximum,hitDistances?.[i]??maximum));
   return {kind:'bullet' as const,model,x,y,dx:Math.cos(theta),dy:Math.sin(theta),
    age:0,duration:distance/profile.speed+.06,distance,angleOffset:offset};
  });
@@ -56,8 +56,8 @@ export function drawCombatFx(ctx:CanvasRenderingContext2D,v:View,effects:readonl
    ctx.beginPath();ctx.arc(0,0,radius,head-.16,head);ctx.stroke();
   }else{
    const profile=shotProfile(fx.model)!;
-   const traveled=Math.min(fx.distance,fx.age*profile.speed),x=(.38+traveled)*v.tile;
-   const length=Math.min(traveled+.18,profile.trail)*v.tile;
+   const traveled=Math.min(fx.distance,fx.age*profile.speed),x=traveled*v.tile;
+   const length=Math.min(Math.max(0,traveled-.22),profile.trail)*v.tile;
    ctx.globalAlpha=Math.min(1,(fx.duration-fx.age)/.075);
    ctx.shadowColor=profile.color;ctx.shadowBlur=v.tile*.26;
    ctx.strokeStyle=profile.color;ctx.lineWidth=Math.max(1.3,profile.width*v.tile);
