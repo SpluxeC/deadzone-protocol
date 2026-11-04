@@ -25,7 +25,7 @@ export function renderDungeon(ctx:CanvasRenderingContext2D,map:DungeonLayout,v:V
  ctx.fillStyle='#070d12';ctx.fillRect(0,0,v.width,v.height);
  const t=v.tile,ox=v.ox,oy=v.oy;
  for(let y=v.minY;y<v.maxY;y++)for(let x=v.minX;x<v.maxX;x++){
-  const px=Math.round(ox+x*t),py=Math.round(oy+y*t),r=hash(x,y,map.seed),open=map.tiles[y*map.width+x]===0;
+  const px=Math.round(ox+(x-.5)*t),py=Math.round(oy+(y-.5)*t),r=hash(x,y,map.seed),open=map.tiles[y*map.width+x]===0;
   if(open){
    ctx.fillStyle=r<.12?'#263430':r<.45?'#293a37':r<.72?'#283633':'#2e3d39';
    ctx.fillRect(px,py,Math.ceil(t)+1,Math.ceil(t)+1);
