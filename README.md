@@ -310,3 +310,6 @@ The default dungeon roguelite renderer has been rebuilt around original, source-
 - **Validation:** `src/rogueliteVisuals.test.ts` verifies the sprite atlas cells, camera projection round-trips at desktop and mobile dimensions, scene culling and status coloring. All established tests and the production build run through the existing CI workflows.
 
 **Scope notes:** This is a working original vector-art pass, not the final hand-painted/high-detail reference artwork; there were no previously approved image files available to integrate. Real-device/browser visual review and end-to-end tuning remain Phase 7 tasks. The preserved legacy FOB game remains in the repository but is not launched by default.
+
+### Phase 6 equipment art addendum
+A second original asset atlas, `src/assets/deadzone-gear.svg`, now supplies 24 image cells for all eleven weapon models, nine attachment models, medical supplies, armor, ammunition and currency. `src/gearIcons.ts` maps the game catalogs to the image cells. Icons display directly in the rotating Armory, weapon/attachment inventory listings, equipped loadout and configurable pre-run equipment preview. A dedicated regression test checks catalog coverage, atlas dimensions, and one-to-one sprite references.
