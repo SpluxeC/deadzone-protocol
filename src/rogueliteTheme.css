@@ -289,3 +289,11 @@
 #rogue #playarea:not(:has(#overlay:not([hidden]))){-webkit-user-select:none;user-select:none}
 #rogue #overlay,#rogue #overlay *{-webkit-touch-callout:default}
 #rogue #overlay select{user-select:auto!important;-webkit-user-select:auto!important}
+
+/* Legacy desktop command footer has no visible buttons on phones but leaves a
+   green bordered rectangle. Remove its entire box on touch devices. */
+@media (pointer:coarse){
+ #rogue > footer{display:none!important}
+ #rogue #mobile-squad[hidden],
+ #rogue #mobile-squad[aria-hidden="true"]{display:none!important;visibility:hidden!important;pointer-events:none!important}
+}
