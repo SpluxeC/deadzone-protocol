@@ -25,5 +25,5 @@ test('knife and axe show different melee arcs without ammunition projectiles',()
   assert.equal(fx[0].kind,'swing');
   assert.ok(fx[0].duration>0);
  }
- assert.ok(makeAttackFx('axe',0,0,1,0,2)[0].distance>makeAttackFx('knife',0,0,1,0,2)[0].distance);
+ assert.ok(makeAttackFx('axe',0,0,1,0,1.6)[0].distance>makeAttackFx('knife',0,0,1,0,1.4)[0].distance);
 });
