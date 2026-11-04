@@ -355,7 +355,7 @@ function draw(){
 function frame(now:number){const dt=Math.min(.05,(now-last)/1000);last=now;update(dt);draw();if(noticeUntil<now)toastEl.textContent='';requestAnimationFrame(frame)}
 window.addEventListener('keydown',e=>{if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code))e.preventDefault();keys.add(e.code);if(e.repeat)return;if(e.code==='Digit1')equip('primary');if(e.code==='Digit2')equip('secondary');if(e.code==='Digit3')equip('melee');if(e.code==='KeyR')reload();if(e.code==='KeyH')heal();if(e.code==='KeyI'&&run&&run.stage==='fight')inventory();if(e.code==='KeyQ')changeOrder();if(e.code==='KeyT')squadPanel();if(e.code==='KeyE'){search();elevator()}if(e.code==='Escape')menu()});window.addEventListener('keyup',e=>keys.delete(e.code));window.addEventListener('blur',()=>{keys.clear();firePressed=false;touch.clear();resetAnalogs()});document.addEventListener('visibilitychange',()=>{if(document.hidden)resetAnalogs()});
 /** Independent pointer capture lets both thumbs move and aim at once. */
-function resetAnalogs(){moveAnalog=zeroStick();aimAnalog=zeroStick();for(const node of document.querySelectorAll<HTMLElement>('.analog-knob'))node.style.transform='translate(-50%,-50%)'}
+function resetAnalogs(){moveAnalog=zeroStick();aimAnalog=zeroStick();document.querySelectorAll<HTMLElement>('.analog-knob').forEach(node=>{node.style.transform='translate(-50%,-50%)'})}
 function bindAnalog(id:string,update:(v:StickVector)=>void){
  const base=document.querySelector<HTMLElement>('#'+id)!;
  const knob=base.querySelector<HTMLElement>('.analog-knob')!;
