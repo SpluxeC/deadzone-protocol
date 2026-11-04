@@ -15,6 +15,8 @@ html,body{margin:0;min-height:100%;background:#122025;color:#e5eee9;font-family:
 <script>
 // Startup guard: a stale mobile cache or script load error must never leave a silent blank page.
 (function(){
+  // Browser double-tap / double-click must not zoom the whole game UI.
+  document.addEventListener('dblclick',function(event){event.preventDefault();},{passive:false});
   var detail='';
   function failed(message){detail=message||'The game could not load.';show();}
   function show(){
