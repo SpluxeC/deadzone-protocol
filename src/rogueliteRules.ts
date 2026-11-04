@@ -4,9 +4,9 @@ export function waveDimensions(wave:number):{width:number;height:number}{
  const w=Math.max(1,Math.floor(wave));return {width:Math.min(64,32+Math.floor((w-1)/4)*6),height:Math.min(48,24+Math.floor((w-1)/4)*4)};
 }
 export function waveEnemyCount(wave:number):number{return Math.min(110,10+Math.max(1,Math.floor(wave))*3)}
-export function makeWave(seed:number,wave:number):WavePlan{
+export function makeWave(seed:number,wave:number,layoutVersion:1|2=2):WavePlan{
  const n=Math.max(1,Math.floor(wave)),dims=waveDimensions(n);
- const map=generateDungeon(seed,dims.width,dims.height);
+ const map=generateDungeon(seed,dims.width,dims.height,layoutVersion);
  const total=waveEnemyCount(n),initial=Math.min(total,Math.max(5,Math.floor(total*.55)));
  const floor=map.tiles.map((tile,i)=>tile===0?{x:i%map.width,y:Math.floor(i/map.width)}:null).filter((v):v is {x:number;y:number}=>v!==null);
  const distant=floor.filter(p=>Math.hypot(p.x-map.entrance.x,p.y-map.entrance.y)>=9&&Math.hypot(p.x-map.extraction.x,p.y-map.extraction.y)>2);
