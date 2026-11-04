@@ -366,7 +366,7 @@ function bindAnalog(id:string,update:(v:StickVector)=>void,fireOnOuter=false){
   const rect=base.getBoundingClientRect(),radius=Math.min(rect.width,rect.height)*.34;
   const dx=e.clientX-(rect.left+rect.width/2),dy=e.clientY-(rect.top+rect.height/2);
   const v=normalizeStick(dx,dy,radius);update(v);
-   if(fireOnOuter)aimFiring=Math.hypot(dx,dy)>radius;
+   if(fireOnOuter)aimFiring=Math.hypot(dx,dy)>Math.min(rect.width,rect.height)/2;
   const pos=stickKnob(dx,dy,radius);knob.style.transform='translate(calc(-50% + '+pos.x+'px),calc(-50% + '+pos.y+'px))';
  };
  const release=(e:PointerEvent)=>{
