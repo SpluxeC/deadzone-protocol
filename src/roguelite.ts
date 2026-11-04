@@ -26,6 +26,20 @@ root.innerHTML=`<div id="rogue" style="height:100dvh;display:flex;flex-direction
 <div id="toast" style="position:fixed;left:50%;bottom:78px;transform:translateX(-50%);pointer-events:none;background:#243c37e8;padding:6px 12px;border-radius:6px;color:white;z-index:5"></div></div>`;
 const style=document.createElement('style');style.textContent=`#overlay[hidden]{display:none!important}#overlay article{margin:auto 0}#rogue button{background:#304941;color:white;border:1px solid #879a80;border-radius:5px;padding:9px 12px;font:600 13px system-ui;cursor:pointer;touch-action:none}#rogue button:hover{background:#436354}#rogue button:disabled{opacity:.42;cursor:not-allowed}#overlay article{background:#1a2d2b;border:1px solid #8f9c82;border-radius:10px;padding:22px;max-width:560px;width:min(100%,560px);box-sizing:border-box;box-shadow:0 15px 60px #0009}#overlay h1{font-size:24px;margin:0 0 8px}#overlay h2{font-size:18px;margin:14px 0 8px}#overlay p{color:#c7d1c8;line-height:1.5}#overlay .shop{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px}#overlay .shop button{text-align:left;min-height:66px}#overlay .menurow{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}#overlay label{display:block;margin:8px 0}#overlay select{padding:8px;background:#1c3030;color:white;border:1px solid #7b9385}`;document.head.append(style);
 const canvas=document.querySelector<HTMLCanvasElement>('#rogue-canvas')!,ctx=canvas.getContext('2d')!,overlay=document.querySelector<HTMLDivElement>('#overlay')!,toastEl=document.querySelector<HTMLDivElement>('#toast')!;
+/** Protect the gameplay surface from iOS/Android text selection, callouts, and drag highlights.
+ * The overlay remains interactive so menu dropdowns and buttons continue working.
+ */
+const gameSurface=document.querySelector<HTMLElement>('#playarea')!;
+gameSurface.addEventListener('selectstart',event=>{
+ if(overlay.hidden)event.preventDefault();
+});
+gameSurface.addEventListener('dragstart',event=>{
+ if(overlay.hidden)event.preventDefault();
+});
+gameSurface.addEventListener('contextmenu',event=>{
+ if(overlay.hidden)event.preventDefault();
+});
+
 // Explicit menu state works on older mobile browsers that do not support CSS :has().
 function syncMenuChrome(){
  const opened=!overlay.hidden;
@@ -461,6 +475,11 @@ function draw(){
  else{ctx.strokeStyle='rgba(255,231,185,.76)';ctx.lineWidth=Math.max(1,v.tile*.04);ctx.beginPath();ctx.moveTo(v.ox+(r.player.x+aim.x*.5)*v.tile,v.oy+(r.player.y+aim.y*.5)*v.tile);ctx.lineTo(v.ox+(r.player.x+aim.x*1.5)*v.tile,v.oy+(r.player.y+aim.y*1.5)*v.tile);ctx.stroke()}
  const w=activeWeapon(r),ammoType=w?weaponDefs[w.model].ammo:null,eq=ensureEquipment(r);
  const ammo=w&&ammoType?w.mag+'/'+eq.ammo[ammoType]:'MELEE';
+ // Mobile squad orders only exist when at least one living squadmate can receive them.
+ const hasActiveSquad=r.allies.some(ally=>!ally.dead&&ally.downed<=0);
+ const mobileSquad=document.querySelector<HTMLElement>('#mobile-squad')!;
+ mobileSquad.hidden=!hasActiveSquad;
+ mobileSquad.setAttribute('aria-hidden',String(!hasActiveSquad));
  const order=orderLabel(r.squadOrder??'follow'),status=cleared()?'EXIT OPEN':'INFECTED '+remaining();
  stats.textContent='WAVE '+r.wave;
  document.querySelector<HTMLButtonElement>('#orders')!.textContent='SQUAD: '+order+' (Q)';
