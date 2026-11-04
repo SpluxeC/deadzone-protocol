@@ -18,3 +18,24 @@ test('large procedural dungeon remains deterministic',()=>{
  assert.deepEqual(a,generateDungeon(2026,60,42));
  assert.equal(a.tiles.length,60*42);
 });
+
+test('new dungeon layout provides wider open areas without breaking legacy seeded maps',()=>{
+ for(let seed=1;seed<=75;seed++){
+  const next=generateDungeon(seed,32,24,2),old=generateDungeon(seed,32,24,1);
+  assert.deepEqual(next,generateDungeon(seed,32,24,2));
+  assert.deepEqual(old,generateDungeon(seed,32,24,1));
+  const countThreeByThree=(map:ReturnType<typeof generateDungeon>)=>{
+   let count=0;
+   for(let y=1;y<map.height-1;y++)for(let x=1;x<map.width-1;x++){
+    let clear=true;
+    for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++)
+     if(map.tiles[(y+dy)*map.width+x+dx]!==0)clear=false;
+    if(clear)count++;
+   }
+   return count;
+  };
+  assert.ok(countThreeByThree(next)>=1,'expanded map must include traversable 3x3 space');
+  assert.equal(next.tiles[next.entrance.y*next.width+next.entrance.x],0);
+  assert.equal(next.tiles[next.extraction.y*next.width+next.extraction.x],0);
+ }
+});
