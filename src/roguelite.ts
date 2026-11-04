@@ -1,9 +1,9 @@
 import {generateDungeon,type DungeonLayout} from './dungeon';
 import {makeWave,killPayout,clearPayout,canExit,permanentPayout,type WavePlan} from './rogueliteRules';
-import {zombieKind,zombieStats,weaponStats,reloadTransfer,distanceField,nextZombieWaypoint,incomingDamage,type ZombieKind,type WeaponSlot} from './combatSystems';
+import {zombieKind,zombieStats,weaponStats,reloadTransfer,distanceField,nextZombieWaypoint,incomingDamage,bossAttack,bossImpact,type ZombieKind,type WeaponSlot} from './combatSystems';
 import './style.css';
 
-type Unit={x:number;y:number;hp:number;maxHp:number;speed:number;attack:number;boss?:boolean;alive:boolean;kind?:ZombieKind;windup?:number};
+type Unit={x:number;y:number;hp:number;maxHp:number;speed:number;attack:number;boss?:boolean;alive:boolean;kind?:ZombieKind;windup?:number;phase?:number};
 type Ally={x:number;y:number;hp:number;name:string;cooldown:number};
 type Run={wave:number;credits:number;hp:number;armor:number;mag:number;reserve:number;medkits:number;weaponTier:number;damage:number;maxMag:number;player:{x:number;y:number};enemies:Unit[];allies:Ally[];spawned:number;kills:number;bosses:number;cleared:number;seed:number;stage:'fight'|'shop';looted:number[];squadAmmo:number;activeSlot?:WeaponSlot;sideMag?:number;sideReserve?:number;reloadTimer?:number;reloadSlot?:WeaponSlot|null;};
 type Profile={tokens:number;bestWave:number;runs:number;startingCredits:number;startAlly:boolean};
@@ -23,7 +23,7 @@ function loadProfile(){try{const s=JSON.parse(localStorage.getItem(store('profil
 function save(){try{localStorage.setItem(store('profile'),JSON.stringify(profile));if(run)localStorage.setItem(store('run'),JSON.stringify(run));else localStorage.removeItem(store('run'))}catch{notice('Browser storage unavailable — progress may not persist')}}
 function notice(t:string){toastEl.textContent=t;noticeUntil=performance.now()+2900}
 const safe=(v:number,a:number,b:number)=>Math.max(a,Math.min(b,v));
-function loadRun(){try{const r=JSON.parse(localStorage.getItem(store('run'))||'null') as Run|null;if(!r||!Number.isFinite(r.wave)||!['fight','shop'].includes(r.stage))return false;run=r;plan=makeWave(run.seed,run.wave);run.looted??=[];run.squadAmmo??=run.allies.length*8;run.maxMag??=12;run.weaponTier??=1;run.damage??=1;run.activeSlot??='primary';run.sideMag??=12;run.sideReserve??=48;run.reloadTimer??=0;run.reloadSlot??=null;for(const enemy of run.enemies){enemy.kind??=enemy.boss?'boss':'shambler';enemy.attack??=0;enemy.windup??=0;}return true}catch{return false}}
+function loadRun(){try{const r=JSON.parse(localStorage.getItem(store('run'))||'null') as Run|null;if(!r||!Number.isFinite(r.wave)||!['fight','shop'].includes(r.stage))return false;run=r;plan=makeWave(run.seed,run.wave);run.looted??=[];run.squadAmmo??=run.allies.length*8;run.maxMag??=12;run.weaponTier??=1;run.damage??=1;run.activeSlot??='primary';run.sideMag??=12;run.sideReserve??=48;run.reloadTimer??=0;run.reloadSlot??=null;for(const enemy of run.enemies){enemy.kind??=enemy.boss?'boss':'shambler';enemy.attack??=0;enemy.windup??=0;enemy.phase??=0;}return true}catch{return false}}
 function menu(){paused=true;overlay.hidden=false;overlay.innerHTML=`<article><h1>DEADZONE <span style="color:#f18567">PROTOCOL</span></h1><p>Wave-based dungeon roguelite. Clear finite hordes, find the elevator, buy upgrades, and descend into a new procedural floor. The old FOB campaign remains preserved in source code.</p><label>Save slot <select id="slot-select"><option value="1">SLOT 01</option><option value="2">SLOT 02</option><option value="3">SLOT 03</option></select></label><p id="career"></p><div class="menurow"><button id="continue-run">CONTINUE RUN</button><button id="new-run">NEW RUN</button><button id="upgrades">PERMANENT UNLOCKS</button></div><p><small>WASD / Arrow keys move · Mouse or SPACE fire · R reload · E search · H heal · Interact with elevator after every enemy is defeated. Touch movement buttons available.</small></p></article>`;
 const sel=overlay.querySelector<HTMLSelectElement>('#slot-select')!;sel.value=String(slot);const refresh=()=>{loadProfile();const active=localStorage.getItem(store('run'));overlay.querySelector('#career')!.textContent='BEST WAVE '+profile.bestWave+' · LEGACY TOKENS '+profile.tokens+' · RUNS '+profile.runs+(active?' · RUN IN PROGRESS':'');(overlay.querySelector<HTMLButtonElement>('#continue-run'))!.disabled=!active};refresh();
 sel.onchange=()=>{slot=Number(sel.value);run=null;plan=null;refresh()};
@@ -50,7 +50,7 @@ for(let dy=-4;dy<=4;dy++)for(let dx=-4;dx<=4;dx++){const x=origin.x+dx,y=origin.
 if(!possible.length){for(let y=1;y<map.height-1;y++)for(let x=1;x<map.width-1;x++)if(map.tiles[y*map.width+x]===0&&Math.hypot(x-run.player.x,y-run.player.y)>4.5&&!run.enemies.some(e=>e.alive&&Math.hypot(e.x-x,e.y-y)<.68))possible.push({x,y,score:Math.hypot(x-origin.x,y-origin.y)})}
 if(!possible.length)return false;
 possible.sort((a,b)=>a.score-b.score);const p=possible[0],kind=zombieKind(run.wave,n,boss),stats=zombieStats(kind);
-run.enemies.push({x:p.x,y:p.y,hp:stats.hp,maxHp:stats.hp,speed:stats.speed,attack:0,boss,alive:true,kind,windup:0});run.spawned++;return true}
+run.enemies.push({x:p.x,y:p.y,hp:stats.hp,maxHp:stats.hp,speed:stats.speed,attack:0,boss,alive:true,kind,windup:0,phase:0});run.spawned++;return true}
 function spawnInitial(){if(!run||!plan)return;let count=0;const ordinaryQuota=plan.boss?plan.initial-1:plan.initial;while(run.spawned<ordinaryQuota&&count++<plan.initial+5)if(!spawnOne(false))break;if(plan.boss&&run.spawned<plan.total)spawnOne(true)}
 function remaining(){return run&&plan?plan.total-run.kills:0}
 function cleared(){return !!run&&!!plan&&canExit(plan.total,run.spawned,run.kills)}
@@ -87,20 +87,26 @@ spawnClock+=dt;if(run.spawned<plan.total&&spawnClock>1.45){spawnClock=0;const ac
 allyClock+=dt;for(const a of run.allies){const d=Math.hypot(p.x-a.x,p.y-a.y);if(d>1.4)moveUnit(a,(p.x-a.x)/d,(p.y-a.y)/d,dt*2.3);if(allyClock>.95&&run.squadAmmo>0){const target=run.enemies.filter(e=>e.alive&&Math.hypot(a.x-e.x,a.y-e.y)<5&&canSee(a.x,a.y,e.x,e.y)).sort((x,y)=>Math.hypot(a.x-x.x,a.y-x.y)-Math.hypot(a.x-y.x,a.y-y.y))[0];if(target){target.hp-=1;run.squadAmmo--;if(target.hp<=0)defeat(target)}}}if(allyClock>.95)allyClock=0;
 pathClock-=dt;if(pathClock<=0||!pathField){pathField=distanceField(plan.map,run.player);pathClock=.32}
 for(const e of run.enemies){if(!e.alive)continue;
- const stats=zombieStats(e.kind??(e.boss?'boss':'shambler'));
+ const stats=zombieStats(e.kind??(e.boss?'boss':'shambler'));if(e.boss&&e.hp<e.maxHp*.5&&e.phase!==2){e.phase=2;notice('BOSS ENRAGED — ATTACKS FASTER!')}
  e.attack=Math.max(0,e.attack-dt);
- if((e.windup??0)>0){e.windup=Math.max(0,(e.windup??0)-dt);if(e.windup===0){const distance=Math.hypot(e.x-p.x,e.y-p.y);if(distance<2.4){const hit=incomingDamage(19,run.armor);run.armor=hit.armor;run.hp=Math.max(0,run.hp-hit.hpDamage)}for(const a of run.allies){if(Math.hypot(a.x-e.x,a.y-e.y)<2.4)a.hp=Math.max(0,a.hp-15)}bossPulse=.28}continue}
+ if((e.windup??0)>0){e.windup=Math.max(0,(e.windup??0)-dt);if(e.windup===0){
+ const ability=bossAttack(run.wave);
+ if(ability==='charge'){const d=Math.hypot(p.x-e.x,p.y-e.y)||1;for(let j=0;j<8;j++)moveUnit(e,(p.x-e.x)/d,(p.y-e.y)/d,.25)}
+ const distance=Math.hypot(e.x-p.x,e.y-p.y),impact=bossImpact(ability,distance);
+ if(impact){const hit=incomingDamage(impact,run.armor);run.armor=hit.armor;run.hp=Math.max(0,run.hp-hit.hpDamage)}
+ for(const a of run.allies){const allyImpact=bossImpact(ability,Math.hypot(a.x-e.x,a.y-e.y));if(allyImpact)a.hp=Math.max(0,a.hp-allyImpact)}
+ bossPulse=.28}continue}
  const nearestAlly=run.allies.filter(a=>a.hp>0).sort((a,b)=>Math.hypot(a.x-e.x,a.y-e.y)-Math.hypot(b.x-e.x,b.y-e.y))[0];
  const playerDist=Math.hypot(p.x-e.x,p.y-e.y);
  const allyDist=nearestAlly?Math.hypot(nearestAlly.x-e.x,nearestAlly.y-e.y):Infinity;
  const target=nearestAlly&&allyDist+.35<playerDist?nearestAlly:p,dist=Math.hypot(target.x-e.x,target.y-e.y);
- if(e.boss&&e.attack===0&&playerDist<2.5){e.windup=.85;e.attack=4.2;notice('BOSS SLAM — GET CLEAR!');continue}
+ if(e.boss&&e.attack===0&&playerDist<(bossAttack(run.wave)==='shockwave'?3.4:2.6)){const ability=bossAttack(run.wave);e.windup=ability==='charge'?1.1:.95;e.attack=e.hp<e.maxHp*.5?2.7:4.2;notice('BOSS '+ability.toUpperCase()+' — DODGE!');continue}
  if(dist<=stats.reach&&e.attack===0){e.attack=stats.attackInterval;if(target===p){const hit=incomingDamage(stats.damage,run.armor);run.armor=hit.armor;run.hp=Math.max(0,run.hp-hit.hpDamage)}else{const ally=target as Ally;ally.hp=Math.max(0,ally.hp-stats.damage)}continue}
  if(dist>stats.reach*.8){const direct=canSee(e.x,e.y,target.x,target.y);const waypoint=direct?target:nextZombieWaypoint(plan.map,pathField!,e);
   const vx=waypoint.x-e.x,vy=waypoint.y-e.y,len=Math.hypot(vx,vy);if(len>.03){
    const nearby=run.enemies.find(other=>other!==e&&other.alive&&Math.hypot(other.x-e.x,other.y-e.y)<.36);
    const avoid=nearby?Math.sign(e.x-nearby.x||((run.spawned%2)*2-1))*.18:0;
-   moveUnit(e,(vx+avoid)/Math.max(.01,len),vy/Math.max(.01,len),dt*stats.speed)
+   moveUnit(e,(vx+avoid)/Math.max(.01,len),vy/Math.max(.01,len),dt*stats.speed*(e.phase===2?1.3:1))
   }
  }
 }
@@ -117,7 +123,7 @@ const box=(x:number,y:number,color:string,r=.32)=>{ctx.fillStyle=color;ctx.fillR
 for(const [i,l]of map.loot.entries())if(!run.looted.includes(i))box(l.x,l.y,'#b89443',.30);
 for(const sp of plan.spawnPoints)box(sp.x,sp.y,'#704941',.18);
 const exit=map.extraction;box(exit.x,exit.y,cleared()?'#50dba1':'#9c7660',.43);
-for(const e of run.enemies)if(e.alive){const kind=e.kind??(e.boss?'boss':'shambler'),info=zombieStats(kind);box(e.x,e.y,info.color,e.boss?.53:kind==='bruiser'?.43:kind==='armored'?.36:kind==='runner'?.26:.31);if(e.boss){ctx.fillStyle='#d3d6c7';ctx.fillRect(ox+(e.x-.5)*tile,oy+(e.y-.72)*tile,tile*Math.max(0,e.hp/e.maxHp),tile*.1);if((e.windup??0)>0){ctx.beginPath();ctx.arc(ox+e.x*tile,oy+e.y*tile,tile*2.4,0,Math.PI*2);ctx.strokeStyle='#ff8e5688';ctx.lineWidth=Math.max(1,tile*.11);ctx.stroke()}}}
+for(const e of run.enemies)if(e.alive){const kind=e.kind??(e.boss?'boss':'shambler'),info=zombieStats(kind);box(e.x,e.y,info.color,e.boss?.53:kind==='bruiser'?.43:kind==='armored'?.36:kind==='runner'?.26:.31);if(e.boss){ctx.fillStyle='#d3d6c7';ctx.fillRect(ox+(e.x-.5)*tile,oy+(e.y-.72)*tile,tile*Math.max(0,e.hp/e.maxHp),tile*.1);if((e.windup??0)>0){ctx.beginPath();ctx.arc(ox+e.x*tile,oy+e.y*tile,tile*(bossAttack(run.wave)==='shockwave'?3.2:bossAttack(run.wave)==='charge'?1.25:2.4),0,Math.PI*2);ctx.strokeStyle='#ff8e5688';ctx.lineWidth=Math.max(1,tile*.11);ctx.stroke()}}}
 for(const a of run.allies)box(a.x,a.y,'#71b7dc',.3);
 box(run.player.x,run.player.y,'#f2e5c6',.36);ctx.strokeStyle='#f1e4ad';ctx.lineWidth=Math.max(1,tile*.12);ctx.beginPath();ctx.moveTo(ox+run.player.x*tile,oy+run.player.y*tile);ctx.lineTo(ox+(run.player.x+aim.x*.75)*tile,oy+(run.player.y+aim.y*.75)*tile);ctx.stroke();
 stats.textContent='WAVE '+run.wave+' · '+(cleared()?'CLEAR — FIND ELEVATOR':'ENEMIES LEFT '+remaining())+' · HP '+run.hp+' · ARMOR '+run.armor+' · '+(run.activeSlot??'primary').toUpperCase()+' '+((run.activeSlot??'primary')==='melee'?'MELEE':(run.activeSlot??'primary')==='secondary'?(run.sideMag??12)+'/'+(run.sideReserve??48):run.mag+'/'+run.reserve)+((run.reloadTimer??0)>0?' RELOADING':'')+' · ₡'+run.credits+' · TEAM '+run.allies.length;
