@@ -12,7 +12,7 @@ export type Gear=Weapon|Mod;
 export type AmmoBank=Record<AmmoType,number>;
 export type Loadout={primary:Weapon|null;secondary:Weapon|null;melee:Weapon|null};
 export type ArmoryOffer={kind:'weapon'|'attachment'|'recruit';model:string;tier:Tier;price:number};
-export type WeaponDef={name:string;slot:Slot;ammo:AmmoType|null;damage:number;mag:number;rate:number;range:number;reload:number;allowed:ClassId[]};
+export type WeaponDef={name:string;slot:Slot;ammo:AmmoType|null;damage:number;mag:number;rate:number;range:number;reload:number;penetration?:number;allowed:ClassId[]};
 export const weaponDefs:Record<WeaponId,WeaponDef>={
  pistol:{name:'Service Pistol',slot:'secondary',ammo:'light',damage:1.3,mag:12,rate:.33,range:6,reload:1.2,allowed:['rifleman','medic','heavy','scout','engineer']},
  smg:{name:'Tactical SMG',slot:'primary',ammo:'light',damage:1.25,mag:32,rate:.12,range:5.8,reload:1.65,allowed:['rifleman','medic','engineer']},
@@ -21,8 +21,8 @@ export const weaponDefs:Record<WeaponId,WeaponDef>={
  shotgun:{name:'Pump Shotgun',slot:'primary',ammo:'shotgun',damage:5.4,mag:6,rate:.8,range:4,reload:2.1,allowed:['heavy','engineer']},
  autoShotgun:{name:'Auto Shotgun',slot:'primary',ammo:'shotgun',damage:4.8,mag:10,rate:.38,range:4.4,reload:2.3,allowed:['heavy']},
  lmg:{name:'Light Machine Gun',slot:'primary',ammo:'heavy',damage:2.2,mag:70,rate:.095,range:8,reload:3.7,allowed:['heavy']},
- marksman:{name:'Marksman Rifle',slot:'primary',ammo:'precision',damage:5.1,mag:15,rate:.47,range:11,reload:2,allowed:['scout']},
- sniper:{name:'Sniper Rifle',slot:'primary',ammo:'precision',damage:8.1,mag:5,rate:1.08,range:13,reload:2.6,allowed:['scout']},
+ marksman:{name:'Marksman Rifle',slot:'primary',ammo:'precision',damage:5.1,mag:15,rate:.47,range:11,reload:2,penetration:1,allowed:['scout']},
+ sniper:{name:'Sniper Rifle',slot:'primary',ammo:'precision',damage:8.1,mag:5,rate:1.08,range:13,reload:2.6,penetration:2,allowed:['scout']},
  knife:{name:'Survival Knife',slot:'melee',ammo:null,damage:2,mag:0,rate:.5,range:1.4,reload:0,allowed:['rifleman','medic','heavy','scout','engineer']},
  axe:{name:'Fire Axe',slot:'melee',ammo:null,damage:3.8,mag:0,rate:.83,range:1.6,reload:0,allowed:['rifleman','medic','heavy','scout','engineer']}
 };
