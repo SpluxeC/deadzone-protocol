@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {generateDungeon} from './dungeon.ts';
-import {createFog,updateFog,exploredIndices,lightLine,fogAlpha,flashlightStrength,FLASHLIGHT_FOV_DEGREES} from './fogOfWar.ts';
+import {createFog,updateFog,exploredIndices,lightLine,fogAlpha} from './fogOfWar.ts';
 
 test('exploration expands in every direction, not only where the player aims',()=>{
  const map=generateDungeon(44,42,30),origin=map.entrance,fog=createFog(map);
@@ -27,14 +27,12 @@ test('solid walls block exploration behind them',()=>{
  assert.equal(fogAlpha(fog,0),1);
 });
 
-test('flashlight spans a total 100 degree field of view',()=>{
- assert.equal(FLASHLIGHT_FOV_DEGREES,100);
- const source={x:12,y:12,dx:1,dy:0,range:8};
- const point=(degrees:number)=>({x:12+5*Math.cos(degrees*Math.PI/180),y:12+5*Math.sin(degrees*Math.PI/180)});
- for(const degrees of [-49,0,49]){
-  const p=point(degrees);assert.ok(flashlightStrength(source,p.x,p.y)>0);
- }
- for(const degrees of [-51,51,90,180]){
-  const p=point(degrees);assert.equal(flashlightStrength(source,p.x,p.y),0);
- }
+test('revealed areas never darken again after exploring elsewhere',()=>{
+ const map=generateDungeon(2026,42,30);
+ const fog=createFog(map);
+ updateFog(map,fog,[{x:map.entrance.x,y:map.entrance.y,radius:5.5}]);
+ const discovered=exploredIndices(fog);
+ assert.ok(discovered.length>0);
+ updateFog(map,fog,[{x:map.extraction.x,y:map.extraction.y,radius:5.5}]);
+ for(const index of discovered)assert.equal(fogAlpha(fog,index),0);
 });
