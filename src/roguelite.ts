@@ -17,7 +17,7 @@ type Profile=ProfileV5;
 const root=document.querySelector<HTMLDivElement>('#app')!;
 root.innerHTML=`<div id="rogue" style="height:100dvh;display:flex;flex-direction:column;background:#0c1416;color:#eaf0eb;font:14px system-ui;overflow:hidden">
 <header style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;padding:9px 14px;background:#142421;border-bottom:1px solid #566b5e"><strong>DEADZONE <span style="color:#f18567">PROTOCOL</span> <small style="color:#a9bbae">/ ROGUELITE</small></strong><span id="stats">WAVE 1</span><button id="menu" type="button">MENU</button></header>
-<div id="playarea" style="position:relative;min-height:0;flex:1;display:flex;justify-content:center;align-items:center;background:#0a1113"><canvas id="rogue-canvas" style="width:100%;height:100%;object-fit:contain;touch-action:none"></canvas><aside id="combat-hud" aria-label="Combat status"><div class="hud-label">SURVIVOR STATUS <span id="hud-wave">WAVE 1</span></div><div class="hud-meter"><span>HEALTH</span><div><i id="hud-hp"></i></div><b id="hud-hp-text">100</b></div><div class="hud-meter"><span>ARMOR</span><div><i id="hud-armor"></i></div><b id="hud-armor-text">50</b></div><div class="hud-meta" id="hud-weapon">LIGHT CARBINE</div><div class="hud-meta" id="hud-team">SQUAD 0/4</div></aside><div id="mobile-sticks" aria-label="Touch analog controls"><div class="analog-group analog-left"><div class="analog-base" id="move-stick" role="group" aria-label="Move"><div class="analog-ring"></div><div class="analog-knob"></div></div><span class="analog-caption">MOVE</span></div><div id="mobile-squad"><button id="mobile-orders" type="button">SQUAD: FOLLOW</button><button id="mobile-team" type="button">TEAM</button></div><div id="mobile-actions"><button id="mobile-reload" type="button">RELOAD</button><button id="mobile-interact" type="button" disabled>INTERACT</button></div><div class="analog-group analog-right"><button id="mobile-weapon-swap" type="button" aria-label="Tap to swap primary and secondary; hold for melee">SWAP WEAPON</button><div class="analog-base" id="aim-stick" role="group" aria-label="Aim and fire"><div class="analog-ring"></div><div class="analog-knob"></div></div><span class="analog-caption">AIM · FIRE</span></div></div><div id="rotate-phone" role="status" aria-live="polite"><div class="rotate-symbol" aria-hidden="true">↻</div><h2>Rotate Your Device</h2><p>Deadzone Protocol is played in landscape mode.</p></div><div id="overlay" style="position:absolute;inset:0;display:flex;align-items:flex-start;justify-content:center;background:#081112df;overflow:auto;padding:14px;box-sizing:border-box"></div></div>
+<div id="playarea" style="position:relative;min-height:0;flex:1;display:flex;justify-content:center;align-items:center;background:#0a1113"><canvas id="rogue-canvas" style="width:100%;height:100%;object-fit:contain;touch-action:none"></canvas><aside id="combat-hud" aria-label="Combat status"><div class="hud-label">SURVIVOR STATUS <span id="hud-wave">WAVE 1</span></div><div class="hud-meter"><span>HEALTH</span><div><i id="hud-hp"></i></div><b id="hud-hp-text">100</b></div><div class="hud-meter"><span>ARMOR</span><div><i id="hud-armor"></i></div><b id="hud-armor-text">50</b></div><div class="hud-meta" id="hud-weapon">LIGHT CARBINE</div><div class="hud-meta" id="hud-team">SQUAD 0/4</div></aside><div id="mobile-sticks" aria-label="Touch analog controls"><div class="analog-group analog-left"><button id="mobile-inventory-team" type="button" aria-label="Tap inventory; hold for team">INVENTORY / TEAM</button><div class="analog-base" id="move-stick" role="group" aria-label="Move"><div class="analog-ring"></div><div class="analog-knob"></div></div><span class="analog-caption">MOVE</span></div><div id="mobile-squad" aria-label="Squad commands"><button type="button" data-squad-order="follow">FOLLOW</button><button type="button" data-squad-order="hold">HOLD</button><button type="button" data-squad-order="focus">FOCUS</button><button type="button" data-squad-order="regroup">REGROUP</button><button type="button" data-squad-order="defensive">DEFEND</button></div><button id="mobile-medkit-revive" type="button" aria-label="Tap to use medkit; hold to revive">MEDKIT / REVIVE</button><div id="mobile-actions"><button id="mobile-reload" type="button">RELOAD</button><button id="mobile-interact" type="button" disabled>INTERACT</button></div><div class="analog-group analog-right"><button id="mobile-weapon-swap" type="button" aria-label="Tap to swap primary and secondary; hold for melee">SWAP WEAPON</button><div class="analog-base" id="aim-stick" role="group" aria-label="Aim and fire"><div class="analog-ring"></div><div class="analog-knob"></div></div><span class="analog-caption">AIM · FIRE</span></div></div><div id="rotate-phone" role="status" aria-live="polite"><div class="rotate-symbol" aria-hidden="true">↻</div><h2>Rotate Your Device</h2><p>Deadzone Protocol is played in landscape mode.</p></div><div id="overlay" style="position:absolute;inset:0;display:flex;align-items:flex-start;justify-content:center;background:#081112df;overflow:auto;padding:14px;box-sizing:border-box"></div></div>
 <footer style="display:flex;flex-wrap:wrap;justify-content:center;gap:6px;padding:8px;background:#152521"><button id="weapon-primary">1 PRIMARY</button><button id="weapon-secondary">2 SIDEARM</button><button id="weapon-melee">3 MELEE</button><button id="shoot">FIRE</button><button id="reload">RELOAD (R)</button><button id="heal">MEDKIT (H)</button><button id="inventory">INVENTORY (I)</button><button id="orders">SQUAD: FOLLOW (Q)</button><button id="squad-panel">TEAM</button><button id="revive">HOLD REVIVE (V)</button><button id="moveup">▲</button><button id="moveleft">◀</button><button id="movedown">▼</button><button id="moveright">▶</button><button id="interact" disabled>INTERACT (E)</button></footer>
 <div id="toast" style="position:fixed;left:50%;bottom:78px;transform:translateX(-50%);pointer-events:none;background:#243c37e8;padding:6px 12px;border-radius:6px;color:white;z-index:5"></div></div>`;
 const style=document.createElement('style');style.textContent=`#overlay[hidden]{display:none!important}#overlay article{margin:auto 0}#rogue button{background:#304941;color:white;border:1px solid #879a80;border-radius:5px;padding:9px 12px;font:600 13px system-ui;cursor:pointer;touch-action:none}#rogue button:hover{background:#436354}#rogue button:disabled{opacity:.42;cursor:not-allowed}#overlay article{background:#1a2d2b;border:1px solid #8f9c82;border-radius:10px;padding:22px;max-width:560px;width:min(100%,560px);box-sizing:border-box;box-shadow:0 15px 60px #0009}#overlay h1{font-size:24px;margin:0 0 8px}#overlay h2{font-size:18px;margin:14px 0 8px}#overlay p{color:#c7d1c8;line-height:1.5}#overlay .shop{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px}#overlay .shop button{text-align:left;min-height:66px}#overlay .menurow{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}#overlay label{display:block;margin:8px 0}#overlay select{padding:8px;background:#1c3030;color:white;border:1px solid #7b9385}`;document.head.append(style);
@@ -250,7 +250,14 @@ function squadPanel(){if(!run)return;paused=true;overlay.hidden=false;const r=ru
 }
 function death(){if(!run)return;const performance=runPerformance(run),achieved=progressAchievements(profile,performance),base=permanentPayout(run.cleared,run.bosses),bonus=performancePayout(performance),result=base+bonus;profile.tokens+=result;profile.bestWave=Math.max(profile.bestWave,run.wave);profile.runs++;const wave=run.wave,clearedCount=run.cleared;run=null;save();paused=true;overlay.hidden=false;overlay.innerHTML=`<article><h1>RUN OVER</h1><p>Reached wave ${wave}. Cleared ${clearedCount} waves.</p><p>Wave and boss rewards: ${base} · Performance: ${bonus} · New achievements: ${achieved.reward}.</p><p><strong>${result+achieved.reward} LEGACY TOKENS EARNED</strong></p>${achieved.names.length?'<p>Achievements: '+achieved.names.join(', ')+'</p>':''}<div class="menurow"><button id="again">PREPARE NEXT RUN</button><button id="back">MAIN MENU</button></div></article>`;overlay.querySelector<HTMLButtonElement>('#again')!.onclick=preRun;overlay.querySelector<HTMLButtonElement>('#back')!.onclick=menu}
 function orderLabel(order:SquadOrder){return order==='focus'?'FOCUS FIRE':order.toUpperCase()}
-function changeOrder(){if(!run||run.stage!=='fight'||paused)return;const orders:SquadOrder[]=['follow','hold','focus','regroup','defensive'];run.squadOrder=orders[(orders.indexOf(run.squadOrder??'follow')+1)%orders.length];if(run.squadOrder==='hold')for(const a of run.allies)a.anchor={x:a.x,y:a.y};if(run.squadOrder==='regroup')run.focusTarget=null;notice('SQUAD ORDER: '+orderLabel(run.squadOrder));save()}
+function setOrder(order:SquadOrder){
+ if(!run||run.stage!=='fight'||paused)return;
+ run.squadOrder=order;
+ if(order==='hold')for(const a of run.allies)a.anchor={x:a.x,y:a.y};
+ if(order==='regroup')run.focusTarget=null;
+ notice('SQUAD ORDER: '+orderLabel(order));save();
+}
+function changeOrder(){if(!run||run.stage!=='fight'||paused)return;const orders:SquadOrder[]=['follow','hold','focus','regroup','defensive'];setOrder(orders[(orders.indexOf(run.squadOrder??'follow')+1)%orders.length])}
 function hurtPlayer(amount:number){if(!run||run.playerDead||(run.playerDowned??0)>0)return;const hit=incomingDamage(amount,run.armor);run.armor=hit.armor;run.hp=Math.max(0,run.hp-hit.hpDamage);run.waveHit=true;if(run.hp<=0){run.playerDowned=PLAYER_BLEEDOUT;run.reloadSlot=null;run.reloadTimer=0;notice('PLAYER DOWN — TEAMMATES CAN REVIVE YOU!')} }
 function hurtAlly(a:Ally,amount:number){if(a.dead||a.downed>0)return;let value=Math.max(0,amount);const armorAbsorb=Math.min(a.armor,value);a.armor-=armorAbsorb;value-=armorAbsorb;applyLethalDamage(a,value,ALLY_BLEEDOUT);if(a.downed>0)notice(a.name+' DOWN — REVIVE BEFORE BLEED-OUT')}
 function rescueAction(dt:number,manual=false){if(!run||paused)return;const r=run,p=r.player;
@@ -368,7 +375,12 @@ function draw(){
  const order=orderLabel(r.squadOrder??'follow'),status=cleared()?'EXIT OPEN':'INFECTED '+remaining();
  stats.textContent='WAVE '+r.wave+' · '+status+' · '+ammo+' · ₡'+r.credits+' · '+order;
  document.querySelector<HTMLButtonElement>('#orders')!.textContent='SQUAD: '+order+' (Q)';
- document.querySelector<HTMLButtonElement>('#mobile-orders')!.textContent='SQUAD: '+order;
+ document.querySelectorAll<HTMLButtonElement>('#mobile-squad [data-squad-order]').forEach(button=>{
+  const selected=button.dataset.squadOrder===(r.squadOrder??'follow');
+  button.classList.toggle('selected',selected);
+  button.setAttribute('aria-pressed',String(selected));
+ });
+ document.querySelector<HTMLButtonElement>('#mobile-medkit-revive')!.classList.toggle('low-health',r.hp>0&&r.hp<=30);
  const activeSlot=r.activeSlot??'primary';
  document.querySelector<HTMLButtonElement>('#mobile-weapon-swap')!.textContent=activeSlot==='melee'?'MELEE · SWAP':activeSlot==='primary'?'PRIMARY · SWAP':'SECONDARY · SWAP';
  const action=nearbyInteraction();
@@ -463,8 +475,40 @@ function bindMobileAction(id:string,fn:()=>void){
 }
 bindMobileAction('mobile-reload',reload);
 bindMobileAction('mobile-interact',interact);
-bindMobileAction('mobile-orders',changeOrder);
-bindMobileAction('mobile-team',squadPanel);
+document.querySelectorAll<HTMLButtonElement>('#mobile-squad [data-squad-order]').forEach(button=>{
+ const order=button.dataset.squadOrder as SquadOrder;
+ button.addEventListener('pointerdown',e=>{if(e.button!==0)return;e.preventDefault();e.stopPropagation();setOrder(order)});
+ button.addEventListener('click',e=>{if(e.detail===0)setOrder(order)});
+});
+/** Separate touch pointer ownership allows the player to keep moving while pressing action buttons. */
+function bindTapHold(id:string,onTap:()=>void,onHoldStart:()=>void,onHoldEnd:()=>void){
+ const button=document.querySelector<HTMLButtonElement>('#'+id)!;
+ let pointer:number|null=null,holdTimer:ReturnType<typeof setTimeout>|null=null,held=false;
+ const clear=()=>{
+  if(holdTimer!==null){clearTimeout(holdTimer);holdTimer=null}
+  if(held)onHoldEnd();
+  pointer=null;held=false;
+ };
+ button.addEventListener('pointerdown',e=>{
+  if(pointer!==null||e.button!==0)return;
+  e.preventDefault();e.stopPropagation();
+  pointer=e.pointerId;held=false;
+  button.setPointerCapture(e.pointerId);
+  holdTimer=setTimeout(()=>{holdTimer=null;if(pointer!==null){held=true;button.classList.add('holding');onHoldStart()}},450);
+ });
+ button.addEventListener('pointerup',e=>{
+  if(e.pointerId!==pointer)return;
+  e.preventDefault();e.stopPropagation();
+  const tap=!held;clear();button.classList.remove('holding');
+  if(tap)onTap();
+ });
+ button.addEventListener('pointercancel',e=>{if(e.pointerId===pointer){clear();button.classList.remove('holding')}});
+ button.addEventListener('lostpointercapture',e=>{if(e.pointerId===pointer){clear();button.classList.remove('holding')}});
+ window.addEventListener('blur',()=>{clear();button.classList.remove('holding')});
+ button.addEventListener('click',e=>{if(e.detail===0)onTap()});
+}
+bindTapHold('mobile-medkit-revive',heal,()=>touch.add('revive'),()=>touch.delete('revive'));
+bindTapHold('mobile-inventory-team',inventory,squadPanel,()=>{});
 const swapButton=document.querySelector<HTMLButtonElement>('#mobile-weapon-swap')!;
 let swapPointer:number|null=null,swapHold:ReturnType<typeof setTimeout>|null=null,swapHeld=false;
 function cancelSwap(){
