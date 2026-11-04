@@ -69,7 +69,7 @@ export function renderFog(ctx:CanvasRenderingContext2D,map:DungeonLayout,v:View,
   if(a<=0)continue;
   ctx.fillStyle='rgba(1,4,8,'+a.toFixed(3)+')';
   // One-pixel overlap avoids seams while pinch-zooming.
-  ctx.fillRect(Math.floor(v.ox+x*t),Math.floor(v.oy+y*t),Math.ceil(t)+1,Math.ceil(t)+1);
+  ctx.fillRect(Math.floor(v.ox+(x-.5)*t),Math.floor(v.oy+(y-.5)*t),Math.ceil(t)+1,Math.ceil(t)+1);
  }
  // Unknown/off-map regions are already the dark background of the renderer.
  ctx.restore();
@@ -77,5 +77,5 @@ export function renderFog(ctx:CanvasRenderingContext2D,map:DungeonLayout,v:View,
 export function fogAlpha(fog:FogState,index:number):number{
  if(fog.explored[index]===0)return 1;
  const discovery=fog.revealed[index];
- return Math.min(1,Math.max(.09,1-discovery*(.18+fog.light[index]*.76)));
+ return Math.min(1,Math.max(.10,1-discovery*(.43+fog.light[index]*.48)));
 }
