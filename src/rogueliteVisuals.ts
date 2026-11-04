@@ -1,5 +1,30 @@
 import type {DungeonLayout} from './dungeon.ts';
 const spriteUrl=new URL('./assets/deadzone-sprites.svg',import.meta.url).href;
+// Optional art pack: when uploaded to public/environment, it loads without a code edit.
+const environmentAtlas=typeof Image==='undefined'?null:new Image();
+const environmentFrameSize=128;
+let environmentReady=false;
+if(environmentAtlas){
+ environmentAtlas.onload=()=>{environmentReady=environmentAtlas.naturalWidth===environmentFrameSize*16&&environmentAtlas.naturalHeight===environmentFrameSize};
+ environmentAtlas.onerror=()=>{environmentReady=false};
+ environmentAtlas.src=new URL('environment/deadzone-environment.svg',document.baseURI).href;
+}
+export const environmentArtReady=()=>environmentReady;
+// 0–9 floor materials, 10–15 wall materials. Deterministic layout is unchanged.
+export function environmentTileId(tileIsFloor:boolean,noise:number):number{
+ const r=Math.max(0,Math.min(.999999,noise));
+ if(!tileIsFloor)return 10+Math.floor(r*6);
+ if(r<.20)return 0;
+ if(r<.39)return 1;
+ if(r<.56)return 2;
+ if(r<.72)return 3;
+ if(r<.79)return 4;
+ if(r<.85)return 5;
+ if(r<.90)return 6;
+ if(r<.94)return 7;
+ if(r<.975)return 8;
+ return 9;
+}
 export type Point={x:number;y:number};
 export type View={tile:number;ox:number;oy:number;width:number;height:number;minX:number;maxX:number;minY:number;maxY:number};
 export type SpriteKind='player'|'rifleman'|'medic'|'heavy'|'scout'|'engineer'|'shambler'|'runner'|'armored'|'bruiser'|'boss'|'crate'|'elevator'|'spawn';
@@ -26,7 +51,11 @@ export function renderDungeon(ctx:CanvasRenderingContext2D,map:DungeonLayout,v:V
  const t=v.tile,ox=v.ox,oy=v.oy;
  for(let y=v.minY;y<v.maxY;y++)for(let x=v.minX;x<v.maxX;x++){
   const px=Math.round(ox+(x-.5)*t),py=Math.round(oy+(y-.5)*t),r=hash(x,y,map.seed),open=map.tiles[y*map.width+x]===0;
-  if(open){
+  if(environmentReady&&environmentAtlas){
+   const frame=environmentTileId(open,r);
+   ctx.drawImage(environmentAtlas,frame*environmentFrameSize,0,environmentFrameSize,environmentFrameSize,
+    px,py,Math.ceil(t)+1,Math.ceil(t)+1);
+  }else if(open){
    ctx.fillStyle=r<.12?'#263430':r<.45?'#293a37':r<.72?'#283633':'#2e3d39';
    ctx.fillRect(px,py,Math.ceil(t)+1,Math.ceil(t)+1);
    ctx.strokeStyle='rgba(143,166,153,.11)';ctx.lineWidth=Math.max(.6,t*.023);ctx.strokeRect(px+.5,py+.5,t-.5,t-.5);
