@@ -32,12 +32,10 @@ test('old save actors in walls are repaired onto reachable floor tiles',()=>{
  assert.equal(canOccupy(map,fixed.x,fixed.y),true);
  assert.deepEqual(nearestWalkable(map,fixed),fixed);
 });
-test('explored but unlit map stays brighter than unknown map',()=>{
+test('explored tiles are completely visible, undiscovered tiles are black',()=>{
  const map=generateDungeon(777,32,24,2),fog=createFog(map);
  const index=map.entrance.y*map.width+map.entrance.x;
  assert.equal(fogAlpha(fog,index),1);
- fog.explored[index]=1;fog.revealed[index]=1;fog.light[index]=0;
- assert.ok(fogAlpha(fog,index)<=.60);
- fog.light[index]=1;
- assert.ok(fogAlpha(fog,index)<.2);
+ fog.explored[index]=1;
+ assert.equal(fogAlpha(fog,index),0);
 });
