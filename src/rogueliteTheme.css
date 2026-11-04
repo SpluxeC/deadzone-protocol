@@ -56,3 +56,40 @@
 #rogue #overlay .shop button .gear-mini{float:left;margin-top:1px;margin-bottom:2px}
 #rogue #loadout-preview .gear-mini{margin-right:4px}
 @media(max-width:780px){#rogue .gear-mini{margin-right:5px}}
+
+/* Landscape-first, two-thumb controls. Menus have no in-game control strip. */
+#rogue{position:relative}
+#rogue:has(#overlay:not([hidden])) footer{display:none!important}
+#mobile-sticks,#rotate-phone{display:none}
+@media (pointer:coarse){
+ #rogue footer{position:absolute!important;top:55px;right:max(8px,env(safe-area-inset-right));bottom:auto;left:auto;max-width:38vw;width:auto;max-height:47vh!important;padding:5px!important;gap:4px!important;background:#102022dd!important;border:1px solid #486b63;border-radius:9px;display:flex;flex-direction:row;flex-wrap:wrap;justify-content:flex-end;align-content:flex-start;overflow-y:auto;overscroll-behavior:contain}
+ #rogue footer button{padding:7px 9px!important;min-width:0!important;font-size:10px!important;white-space:nowrap}
+ #rogue footer #shoot,#rogue footer #moveup,#rogue footer #movedown,#rogue footer #moveleft,#rogue footer #moveright{display:none!important}
+ #rogue #playarea{touch-action:none}
+ #mobile-sticks{position:absolute;inset:0;z-index:5;display:flex;justify-content:space-between;align-items:flex-end;pointer-events:none;padding:0 max(16px,env(safe-area-inset-right)) max(10px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));box-sizing:border-box}
+ #rogue #playarea:has(#overlay:not([hidden])) #mobile-sticks{display:none!important}
+ #mobile-sticks .analog-group{display:flex;flex-direction:column;align-items:center;gap:3px;pointer-events:none}
+ #mobile-sticks .analog-base{--stick-size:clamp(92px,21vh,148px);width:var(--stick-size);height:var(--stick-size);position:relative;pointer-events:auto;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;border-radius:50%;background:radial-gradient(circle,#233d3ebd 0 20%,#13272bdf 75%,#0a191cbf);border:2px solid #729f8da8;box-shadow:inset 0 0 0 7px #253c3866,inset 0 4px 16px #0007,0 5px 24px #0009}
+ #mobile-sticks .analog-ring{position:absolute;inset:17%;border:1px dashed #9ac4b36f;border-radius:50%;pointer-events:none}
+ #mobile-sticks .analog-knob{position:absolute;left:50%;top:50%;width:39%;height:39%;border-radius:50%;transform:translate(-50%,-50%);background:radial-gradient(circle at 35% 25%,#9fbdb0,#46655b 70%,#27423b);border:2px solid #a8d0b3;box-shadow:inset 0 2px 5px #d6f4d21f,0 3px 12px #000a;pointer-events:none;will-change:transform}
+ #mobile-sticks .analog-right .analog-knob{background:radial-gradient(circle at 35% 25%,#ecc29f,#a26a4d 70%,#74442f);border-color:#e8b58e}
+ #mobile-sticks .analog-right .analog-base{border-color:#d5a17b91}
+ #mobile-sticks .analog-caption{font:800 9px system-ui;letter-spacing:.18em;color:#c7ded0;text-shadow:0 2px 5px #000;padding-bottom:1px}
+ #combat-hud{max-width:190px}
+ #rogue #toast{bottom:8px!important}
+}
+@media(pointer:coarse) and (orientation:landscape) and (max-height:430px){
+ #rogue header{min-height:30px;height:34px}
+ #rogue footer{top:39px;max-height:43vh!important}
+ #mobile-sticks .analog-base{--stick-size:clamp(82px,27vh,120px)}
+ #mobile-sticks{padding-bottom:max(3px,env(safe-area-inset-bottom))}
+ #combat-hud{top:5px;max-width:160px;padding:5px 7px;transform:scale(.85);transform-origin:top left}
+ #rogue #toast{max-width:38vw;left:50%;font-size:9px!important}
+}
+@media (pointer:coarse) and (orientation:portrait){
+ #rotate-phone{display:flex;position:fixed;inset:0;z-index:50;align-items:center;justify-content:center;flex-direction:column;gap:12px;padding:24px;text-align:center;box-sizing:border-box;background:radial-gradient(circle at 50% 40%,#244640,#071518 80%);color:#f0f5e8}
+ #rotate-phone .rotate-symbol{font-size:72px;line-height:1;color:#afddbb;transform:rotate(-90deg);border:3px solid #86b59d;border-radius:20px;width:112px;height:112px;display:flex;align-items:center;justify-content:center}
+ #rotate-phone h2{margin:0;font-size:22px;letter-spacing:.09em;text-transform:uppercase}
+ #rotate-phone p{margin:0;color:#c4d7c9;font-size:14px}
+ #rogue footer,#mobile-sticks{display:none!important}
+}
