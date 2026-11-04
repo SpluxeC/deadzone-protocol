@@ -97,7 +97,7 @@ export function armoryOffers(seed:number,wave:number,rerolls:number):ArmoryOffer
  const choose=(list:string[])=>{for(let tries=0;tries<30;tries++){const m=list[Math.floor(random()*list.length)];if(!used.has(m)){used.add(m);return m}}return list[0]};
  for(let i=0;i<3;i++){const model=choose(primaryModels),tier=rarityForWave(wave,random());offers.push({kind:'weapon',model,tier,price:weaponPrice(model as WeaponId,tier)})}
  for(let i=0;i<3;i++){const model=choose(modModels),tier=rarityForWave(wave,random());offers.push({kind:'attachment',model,tier,price:modPrice(model as AttachmentId,tier)})}
- offers.push({kind:'recruit',model:'rifleman',tier:1,price:750});
+ const roles=['rifleman','medic','heavy','scout','engineer'];const recruit=roles[Math.floor(random()*roles.length)];const costs:Record<string,number>={rifleman:750,medic:900,heavy:1150,scout:950,engineer:1000};offers.push({kind:'recruit',model:recruit,tier:1,price:costs[recruit]});
  return offers;
 }
 export function rareLoot(seed:number,wave:number,container:number,boss=false):Gear|null{
