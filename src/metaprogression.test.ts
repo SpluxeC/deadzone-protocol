@@ -37,7 +37,7 @@ test('achievement payouts are one-time and do not multiply on saves or retries',
 test('performance rewards remain modest and deterministic',()=>{
  const empty:RunPerformance={cleared:0,bosses:0,killsTotal:0,lootedTotal:0,flawlessWaves:0,bestSquad:0};
  assert.equal(performancePayout(empty),0);
- assert.ok(performancePayout({...empty,killsTotal:100,flawlessWaves:2})>0);
+ assert.ok(performancePayout({...empty,killsTotal:100,flawlessWaves:2})>0);assert.ok(performancePayout({...empty,killsTotal:1})>0);
  assert.ok(performancePayout({...empty,killsTotal:10000,flawlessWaves:50,lootedTotal:1000})<=120);
  assert.ok(Object.keys(unlocks).length>=12);
 });
