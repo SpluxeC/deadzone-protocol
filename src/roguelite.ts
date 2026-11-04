@@ -7,7 +7,7 @@ import {migrateProfile,unlocks,achievements,buyUnlock,allowedPrimary,allowedMele
 import {camera,toWorld,renderDungeon,drawSprite,drawBar,drawHazard,hudColor,type View,type SpriteKind} from './rogueliteVisuals';
 import {gearIcon} from './gearIcons';
 import {makeAttackFx,ageCombatFx,drawCombatFx,type CombatFx} from './combatFx';
-import {createFog,updateFog,renderFog,exploredIndices,type FogState,type Flashlight} from './fogOfWar';
+import {createFog,updateFog,renderFog,exploredIndices,type FogState,type Explorer} from './fogOfWar';
 import {normalizeStick,stickKnob,type StickVector} from './mobileControls';
 import {walkableTile,canOccupy,nearestWalkable} from './tileCollision';
 import './rogueliteTheme.css';
@@ -333,11 +333,11 @@ function allyDirection(a:Ally):{x:number;y:number}{
  if(nearest){const d=Math.hypot(nearest.x-a.x,nearest.y-a.y)||1;return {x:(nearest.x-a.x)/d,y:(nearest.y-a.y)/d}}
  return aim;
 }
-function flashlightSources():Flashlight[]{
+function explorationSources():Explorer[]{
  if(!run)return [];
- const lights:Flashlight[]=[{x:run.player.x,y:run.player.y,dx:aim.x,dy:aim.y,range:8.3,halfAngle:.68}];
- for(const a of run.allies){if(a.dead||a.downed>0)continue;const dir=allyDirection(a);lights.push({x:a.x,y:a.y,dx:dir.x,dy:dir.y,range:7.3,halfAngle:.62})}
- return lights;
+ const explorers:Explorer[]=[{x:run.player.x,y:run.player.y,radius:5.5}];
+ for(const a of run.allies)if(!a.dead&&a.downed<=0)explorers.push({x:a.x,y:a.y,radius:4.5});
+ return explorers;
 }
 function update(dt:number){if(!run||!plan||paused||run.stage!=='fight')return;
 combatFx=ageCombatFx(combatFx,dt);
@@ -347,7 +347,7 @@ if(aimAnalog.magnitude>0){aim={x:aimAnalog.x/aimAnalog.magnitude,y:aimAnalog.y/a
 if((run.playerDowned??0)===0&&(keys.has('Space')||firePressed||aimFiring)){const nearest=run.enemies.filter(e=>e.alive&&canSee(p.x,p.y,e.x,e.y)&&Math.hypot(e.x-p.x,e.y-p.y)<=(activeWeapon(run!)?effectiveStats(activeWeapon(run!)!).range:1.3)).sort((a,b)=>Math.hypot(a.x-p.x,a.y-p.y)-Math.hypot(b.x-p.x,b.y-p.y))[0];if(nearest&&keys.has('Space')){const length=Math.hypot(nearest.x-p.x,nearest.y-p.y)||1;aim={x:(nearest.x-p.x)/length,y:(nearest.y-p.y)/length}}shoot()}
 spawnClock+=dt;if(run.spawned<plan.total&&spawnClock>1.45){spawnClock=0;const active=run.enemies.filter(e=>e.alive).length;if(active<Math.min(22,8+Math.ceil(run.wave/2)))spawnOne(false)}
 squadUpdate(dt);
-if(fog&&updateFog(plan.map,fog,flashlightSources(),dt))run.explored=exploredIndices(fog);
+if(fog&&updateFog(plan.map,fog,explorationSources()))run.explored=exploredIndices(fog);
 pathClock-=dt;if(pathClock<=0||!pathField){pathField=distanceField(plan.map,run.player);pathClock=.32}
 for(const e of run.enemies){if(!e.alive)continue;
  e.suppressed=Math.max(0,(e.suppressed??0)-dt);e.scoutMarked=Math.max(0,(e.scoutMarked??0)-dt);const stats=zombieStats(e.kind??(e.boss?'boss':'shambler'));if(e.boss&&e.hp<e.maxHp*.5&&e.phase!==2){e.phase=2;notice('BOSS ENRAGED — ATTACKS FASTER!')}
@@ -405,9 +405,6 @@ function draw(){
  drawSprite(ctx,'player',v,r.player.x,r.player.y,{angle:Math.atan2(aim.y,aim.x),scale:1.25,down:(r.playerDowned??0)>0,glow:'#b3d8b4',bob});
  drawCombatFx(ctx,v,combatFx);
  if(fog)renderFog(ctx,m,v,fog);
- // Flashlight holders stay visible above darkness.
- for(const a of r.allies){if(a.dead)continue;const dir=allyDirection(a);drawSprite(ctx,a.role,v,a.x,a.y,{angle:Math.atan2(dir.y,dir.x),scale:a.role==='heavy'?1.25:1.08,down:a.downed>0,alpha:a.downed>0?.55:1})}
- drawSprite(ctx,'player',v,r.player.x,r.player.y,{angle:Math.atan2(aim.y,aim.x),scale:1.25,down:(r.playerDowned??0)>0,glow:'#b3d8b4',bob});
  if((r.playerDowned??0)>0){ctx.font='bold '+Math.max(13,v.tile*.48)+'px system-ui';ctx.textAlign='center';ctx.fillStyle='#ff9b83';ctx.fillText('DOWNED '+Math.ceil(r.playerDowned??0)+'s',v.ox+r.player.x*v.tile,v.oy+(r.player.y-1)*v.tile)}
  else{ctx.strokeStyle='rgba(255,231,185,.76)';ctx.lineWidth=Math.max(1,v.tile*.04);ctx.beginPath();ctx.moveTo(v.ox+(r.player.x+aim.x*.5)*v.tile,v.oy+(r.player.y+aim.y*.5)*v.tile);ctx.lineTo(v.ox+(r.player.x+aim.x*1.5)*v.tile,v.oy+(r.player.y+aim.y*1.5)*v.tile);ctx.stroke()}
  const w=activeWeapon(r),ammoType=w?weaponDefs[w.model].ammo:null,eq=ensureEquipment(r);
