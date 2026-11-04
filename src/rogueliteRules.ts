@@ -1,4 +1,4 @@
-import {generateDungeon, type DungeonLayout} from './dungeon';
+import {generateDungeon, type DungeonLayout} from './dungeon.ts';
 export type WavePlan={wave:number;map:DungeonLayout;total:number;initial:number;reinforcements:number;boss:boolean;spawnPoints:{x:number;y:number}[]};
 export function waveDimensions(wave:number):{width:number;height:number}{
  const w=Math.max(1,Math.floor(wave));return {width:Math.min(64,32+Math.floor((w-1)/4)*6),height:Math.min(48,24+Math.floor((w-1)/4)*4)};
