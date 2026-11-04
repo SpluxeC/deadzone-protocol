@@ -9,7 +9,8 @@
       "DOM"
     ],
     "noEmit": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "allowImportingTsExtensions": true
   },
   "exclude": [
     "src/**/*.test.ts"
