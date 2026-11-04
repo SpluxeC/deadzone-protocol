@@ -16,7 +16,7 @@ import './style.css';
 
 type Unit={x:number;y:number;hp:number;maxHp:number;speed:number;attack:number;boss?:boolean;alive:boolean;kind?:ZombieKind;windup?:number;phase?:number;aggro?:number;suppressed?:number;scoutMarked?:number};
 type Ally=Squadmate;
-type Run={wave:number;credits:number;hp:number;armor:number;mag:number;reserve:number;medkits:number;weaponTier:number;damage:number;maxMag:number;player:{x:number;y:number};enemies:Unit[];allies:Ally[];spawned:number;kills:number;bosses:number;cleared:number;seed:number;stage:'fight'|'shop';looted:number[];squadAmmo:number;activeSlot?:WeaponSlot;sideMag?:number;sideReserve?:number;reloadTimer?:number;reloadSlot?:WeaponSlot|null;playerDowned?:number;playerDead?:boolean;squadOrder?:SquadOrder;focusTarget?:number|null;reviveProgress?:number;equipment?:{loadout:Loadout;bag:Gear[];ammo:AmmoBank;capacity:number;rerolls:number;};killsTotal?:number;lootedTotal?:number;flawlessWaves?:number;bestSquad?:number;waveStartHp?:number;waveStartArmor?:number;waveHit?:boolean;explored?:number[];layoutVersion?:1|2;};
+type Run={wave:number;credits:number;hp:number;armor:number;mag:number;reserve:number;medkits:number;weaponTier:number;damage:number;maxMag:number;player:{x:number;y:number};enemies:Unit[];allies:Ally[];spawned:number;kills:number;bosses:number;cleared:number;seed:number;stage:'fight'|'shop';looted:number[];squadAmmo:number;activeSlot?:WeaponSlot;sideMag?:number;sideReserve?:number;reloadTimer?:number;reloadSlot?:WeaponSlot|null;playerDowned?:number;playerDead?:boolean;squadOrder?:SquadOrder;focusTarget?:number|null;reviveProgress?:number;equipment?:{loadout:Loadout;bag:Gear[];ammo:AmmoBank;capacity:number;rerolls:number;};killsTotal?:number;lootedTotal?:number;flawlessWaves?:number;bestSquad?:number;waveStartHp?:number;waveStartArmor?:number;waveHit?:boolean;explored?:number[];layoutVersion?:1|2|3;};
 type Profile=ProfileV5;
 const root=document.querySelector<HTMLDivElement>('#app')!;
 root.innerHTML=`<div id="rogue" style="height:100dvh;display:flex;flex-direction:column;background:#0c1416;color:#eaf0eb;font:14px system-ui;overflow:hidden">
@@ -30,6 +30,31 @@ const canvas=document.querySelector<HTMLCanvasElement>('#rogue-canvas')!,ctx=can
  * The overlay remains interactive so menu dropdowns and buttons continue working.
  */
 const gameSurface=document.querySelector<HTMLElement>('#playarea')!;
+// Inventory buttons are activated directly on touch pointerdown. On some mobile
+// browsers, tapping controls inside a touch-action:none game surface suppresses
+// the delayed synthetic click; handle touch explicitly without double actions.
+let lastInventoryTouch:{button:HTMLButtonElement;at:number}|null=null;
+overlay.addEventListener('pointerdown',event=>{
+ if(event.pointerType!=='touch'||!overlay.querySelector('.inventory-screen'))return;
+ const target=event.target;
+ if(!(target instanceof Element))return;
+ const button=target.closest<HTMLButtonElement>('button');
+ if(!button||button.disabled||!overlay.contains(button))return;
+ event.preventDefault();
+ event.stopPropagation();
+ lastInventoryTouch={button,at:performance.now()};
+ button.click();
+},{passive:false});
+overlay.addEventListener('click',event=>{
+ if(!event.isTrusted||!lastInventoryTouch)return;
+ const target=event.target;
+ if(!(target instanceof Element))return;
+ const button=target.closest<HTMLButtonElement>('button');
+ if(button===lastInventoryTouch.button&&performance.now()-lastInventoryTouch.at<850){
+  event.preventDefault();event.stopImmediatePropagation();
+ }
+},true);
+
 gameSurface.addEventListener('selectstart',event=>{
  if(overlay.hidden)event.preventDefault();
 });
@@ -138,7 +163,7 @@ function preRun(){loadProfile();paused=true;overlay.hidden=false;const p=profile
  overlay.querySelector<HTMLButtonElement>('#launch-run')!.onclick=()=>{read();newRun()};
  overlay.querySelector<HTMLButtonElement>('#prep-back')!.onclick=menu;
 }
-function buildFloor(seed:number,wave:number){combatFx=[];if(run)run.layoutVersion=2;plan=makeWave(seed,wave,2);if(!run)return;run.explored=[];fog=createFog(plan.map);const p=plan.map.entrance;run.player={x:p.x,y:p.y};run.enemies=[];run.spawned=0;run.kills=0;run.looted=[];run.stage='fight';run.reloadTimer=0;run.reloadSlot=null;ensureEquipment(run).rerolls=0;run.focusTarget=null;run.waveHit=false;run.waveStartHp=run.hp;run.waveStartArmor=run.armor;pathClock=0;pathField=null;bossPulse=0;noiseClock=0;for(let i=0;i<run.allies.length;i++){run.allies[i].x=p.x-.4-i*.3;run.allies[i].y=p.y+.55+i*.35;const safeAlly=nearestWalkable(plan.map,run.allies[i]);run.allies[i].x=safeAlly.x;run.allies[i].y=safeAlly.y;run.allies[i].anchor={x:run.allies[i].x,y:run.allies[i].y};run.allies[i].reviveProgress=0}spawnClock=0;allyClock=0;spawnInitial();save()}
+function buildFloor(seed:number,wave:number){combatFx=[];if(run)run.layoutVersion=3;plan=makeWave(seed,wave,3);if(!run)return;run.explored=[];fog=createFog(plan.map);const p=plan.map.entrance;run.player={x:p.x,y:p.y};run.enemies=[];run.spawned=0;run.kills=0;run.looted=[];run.stage='fight';run.reloadTimer=0;run.reloadSlot=null;ensureEquipment(run).rerolls=0;run.focusTarget=null;run.waveHit=false;run.waveStartHp=run.hp;run.waveStartArmor=run.armor;pathClock=0;pathField=null;bossPulse=0;noiseClock=0;for(let i=0;i<run.allies.length;i++){run.allies[i].x=p.x-.4-i*.3;run.allies[i].y=p.y+.55+i*.35;const safeAlly=nearestWalkable(plan.map,run.allies[i]);run.allies[i].x=safeAlly.x;run.allies[i].y=safeAlly.y;run.allies[i].anchor={x:run.allies[i].x,y:run.allies[i].y};run.allies[i].reviveProgress=0}spawnClock=0;allyClock=0;spawnInitial();save()}
 function newRun(){loadProfile();const kit=startingKit(profile);run={wave:1,credits:kit.credits,hp:100,armor:kit.armor,mag:kit.loadout.primary?.mag??0,reserve:kit.ammo.rifle,medkits:kit.medkits,weaponTier:1,damage:1,maxMag:kit.loadout.primary?.mag??0,player:{x:0,y:0},enemies:[],allies:kit.teammate==='none'?[]:[makeSquadmate(kit.teammate,'starter-01',0,0)],spawned:0,kills:0,bosses:0,cleared:0,seed:Math.floor(Math.random()*2000000000),stage:'fight',looted:[],squadAmmo:kit.teammate==='none'?0:8,activeSlot:'primary',sideMag:kit.loadout.secondary?.mag??12,sideReserve:kit.ammo.light,reloadTimer:0,reloadSlot:null,playerDowned:0,playerDead:false,squadOrder:'follow',focusTarget:null,reviveProgress:0,killsTotal:0,lootedTotal:0,flawlessWaves:0,bestSquad:kit.teammate==='none'?0:1,waveHit:false,equipment:{loadout:kit.loadout,bag:[],ammo:kit.ammo,capacity:kit.capacity,rerolls:0}};buildFloor(run.seed,1);overlay.hidden=true;paused=false;notice('WAVE 1 · Clear all infected to unlock the elevator')}
 function isFloor(x:number,y:number){return !!plan&&walkableTile(plan.map,x,y)}
 function canSee(ax:number,ay:number,bx:number,by:number){const dist=Math.hypot(ax-bx,ay-by),count=Math.ceil(dist*4);for(let i=1;i<count;i++){const a=i/count;if(!isFloor(ax+(bx-ax)*a,ay+(by-ay)*a))return false}return true}
@@ -267,7 +292,7 @@ function inventory(){if(!run)return;paused=true;overlay.hidden=false;
  const slotRows=(['primary','secondary','melee'] as Slot[]).map(slot=>{const w=eq.loadout[slot];const mods=w?Object.values(w.mods).filter((m):m is Mod=>!!m):[];
   return `<section style="padding:7px;border-bottom:1px solid #3f6055"><b>${slot.toUpperCase()}</b> — ${w?gearIcon(w.model)+itemName(w):'EMPTY'} ${w?(' · '+(weaponDefs[w.model].ammo?'MAG '+w.mag+'/'+effectiveStats(w).capacity:'MELEE')):''}<br>${mods.map(m=>itemName(m)).join(' · ')||'No attachments'} ${w?'<button id="remove-'+slot+'">UNEQUIP</button>':''} ${w&&atShop&&w.tier<5?'<button id="upgrade-equipped-'+slot+'">UPGRADE '+upgradePrice(w)+' CR</button>':''} ${mods.map(m=>'<button id="detach-'+slot+'-'+attachmentDefs[m.model].slot+'">REMOVE '+attachmentDefs[m.model].slot+'</button>'+(atShop&&m.tier<5?'<button id="upgrade-mod-'+slot+'-'+attachmentDefs[m.model].slot+'">UPGRADE MOD '+upgradePrice(m)+' CR</button>':'')).join(' ')}</section>`}).join('');
  const rows=eq.bag.map((gear,i)=>`<section style="padding:8px;border-bottom:1px solid #3f6055"><b>${gearIcon(gear.model)}${itemName(gear)}</b> ${gear.kind==='weapon'?' · DMG '+effectiveStats(gear).damage.toFixed(1)+' · '+(weaponDefs[gear.model].ammo??'no ammo'):' · '+attachmentDefs[gear.model].stat} · Sell ${salePrice(gear)} credits <div class="menurow">${gear.kind==='weapon'?'<button id="equip-item-'+i+'">EQUIP '+weaponDefs[gear.model].slot.toUpperCase()+'</button>':(['primary','secondary'] as Slot[]).filter(slot=>{const w=eq.loadout[slot];return w&&canEquipMod(w,gear)}).map(slot=>'<button id="attach-'+i+'-'+slot+'">ATTACH '+slot+'</button>').join('')}${atShop&&gear.tier<5?'<button id="upgrade-item-'+i+'">UPGRADE '+upgradePrice(gear)+' CR</button>':''}<button id="dispose-'+i+'">${atShop?'SELL':'DROP'}</button></div></section>`).join('');
- overlay.innerHTML=`<article><h1>INVENTORY · ${inventorySummary(r)} SLOTS</h1><p>Gear uses one backpack slot. Ammo reserves stack into slots; medkits stack three per slot. Equipped gear does not occupy backpack space.</p><h2>Equipped Gear</h2>${slotRows}<h2>Backpack</h2>${rows||'<p>Backpack empty</p>'}<h2>Supplies</h2><p>${ammoTypes.map(t=>ammoLabels[t]+': '+eq.ammo[t]).join(' · ')} · Medkits: ${r.medkits}</p><div class="menurow">${ammoTypes.filter(t=>eq.ammo[t]>0).map(t=>'<button id="discard-'+t+'">'+(atShop?'SELL':'DROP')+' '+ammoLabels[t]+' '+Math.min(ammoStack[t],eq.ammo[t])+'</button>').join('')} ${r.medkits>0?'<button id="discard-med">'+(atShop?'SELL':'DROP')+' 1 MEDKIT</button>':''}</div><div class="menurow"><button id="close-inventory">${atShop?'BACK TO ARMORY':'RETURN TO DUNGEON'}</button></div></article>`;
+ overlay.innerHTML=`<article class="inventory-screen"><h1>INVENTORY · ${inventorySummary(r)} SLOTS</h1><p>Gear uses one backpack slot. Ammo reserves stack into slots; medkits stack three per slot. Equipped gear does not occupy backpack space.</p><h2>Equipped Gear</h2>${slotRows}<h2>Backpack</h2>${rows||'<p>Backpack empty</p>'}<h2>Supplies</h2><p>${ammoTypes.map(t=>ammoLabels[t]+': '+eq.ammo[t]).join(' · ')} · Medkits: ${r.medkits}</p><div class="menurow">${ammoTypes.filter(t=>eq.ammo[t]>0).map(t=>'<button id="discard-'+t+'">'+(atShop?'SELL':'DROP')+' '+ammoLabels[t]+' '+Math.min(ammoStack[t],eq.ammo[t])+'</button>').join('')} ${r.medkits>0?'<button id="discard-med">'+(atShop?'SELL':'DROP')+' 1 MEDKIT</button>':''}</div><div class="menurow"><button id="close-inventory">${atShop?'BACK TO ARMORY':'RETURN TO DUNGEON'}</button></div></article>`;
  const refresh=()=>{save();inventory()};
  for(const slot of ['primary','secondary','melee'] as Slot[]){
   const w=eq.loadout[slot];if(!w)continue;
@@ -411,7 +436,7 @@ shotCooldown=Math.max(0,shotCooldown-dt);noiseClock=Math.max(0,noiseClock-dt);if
 rescueAction(dt,keys.has('KeyV')||touch.has('revive'));
 if(aimAnalog.magnitude>0){aim={x:aimAnalog.x/aimAnalog.magnitude,y:aimAnalog.y/aimAnalog.magnitude}}
 if((run.playerDowned??0)===0&&(keys.has('Space')||firePressed||aimFiring)){const nearest=run.enemies.filter(e=>e.alive&&canSee(p.x,p.y,e.x,e.y)&&Math.hypot(e.x-p.x,e.y-p.y)<=(activeWeapon(run!)?effectiveStats(activeWeapon(run!)!).range:1.3)).sort((a,b)=>Math.hypot(a.x-p.x,a.y-p.y)-Math.hypot(b.x-p.x,b.y-p.y))[0];if(nearest&&keys.has('Space')){const length=Math.hypot(nearest.x-p.x,nearest.y-p.y)||1;aim={x:(nearest.x-p.x)/length,y:(nearest.y-p.y)/length}}shoot()}
-spawnClock+=dt;if(run.spawned<plan.total&&spawnClock>1.45){spawnClock=0;const active=run.enemies.filter(e=>e.alive).length;if(active<Math.min(22,8+Math.ceil(run.wave/2)))spawnOne(false)}
+spawnClock+=dt;if(run.spawned<plan.total&&spawnClock>(run.layoutVersion===3?1.05:1.45)){spawnClock=0;const active=run.enemies.filter(e=>e.alive).length;const cap=run.layoutVersion===3?Math.min(44,16+Math.ceil(run.wave)):Math.min(22,8+Math.ceil(run.wave/2));if(active<cap)spawnOne(false)}
 squadUpdate(dt);
 if(fog&&updateFog(plan.map,fog,explorationSources()))run.explored=exploredIndices(fog);
 pathClock-=dt;if(pathClock<=0||!pathField){pathField=distanceField(plan.map,run.player);pathClock=.32}
