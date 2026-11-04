@@ -157,7 +157,7 @@ function shop(){if(!run)return;
  const packCost=backpackUpgradePrice(eq.capacity);
  bind('pack-buy',packCost,()=>{eq.capacity+=4;return true},eq.capacity<24);
  offers.forEach((offer,i)=>bind('offer-'+i,offer.price,()=>{
-  if(offer.kind==='recruit'){if(!canRecruit(r.allies.length)){notice('SQUAD FULL');return false}const role=offer.model as keyof typeof CLASS_INFO;r.allies.push(makeSquadmate(role,gearId(r),r.player.x,r.player.y));r.bestSquad=Math.max(r.bestSquad??0,r.allies.length);r.squadAmmo+=8;return true}
+  if(offer.kind==='recruit'){if(!canRecruit(r.allies.length)){notice('SQUAD FULL');return false}const role=offer.model as keyof typeof CLASS_INFO;r.allies.push(makeSquadmate(role,gearId(r),r.player.x,r.player.y));r.squadAmmo+=8;return true}
   if(!canAddItem(eq.bag,eq.ammo,r.medkits,eq.capacity)){notice('BACKPACK FULL');return false}
   const item=offer.kind==='weapon'?newWeapon(offer.model as WeaponId,offer.tier,gearId(r)):newMod(offer.model as AttachmentId,offer.tier,gearId(r));eq.bag.push(item);notice(itemName(item)+' purchased');return true
  },offer.kind!=='recruit'||canRecruit(r.allies.length)));
