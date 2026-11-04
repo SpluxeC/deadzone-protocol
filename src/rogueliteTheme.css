@@ -55,4 +55,4 @@
 #rogue .gear-mini{display:inline-block;vertical-align:middle;flex:none;width:34px;height:34px;margin-right:8px;border-radius:6px;background-repeat:no-repeat;background-size:816px 34px;background-color:#1e3431;box-shadow:0 0 0 1px #617f73;image-rendering:auto}
 #rogue #overlay .shop button .gear-mini{float:left;margin-top:1px;margin-bottom:2px}
 #rogue #loadout-preview .gear-mini{margin-right:4px}
-@media(max-width:780px){#rogue .gear-mini{width:29px;height:29px;background-size:696px 29px}}
+@media(max-width:780px){#rogue .gear-mini{margin-right:5px}}
