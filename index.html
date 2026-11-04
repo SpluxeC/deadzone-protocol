@@ -19,14 +19,22 @@ html,body{margin:0;min-height:100%;background:#122025;color:#e5eee9;font-family:
   function failed(message){detail=message||'The game could not load.';show();}
   function show(){
     var app=document.getElementById('app');
-    if(!app||!app.querySelector('#startup-status'))return;
+    if(!app||document.documentElement.dataset.deadzoneReady==='true')return;
+    if(!app.querySelector('#startup-status')){
+      var status=document.createElement('main');
+      status.id='startup-status';
+      status.style.cssText='position:fixed;inset:0;z-index:100;background:#122025';
+      status.innerHTML='<h1>DEADZONE PROTOCOL</h1><p id="startup-message"></p><button id="startup-retry" type="button">RETRY LOADING</button>';
+      app.appendChild(status);
+      status.querySelector('#startup-retry').addEventListener('click',function(){location.reload()});
+    }
     var msg=app.querySelector('#startup-message');
     if(msg)msg.textContent=detail||'The game is taking longer than expected to load.';
     var retry=app.querySelector('#startup-retry');
     if(retry)retry.hidden=false;
   }
   window.addEventListener('error',function(event){
-    if(document.getElementById('rogue'))return;
+    if(document.documentElement.dataset.deadzoneReady==='true')return;
     failed('The game failed to start. Reload to retry.');
   },true);
   window.addEventListener('unhandledrejection',function(){
@@ -34,7 +42,7 @@ html,body{margin:0;min-height:100%;background:#122025;color:#e5eee9;font-family:
     failed('The game encountered a startup error. Reload to retry.');
   });
   window.addEventListener('DOMContentLoaded',function(){
-    setTimeout(function(){if(!document.getElementById('rogue'))show()},5000);
+    setTimeout(function(){if(document.documentElement.dataset.deadzoneReady!=='true')show()},5000);
   });
 })();
 </script>
