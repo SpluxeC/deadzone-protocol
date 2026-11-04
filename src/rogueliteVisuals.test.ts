@@ -34,3 +34,14 @@ test('offscreen culling and health feedback have valid ranges',()=>{
  assert.equal(visible(v,map.entrance.x,map.entrance.y),true);
  assert.notEqual(hudColor(.8),hudColor(.1));
 });
+
+import {gearIconModels,gearIcon} from './gearIcons.ts';
+test('all weapon, attachment and supply icons resolve to one atlas cell',()=>{
+ const svg=readFileSync(new URL('./assets/deadzone-gear.svg',import.meta.url),'utf8');
+ assert.equal(gearIconModels.length,24);
+ assert.equal(new Set(gearIconModels).size,24);
+ assert.match(svg,/viewBox="0 0 1536 64"/);
+ assert.equal((svg.match(/<g transform="translate\(\d+ 0\)"/g)||[]).length,24);
+ for(const id of gearIconModels)assert.match(gearIcon(id),/class="gear-mini"/);
+ assert.equal(gearIcon('unknown-gear'), '');
+});
