@@ -263,3 +263,29 @@
  #rogue.menu-open #overlay .achievement-item{padding:4px;font-size:clamp(9px,2vh,11px)}
  #rogue.menu-open #overlay .progression-category{margin:0;gap:8px}
 }
+
+/* Mobile squad orders: override the touch-control display rule when no living squadmate exists.
+   The hidden attribute removes the entire row, including any empty selected-button background. */
+#rogue #mobile-squad[hidden]{display:none!important}
+#rogue #mobile-squad[aria-hidden="true"]{display:none!important}
+
+/* Prevent iOS/Android blue text-selection highlights and long-press callouts
+   during gameplay; keep native dropdown interaction in menus. */
+#rogue #playarea,
+#rogue #rogue-canvas,
+#rogue #mobile-sticks,
+#rogue #mobile-sticks *,
+#rogue #mobile-squad,
+#rogue #mobile-squad *,
+#rogue #mobile-actions,
+#rogue #mobile-actions *,
+#rogue footer,
+#rogue footer *{
+ -webkit-user-select:none!important;
+ user-select:none!important;
+ -webkit-touch-callout:none!important;
+ -webkit-tap-highlight-color:transparent;
+}
+#rogue #playarea:not(:has(#overlay:not([hidden]))){-webkit-user-select:none;user-select:none}
+#rogue #overlay,#rogue #overlay *{-webkit-touch-callout:default}
+#rogue #overlay select{user-select:auto!important;-webkit-user-select:auto!important}
