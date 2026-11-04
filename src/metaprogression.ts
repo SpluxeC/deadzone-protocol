@@ -1,5 +1,6 @@
 import {weaponDefs,attachmentDefs,newWeapon,newMod,canEquipMod,usedSlots,type WeaponId,type AttachmentId,type Tier,type Loadout,type AmmoBank,type Mod,type Weapon} from './equipmentArmory.ts';
-import {classIds,type ClassId} from './equipmentArmory.ts';
+import type {ClassId} from './equipmentArmory.ts';
+import {classIds} from './squadSystems.ts';
 export type UnlockId='starterSmg'|'starterAssault'|'starterShotgun'|'starterMarksman'|'starterAxe'|'starterRedDot'|'starterGrip'|'starterArmor'|'starterMedkit'|'startingBackpack'|'armoryCatalog'|'classMedic'|'classHeavy'|'classScout'|'classEngineer';
 export type UnlockDef={label:string;description:string;cost:number;group:string};
 export const unlocks:Record<UnlockId,UnlockDef>={
