@@ -67,7 +67,7 @@ const sel=overlay.querySelector<HTMLSelectElement>('#slot-select')!;sel.value=St
 sel.onchange=()=>{slot=Number(sel.value);run=null;plan=null;refresh()};
 overlay.querySelector<HTMLButtonElement>('#continue-run')!.onclick=()=>{if(!loadRun()){notice('No valid run found');return}paused=false;if(run!.stage==='shop')shop();else overlay.hidden=true};
 overlay.querySelector<HTMLButtonElement>('#new-run')!.onclick=()=>{if(localStorage.getItem(store('run'))&&!confirm('Start a new run? Current run progress will be lost.'))return;preRun()};
-overlay.querySelector<HTMLButtonElement>('#upgrades')!.onclick=permanentShop;
+overlay.querySelector<HTMLButtonElement>('#upgrades')!.onclick=()=>permanentShop();
 }
 function permanentShop(section='Core Bonuses'){loadProfile();paused=true;overlay.hidden=false;
  const groups=['Core Bonuses',...new Set(Object.values(unlocks).map(x=>x.group)),'Achievements'];
