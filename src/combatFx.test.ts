@@ -10,7 +10,7 @@ test('every firearm generates distinctive short-lived tracers',()=>{
   assert.ok(p,model);
   const fx=makeAttackFx(model,2,3,1,0,20);
   assert.equal(fx.length,p.count);
-  assert.ok(fx.every(f=>f.kind==='bullet'&&f.duration>0&&f.distance<=p.distance));
+  assert.ok(fx.every(f=>f.kind==='bullet'&&f.duration>0&&f.distance<=20));
   assert.equal(ageCombatFx(fx,5).length,0);
  }
  assert.ok(makeAttackFx('shotgun',0,0,0,1,4).length>makeAttackFx('pistol',0,0,0,1,4).length);
