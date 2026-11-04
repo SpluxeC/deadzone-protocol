@@ -5,11 +5,9 @@ export type View={tile:number;ox:number;oy:number;width:number;height:number;min
 export type SpriteKind='player'|'rifleman'|'medic'|'heavy'|'scout'|'engineer'|'shambler'|'runner'|'armored'|'bruiser'|'boss'|'crate'|'elevator'|'spawn';
 export const spriteIndex:Record<SpriteKind,number>={player:0,rifleman:1,medic:2,heavy:3,scout:4,engineer:5,shambler:6,runner:7,armored:8,bruiser:9,boss:10,crate:11,elevator:12,spawn:13};
 export const spriteSize=96;
-const atlas=new Image();
+const atlas=typeof Image==='undefined'?null:new Image();
 let ready=false;
-atlas.onload=()=>{ready=true};
-atlas.onerror=()=>{ready=false};
-atlas.src=spriteUrl;
+if(atlas){atlas.onload=()=>{ready=true};atlas.onerror=()=>{ready=false};atlas.src=spriteUrl}
 export const spriteReady=()=>ready;
 export function camera(map:DungeonLayout,player:Point,width:number,height:number):View{
  const tile=Math.max(18,Math.min(40,Math.min(width/23,height/15)));
@@ -55,7 +53,7 @@ export function drawSprite(ctx:CanvasRenderingContext2D,kind:SpriteKind,v:View,x
  const px=v.ox+x*v.tile,py=v.oy+y*v.tile+(opts?.bob??0),sz=v.tile*(opts?.scale??1);
  ctx.save();ctx.translate(px,py);ctx.rotate((opts?.angle??0)+(opts?.down?Math.PI*.5:0));ctx.globalAlpha=opts?.alpha??1;
  if(opts?.glow){ctx.fillStyle=opts.glow;ctx.globalAlpha=.17;ctx.beginPath();ctx.ellipse(0,0,sz*.72,sz*.65,0,0,Math.PI*2);ctx.fill();ctx.globalAlpha=opts.alpha??1}
- if(ready)ctx.drawImage(atlas,spriteIndex[kind]*spriteSize,0,spriteSize,spriteSize,-sz*.6,-sz*.7,sz*1.2,sz*1.2);
+ if(ready&&atlas)ctx.drawImage(atlas,spriteIndex[kind]*spriteSize,0,spriteSize,spriteSize,-sz*.6,-sz*.7,sz*1.2,sz*1.2);
  else{ctx.fillStyle=kind==='player'?'#dcd0b3':kind==='elevator'?'#61cda0':kind==='crate'?'#b9975d':'#7b9991';ctx.beginPath();ctx.arc(0,0,sz*.35,0,Math.PI*2);ctx.fill()}
  ctx.restore();
 }
