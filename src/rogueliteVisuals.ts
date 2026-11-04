@@ -1,5 +1,5 @@
 import type {DungeonLayout} from './dungeon.ts';
-import spriteUrl from './assets/deadzone-sprites.svg?url';
+const spriteUrl=new URL('./assets/deadzone-sprites.svg',import.meta.url).href;
 export type Point={x:number;y:number};
 export type View={tile:number;ox:number;oy:number;width:number;height:number;minX:number;maxX:number;minY:number;maxY:number};
 export type SpriteKind='player'|'rifleman'|'medic'|'heavy'|'scout'|'engineer'|'shambler'|'runner'|'armored'|'bruiser'|'boss'|'crate'|'elevator'|'spawn';
