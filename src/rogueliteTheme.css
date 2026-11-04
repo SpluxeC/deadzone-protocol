@@ -50,13 +50,24 @@
  #rogue #overlay article{padding:13px}
  #rogue #overlay .shop{grid-template-columns:repeat(auto-fit,minmax(135px,1fr))}
 }
+/* Keep every readout in the title bar; never hide squad or enemy status. */
+@media(max-width:900px){
+ #rogue header{display:grid;grid-template-columns:1fr auto;grid-template-rows:auto auto;column-gap:7px;row-gap:1px;height:auto;min-height:47px;padding:3px 7px!important}
+ #rogue header .game-title{grid-column:1;grid-row:1;justify-self:start;font-size:11px}
+ #rogue header #menu{grid-column:2;grid-row:1;justify-self:end;padding:2px 6px!important;min-height:21px}
+ #rogue #combat-hud{grid-column:1 / -1;grid-row:2;width:100%;display:flex;justify-content:space-between;gap:3px;overflow:visible}
+ #rogue #combat-hud .top-stat{display:inline-block!important;flex:0 1 auto;max-width:none;font-size:clamp(7px,1.25vw,9px);overflow:visible;text-overflow:clip}
+ #rogue #combat-hud #stats{font-size:clamp(8px,1.35vw,10px)}
+ #rogue #combat-hud .hud-meter{flex:0 1 auto;min-width:0;grid-template-columns:auto minmax(9px,28px) auto;gap:2px;font-size:clamp(7px,1.15vw,9px)}
+ #rogue #combat-hud .hud-meter b{font-size:clamp(7px,1.15vw,9px)}
+}
 @media(max-width:680px){
  #rogue header .game-title{font-size:10px}
- #rogue #combat-hud #hud-team,#rogue #combat-hud #hud-enemies{display:none}
- #rogue #combat-hud .hud-meter{min-width:44px;flex-basis:62px}
+ #rogue #combat-hud{gap:2px}
+ #rogue #combat-hud .hud-meter{grid-template-columns:auto 12px auto}
 }
 @media(max-height:430px) and (pointer:coarse){
- #rogue header{height:35px;min-height:35px}
+ #rogue header{height:auto;min-height:45px}
  #rogue #combat-hud #hud-weapon{max-width:19vw}
 }
 @media(max-height:550px){#rogue footer{max-height:78px}}
@@ -108,7 +119,7 @@
  #rogue #toast{bottom:8px!important}
 }
 @media(pointer:coarse) and (orientation:landscape) and (max-height:430px){
- #rogue header{min-height:30px;height:34px}
+ #rogue header{min-height:45px;height:auto}
  #rogue footer{top:39px;max-height:43vh!important}
  #mobile-sticks .analog-base{--stick-size:clamp(82px,27vh,120px)}
  #mobile-sticks{padding-bottom:max(3px,env(safe-area-inset-bottom))}
