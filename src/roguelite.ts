@@ -9,6 +9,7 @@ import {gearIcon} from './gearIcons';
 import {makeAttackFx,ageCombatFx,drawCombatFx,type CombatFx} from './combatFx';
 import {createFog,updateFog,renderFog,exploredIndices,type FogState,type Flashlight} from './fogOfWar';
 import {normalizeStick,stickKnob,type StickVector} from './mobileControls';
+import {walkableTile,canOccupy,nearestWalkable} from './tileCollision';
 import './rogueliteTheme.css';
 import './style.css';
 
@@ -55,7 +56,11 @@ function activeWeapon(r:Run):Weapon|null{return ensureEquipment(r).loadout[r.act
 function inventorySummary(r:Run){const eq=ensureEquipment(r);return usedSlots(eq.bag,eq.ammo,r.medkits)+'/'+eq.capacity}
 function gearId(r:Run):string{return 'gear-'+r.wave+'-'+r.kills+'-'+Math.floor(Math.random()*1e9)}
 
-function loadRun(){try{const r=JSON.parse(localStorage.getItem(store('run'))||'null') as Run|null;if(!r||!Number.isFinite(r.wave)||!['fight','shop'].includes(r.stage))return false;run=r;run.layoutVersion??=1;plan=makeWave(run.seed,run.wave,run.layoutVersion);run.looted??=[];run.squadAmmo??=run.allies.length*8;run.maxMag??=12;run.weaponTier??=1;run.damage??=1;run.activeSlot??='primary';run.sideMag??=12;run.sideReserve??=48;run.reloadTimer??=0;run.reloadSlot??=null;run.killsTotal??=0;run.lootedTotal??=0;run.flawlessWaves??=0;run.bestSquad??=run.allies.length;run.waveHit??=false;run.playerDowned??=0;run.playerDead??=false;run.squadOrder??='follow';run.focusTarget??=null;run.reviveProgress??=0;run.allies=(run.allies||[]).map((a,i)=>migrateSquadmate(a,i));ensureEquipment(run);fog=createFog(plan.map,run.explored??[]);for(const enemy of run.enemies){enemy.kind??=enemy.boss?'boss':'shambler';enemy.attack??=0;enemy.windup??=0;enemy.phase??=0;enemy.aggro??=0;enemy.suppressed??=0;enemy.scoutMarked??=0;}return true}catch{return false}}
+function loadRun(){try{const r=JSON.parse(localStorage.getItem(store('run'))||'null') as Run|null;if(!r||!Number.isFinite(r.wave)||!['fight','shop'].includes(r.stage))return false;run=r;run.layoutVersion??=1;plan=makeWave(run.seed,run.wave,run.layoutVersion);run.looted??=[];run.squadAmmo??=run.allies.length*8;run.maxMag??=12;run.weaponTier??=1;run.damage??=1;run.activeSlot??='primary';run.sideMag??=12;run.sideReserve??=48;run.reloadTimer??=0;run.reloadSlot??=null;run.killsTotal??=0;run.lootedTotal??=0;run.flawlessWaves??=0;run.bestSquad??=run.allies.length;run.waveHit??=false;run.playerDowned??=0;run.playerDead??=false;run.squadOrder??='follow';run.focusTarget??=null;run.reviveProgress??=0;run.allies=(run.allies||[]).map((a,i)=>migrateSquadmate(a,i));
+ run.player=nearestWalkable(plan.map,run.player);
+ for(const a of run.allies){const p=nearestWalkable(plan.map,a);a.x=p.x;a.y=p.y;}
+ ensureEquipment(run);fog=createFog(plan.map,run.explored??[]);for(const enemy of run.enemies){
+ const p=nearestWalkable(plan.map,enemy);enemy.x=p.x;enemy.y=p.y;enemy.kind??=enemy.boss?'boss':'shambler';enemy.attack??=0;enemy.windup??=0;enemy.phase??=0;enemy.aggro??=0;enemy.suppressed??=0;enemy.scoutMarked??=0;}return true}catch{return false}}
 function menu(){combatFx=[];paused=true;overlay.hidden=false;overlay.innerHTML=`<article><h1>DEADZONE <span style="color:#f18567">PROTOCOL</span></h1><p>Wave-based dungeon roguelite. Clear finite hordes, find the elevator, buy upgrades, and descend into a new procedural floor. The old FOB campaign remains preserved in source code.</p><label>Save slot <select id="slot-select"><option value="1">SLOT 01</option><option value="2">SLOT 02</option><option value="3">SLOT 03</option></select></label><p id="career"></p><div class="menurow"><button id="continue-run">CONTINUE RUN</button><button id="new-run">NEW RUN</button><button id="upgrades">PERMANENT UNLOCKS</button></div></article>`;
 const sel=overlay.querySelector<HTMLSelectElement>('#slot-select')!;sel.value=String(slot);const refresh=()=>{loadProfile();const active=localStorage.getItem(store('run'));overlay.querySelector('#career')!.textContent='BEST WAVE '+profile.bestWave+' · LEGACY TOKENS '+profile.tokens+' · RUNS '+profile.runs+(active?' · RUN IN PROGRESS':'');(overlay.querySelector<HTMLButtonElement>('#continue-run'))!.disabled=!active};refresh();
 sel.onchange=()=>{slot=Number(sel.value);run=null;plan=null;refresh()};
@@ -93,9 +98,9 @@ function preRun(){loadProfile();paused=true;overlay.hidden=false;const p=profile
  overlay.querySelector<HTMLButtonElement>('#launch-run')!.onclick=()=>{read();newRun()};
  overlay.querySelector<HTMLButtonElement>('#prep-back')!.onclick=menu;
 }
-function buildFloor(seed:number,wave:number){combatFx=[];if(run)run.layoutVersion=2;plan=makeWave(seed,wave,2);if(!run)return;run.explored=[];fog=createFog(plan.map);const p=plan.map.entrance;run.player={x:p.x,y:p.y};run.enemies=[];run.spawned=0;run.kills=0;run.looted=[];run.stage='fight';run.reloadTimer=0;run.reloadSlot=null;ensureEquipment(run).rerolls=0;run.focusTarget=null;run.waveHit=false;run.waveStartHp=run.hp;run.waveStartArmor=run.armor;pathClock=0;pathField=null;bossPulse=0;noiseClock=0;for(let i=0;i<run.allies.length;i++){run.allies[i].x=p.x-.4-i*.3;run.allies[i].y=p.y+.55+i*.35;run.allies[i].anchor={x:run.allies[i].x,y:run.allies[i].y};run.allies[i].reviveProgress=0}spawnClock=0;allyClock=0;spawnInitial();save()}
+function buildFloor(seed:number,wave:number){combatFx=[];if(run)run.layoutVersion=2;plan=makeWave(seed,wave,2);if(!run)return;run.explored=[];fog=createFog(plan.map);const p=plan.map.entrance;run.player={x:p.x,y:p.y};run.enemies=[];run.spawned=0;run.kills=0;run.looted=[];run.stage='fight';run.reloadTimer=0;run.reloadSlot=null;ensureEquipment(run).rerolls=0;run.focusTarget=null;run.waveHit=false;run.waveStartHp=run.hp;run.waveStartArmor=run.armor;pathClock=0;pathField=null;bossPulse=0;noiseClock=0;for(let i=0;i<run.allies.length;i++){run.allies[i].x=p.x-.4-i*.3;run.allies[i].y=p.y+.55+i*.35;const safeAlly=nearestWalkable(plan.map,run.allies[i]);run.allies[i].x=safeAlly.x;run.allies[i].y=safeAlly.y;run.allies[i].anchor={x:run.allies[i].x,y:run.allies[i].y};run.allies[i].reviveProgress=0}spawnClock=0;allyClock=0;spawnInitial();save()}
 function newRun(){loadProfile();const kit=startingKit(profile);run={wave:1,credits:kit.credits,hp:100,armor:kit.armor,mag:kit.loadout.primary?.mag??0,reserve:kit.ammo.rifle,medkits:kit.medkits,weaponTier:1,damage:1,maxMag:kit.loadout.primary?.mag??0,player:{x:0,y:0},enemies:[],allies:kit.teammate==='none'?[]:[makeSquadmate(kit.teammate,'starter-01',0,0)],spawned:0,kills:0,bosses:0,cleared:0,seed:Math.floor(Math.random()*2000000000),stage:'fight',looted:[],squadAmmo:kit.teammate==='none'?0:8,activeSlot:'primary',sideMag:kit.loadout.secondary?.mag??12,sideReserve:kit.ammo.light,reloadTimer:0,reloadSlot:null,playerDowned:0,playerDead:false,squadOrder:'follow',focusTarget:null,reviveProgress:0,killsTotal:0,lootedTotal:0,flawlessWaves:0,bestSquad:kit.teammate==='none'?0:1,waveHit:false,equipment:{loadout:kit.loadout,bag:[],ammo:kit.ammo,capacity:kit.capacity,rerolls:0}};buildFloor(run.seed,1);overlay.hidden=true;paused=false;notice('WAVE 1 · Clear all infected to unlock the elevator')}
-function isFloor(x:number,y:number){if(!plan)return false;const map=plan.map,tx=Math.floor(x+.5),ty=Math.floor(y+.5);return tx>=0&&ty>=0&&tx<map.width&&ty<map.height&&map.tiles[ty*map.width+tx]===0}
+function isFloor(x:number,y:number){return !!plan&&walkableTile(plan.map,x,y)}
 function canSee(ax:number,ay:number,bx:number,by:number){const dist=Math.hypot(ax-bx,ay-by),count=Math.ceil(dist*4);for(let i=1;i<count;i++){const a=i/count;if(!isFloor(ax+(bx-ax)*a,ay+(by-ay)*a))return false}return true}
 function spawnOne(boss=false){if(!run||!plan||run.spawned>=plan.total)return false;const points=plan.spawnPoints.filter(p=>Math.hypot(p.x-run!.player.x,p.y-run!.player.y)>5);if(!points.length){const far=plan.spawnPoints.slice().sort((a,b)=>Math.hypot(b.x-run!.player.x,b.y-run!.player.y)-Math.hypot(a.x-run!.player.x,a.y-run!.player.y))[0];if(!far||Math.hypot(far.x-run.player.x,far.y-run.player.y)<2)return false;points.push(far)}const n=run.spawned,origin=points[(n*7+run.wave*3)%points.length];
 const map=plan.map,possible: {x:number;y:number;score:number}[]=[];
@@ -310,7 +315,13 @@ function squadUpdate(dt:number){if(!run||!plan)return;const r=run,p=r.player,ord
  }
  r.allies=r.allies.filter(a=>!a.dead);
 }
-function moveUnit(u:{x:number;y:number},vx:number,vy:number,step:number){if(isFloor(u.x+vx*step,u.y))u.x+=vx*step;if(isFloor(u.x,u.y+vy*step))u.y+=vy*step}
+function moveUnit(u:{x:number;y:number},vx:number,vy:number,step:number){
+ if(!plan)return;
+ const map=plan.map;
+ // Check a whole actor footprint, so sprite centers cannot slide into wall tile edges.
+ if(canOccupy(map,u.x+vx*step,u.y))u.x+=vx*step;
+ if(canOccupy(map,u.x,u.y+vy*step))u.y+=vy*step;
+}
 function allyDirection(a:Ally):{x:number;y:number}{
  if(!run||!plan)return aim;
  let nearest:Unit|null=null,best=8;
