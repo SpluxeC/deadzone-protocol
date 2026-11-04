@@ -11,9 +11,9 @@ if(atlas){atlas.onload=()=>{ready=true};atlas.onerror=()=>{ready=false};atlas.sr
 export const spriteReady=()=>ready;
 export function camera(map:DungeonLayout,player:Point,width:number,height:number,zoom=1):View{
  const tile=Math.max(10,Math.min(85,Math.max(18,Math.min(40,Math.min(width/23,height/15)))*zoom));
- const worldWidth=map.width*tile,worldHeight=map.height*tile;
- const ox=worldWidth<width?(width-worldWidth)/2:Math.min(0,Math.max(width-worldWidth,width/2-player.x*tile));
- const oy=worldHeight<height?(height-worldHeight)/2:Math.min(0,Math.max(height-worldHeight,height/2-player.y*tile));
+ // Always center the player, including at dungeon boundaries. Areas beyond the map render as background.
+ const ox=width/2-player.x*tile;
+ const oy=height/2-player.y*tile;
  return {tile,ox,oy,width,height,minX:Math.max(0,Math.floor(-ox/tile)-1),maxX:Math.min(map.width,Math.ceil((width-ox)/tile)+1),minY:Math.max(0,Math.floor(-oy/tile)-1),maxY:Math.min(map.height,Math.ceil((height-oy)/tile)+1)};
 }
 export function toWorld(view:View,screenX:number,screenY:number):Point{return {x:(screenX-view.ox)/view.tile,y:(screenY-view.oy)/view.tile}}
