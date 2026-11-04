@@ -572,4 +572,4 @@ window.addEventListener('blur',cancelSwap);
 swapButton.addEventListener('click',e=>{if(e.detail===0)swapFirearm()});
 const reviveButton=document.querySelector<HTMLButtonElement>('#revive')!;reviveButton.addEventListener('pointerdown',e=>{e.preventDefault();reviveButton.setPointerCapture(e.pointerId);touch.add('revive')});reviveButton.addEventListener('pointerup',()=>touch.delete('revive'));reviveButton.addEventListener('pointercancel',()=>touch.delete('revive'));
 for(const [id,dir]of [['moveup','up'],['movedown','down'],['moveleft','left'],['moveright','right']]){const el=document.querySelector<HTMLButtonElement>('#'+id)!;el.addEventListener('pointerdown',e=>{e.preventDefault();el.setPointerCapture(e.pointerId);touch.add(dir)});el.addEventListener('pointerup',()=>touch.delete(dir));el.addEventListener('pointercancel',()=>touch.delete(dir))}
-loadProfile();menu();requestAnimationFrame(frame);
+loadProfile();menu();document.documentElement.dataset.deadzoneReady='true';requestAnimationFrame(frame);
