@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {camera,toWorld,visible,spriteIndex,spriteSize,hudColor} from './rogueliteVisuals.ts';
+import {camera,toWorld,visible,spriteIndex,spriteSize,hudColor,environmentTileId,environmentArtReady} from './rogueliteVisuals.ts';
 import {generateDungeon} from './dungeon.ts';
 import {readFileSync} from 'node:fs';
 test('all 5 specialists and 5 infected have distinct sprite atlas cells',()=>{
@@ -44,4 +44,16 @@ test('all weapon, attachment and supply icons resolve to one atlas cell',()=>{
  assert.equal((svg.match(/<g transform="translate\(\d+ 0\)"/g)||[]).length,24);
  for(const id of gearIconModels)assert.match(gearIcon(id),/class="gear-mini"/);
  assert.equal(gearIcon('unknown-gear'), '');
+});
+
+test('optional environment atlas maps only flooring to floor art and walls to wall art',()=>{
+ for(let n=0;n<=100;n++){
+  const noise=n/100;
+  const floor=environmentTileId(true,noise),wall=environmentTileId(false,noise);
+  assert.ok(floor>=0&&floor<10);
+  assert.ok(wall>=10&&wall<16);
+ }
+ assert.equal(environmentTileId(true,0),0);
+ assert.equal(environmentTileId(true,.999),9);
+ assert.equal(environmentArtReady(),false); // Node has no Image; browser downloads it after upload
 });
