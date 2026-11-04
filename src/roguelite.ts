@@ -7,7 +7,7 @@ import {migrateProfile,unlocks,achievements,buyUnlock,allowedPrimary,allowedMele
 import {camera,toWorld,renderDungeon,drawSprite,drawBar,drawHazard,hudColor,type View,type SpriteKind} from './rogueliteVisuals';
 import {gearIcon} from './gearIcons';
 import {makeAttackFx,ageCombatFx,drawCombatFx,type CombatFx} from './combatFx';
-import {createFog,updateFog,renderFog,exploredIndices,type FogState,type Explorer} from './fogOfWar';
+import {createFog,updateFog,renderFog,renderFlashlights,exploredIndices,type FogState,type Explorer,type Flashlight} from './fogOfWar';
 import {normalizeStick,stickKnob,type StickVector} from './mobileControls';
 import {walkableTile,canOccupy,nearestWalkable} from './tileCollision';
 import './rogueliteTheme.css';
@@ -333,6 +333,12 @@ function allyDirection(a:Ally):{x:number;y:number}{
  if(nearest){const d=Math.hypot(nearest.x-a.x,nearest.y-a.y)||1;return {x:(nearest.x-a.x)/d,y:(nearest.y-a.y)/d}}
  return aim;
 }
+function flashlightSources():Flashlight[]{
+ if(!run)return [];
+ const sources:Flashlight[]=[{x:run.player.x,y:run.player.y,dx:aim.x,dy:aim.y,range:8.3}];
+ for(const a of run.allies)if(!a.dead&&a.downed<=0){const dir=allyDirection(a);sources.push({x:a.x,y:a.y,dx:dir.x,dy:dir.y,range:7.3})}
+ return sources;
+}
 function explorationSources():Explorer[]{
  if(!run)return [];
  const explorers:Explorer[]=[{x:run.player.x,y:run.player.y,radius:5.5}];
@@ -386,6 +392,7 @@ function draw(){
  if(!plan||!run){ctx.fillStyle='#081115';ctx.fillRect(0,0,cw,ch);stats.textContent='READY';lastView=null;return}
  const r=run,m=plan.map,v=camera(m,r.player,cw,ch,cameraZoom);lastView=v;
  renderDungeon(ctx,m,v,r.wave);
+ if(fog)renderFlashlights(ctx,m,v,flashlightSources(),fog);
  const now=performance.now(),bob=Math.sin(now/340)*v.tile*.025;
  for(const sp of plan.spawnPoints)drawSprite(ctx,'spawn',v,sp.x,sp.y,{scale:.71,alpha:.72});
  for(const [i,l] of m.loot.entries())if(!r.looted.includes(i))drawSprite(ctx,'crate',v,l.x,l.y,{scale:.94,glow:'#deae69'});
