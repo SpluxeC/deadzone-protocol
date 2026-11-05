@@ -27,3 +27,20 @@ export function killPayout(wave:number,boss=false):number{return boss?180+wave*1
 export function clearPayout(wave:number):number{return 90+Math.max(1,wave)*25+(wave%5===0?250:0)}
 export function canExit(total:number,spawned:number,killed:number):boolean{return spawned>=total&&killed>=total}
 export function permanentPayout(clearedWaves:number,bosses:number):number{return Math.max(0,clearedWaves)*4+Math.max(0,bosses)*20}
+
+/** Endless extraction pressure. Spawn intervals shrink as time in a wave increases.
+ * An active-enemy cap keeps browser/mobile simulation bounded.
+ */
+export function extractionSpawnInterval(elapsedSeconds:number,wave:number):number{
+ const elapsed=Math.max(0,Number.isFinite(elapsedSeconds)?elapsedSeconds:0);
+ const difficulty=Math.min(.2,(Math.max(1,wave)-1)*.012);
+ return Math.max(.4,2.4-difficulty-elapsed*.012);
+}
+export function extractionActiveCap(elapsedSeconds:number,wave:number):number{
+ const elapsed=Math.max(0,Number.isFinite(elapsedSeconds)?elapsedSeconds:0);
+ return Math.min(55,Math.max(16,Math.floor(18+Math.max(1,wave)*.8+elapsed/18)));
+}
+export function formatRunTime(seconds:number):string{
+ const whole=Math.max(0,Math.floor(Number.isFinite(seconds)?seconds:0));
+ return Math.floor(whole/60)+':'+String(whole%60).padStart(2,'0');
+}
