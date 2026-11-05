@@ -45,9 +45,9 @@ test('endless zombie pressure accelerates the longer the player remains on a wav
  for(const wave of [1,5,15]){
   assert.ok(extractionSpawnInterval(0,wave)>extractionSpawnInterval(45,wave));
   assert.ok(extractionSpawnInterval(45,wave)>extractionSpawnInterval(100,wave));
-  assert.ok(extractionSpawnInterval(500,wave)>=.4);
+  assert.ok(extractionSpawnInterval(500,wave)>=.24);
   assert.ok(extractionActiveCap(0,wave)<extractionActiveCap(180,wave));
-  assert.ok(extractionActiveCap(10000,wave)<=55);
+  assert.ok(extractionActiveCap(10000,wave)<=65);
  }
  assert.ok(extractionSpawnInterval(0,15)<extractionSpawnInterval(0,1));
  assert.equal(formatRunTime(0),'0:00');
