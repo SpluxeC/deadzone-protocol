@@ -552,7 +552,7 @@ function bindAnalog(id:string,update:(v:StickVector)=>void){
  });
  base.addEventListener('pointermove',e=>{if(pointer!==e.pointerId)return;e.preventDefault();process(e)});
  base.addEventListener('pointerup',release);base.addEventListener('pointercancel',release);
- base.addEventListener('lostpointercapture',e=>{if(pointer!==e.pointerId)return;pointer=null;update(zeroStick());if(fireOnOuter)aimFiring=false;knob.style.transform='translate(-50%,-50%)'});
+ base.addEventListener('lostpointercapture',e=>{if(pointer!==e.pointerId)return;pointer=null;update(zeroStick());knob.style.transform='translate(-50%,-50%)'});
  window.addEventListener('blur',()=>{pointer=null;update(zeroStick());knob.style.transform='translate(-50%,-50%)'});
 }
 bindAnalog('move-stick',v=>{moveAnalog=v});
