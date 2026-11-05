@@ -89,7 +89,7 @@ function loadRun(){try{const r=JSON.parse(localStorage.getItem(store('run'))||'n
  for(const a of run.allies){const p=nearestWalkable(plan.map,a);a.x=p.x;a.y=p.y;}
  ensureEquipment(run);fog=createFog(plan.map,run.explored??[]);for(const enemy of run.enemies){
  const p=nearestWalkable(plan.map,enemy);enemy.x=p.x;enemy.y=p.y;enemy.kind??=enemy.boss?'boss':'shambler';enemy.attack??=0;enemy.windup??=0;enemy.phase??=0;enemy.aggro??=0;enemy.suppressed??=0;enemy.scoutMarked??=0;}return true}catch{return false}}
-function menu(){combatFx=[];paused=true;overlay.hidden=false;overlay.innerHTML=`<article class="main-menu-screen"><h1>DEADZONE <span style="color:#f18567">PROTOCOL</span></h1><p>Wave-based dungeon roguelite. Clear finite hordes, find the elevator, buy upgrades, and descend into a new procedural floor. The old FOB campaign remains preserved in source code.</p><label>Save slot <select id="slot-select"><option value="1">SLOT 01</option><option value="2">SLOT 02</option><option value="3">SLOT 03</option></select></label><p id="career"></p><div class="menurow"><button id="continue-run">CONTINUE RUN</button><button id="new-run">NEW RUN</button><button id="upgrades">PERMANENT UNLOCKS</button></div></article>`;
+function menu(){combatFx=[];paused=true;overlay.hidden=false;overlay.innerHTML=`<article class="main-menu-screen"><h1>DEADZONE <span style="color:#f18567">PROTOCOL</span></h1><p>Wave-based survival roguelite. Outrun an endless growing horde, extract by elevator, upgrade in the Armory, and descend again. The old FOB campaign remains preserved in source code.</p><label>Save slot <select id="slot-select"><option value="1">SLOT 01</option><option value="2">SLOT 02</option><option value="3">SLOT 03</option></select></label><p id="career"></p><div class="menurow"><button id="continue-run">CONTINUE RUN</button><button id="new-run">NEW RUN</button><button id="upgrades">PERMANENT UNLOCKS</button></div></article>`;
 const sel=overlay.querySelector<HTMLSelectElement>('#slot-select')!;sel.value=String(slot);const refresh=()=>{loadProfile();const active=localStorage.getItem(store('run'));overlay.querySelector('#career')!.textContent='BEST WAVE '+profile.bestWave+' · LEGACY TOKENS '+profile.tokens+' · RUNS '+profile.runs+(active?' · RUN IN PROGRESS':'');(overlay.querySelector<HTMLButtonElement>('#continue-run'))!.disabled=!active};refresh();
 sel.onchange=()=>{slot=Number(sel.value);run=null;plan=null;refresh()};
 overlay.querySelector<HTMLButtonElement>('#continue-run')!.onclick=()=>{if(!loadRun()){notice('No valid run found');return}paused=false;if(run!.stage==='shop')shop();else overlay.hidden=true};
@@ -221,7 +221,42 @@ function search(targetIndex?:number){if(!run||!plan||run.stage!=='fight'||(run.p
   else if(reward===2){if(usedSlots(eq.bag,eq.ammo,run.medkits+1)>eq.capacity){notice('BACKPACK FULL — cannot carry medkit');return}run.medkits++;notice('Cache found: medkit')}
   else{run.credits+=45+run.wave*4;notice('Scavenged credits')}}
  run.looted.push(i);run.lootedTotal=(run.lootedTotal??0)+1;save()}
-function elevator(){if(!run||!plan||run.stage!=='fight'||(run.playerDowned??0)>0)return;if(!cleared()){notice('Eliminate all infected first — '+remaining()+' remaining');return}const p=plan.map.extraction;if(Math.hypot(run.player.x-p.x,run.player.y-p.y)>1.5){notice('Find the green elevator on the map');return}run.credits+=clearPayout(run.wave);run.cleared++;if(!run.waveHit)run.flawlessWaves=(run.flawlessWaves??0)+1;run.bestSquad=Math.max(run.bestSquad??0,run.allies.length);updateAchievements(run);run.stage='shop';save();shop()}
+/** Every extraction produces a wave report; the player may continue deeper or bank the run. */
+function waveReport(){
+ if(!run)return;
+ paused=true;overlay.hidden=false;
+ const r=run,seconds=r.waveSeconds??0;
+ const waveKills=(r.killsTotal??0)-(r.waveStartKills??0);
+ const waveLoot=(r.lootedTotal??0)-(r.waveStartLooted??0);
+ const reward=clearPayout(r.wave);
+ overlay.innerHTML=`<article class="run-results"><h1>EXTRACTION SUCCESSFUL</h1><p>Wave ${r.wave} completed · ${formatRunTime(seconds)} inside the danger zone</p>
+ <div class="results-grid">
+ <div><strong>${waveKills}</strong><span>Zombies eliminated</span></div>
+ <div><strong>${waveLoot}</strong><span>Containers searched</span></div>
+ <div><strong>${r.spawned}</strong><span>Zombies spawned</span></div>
+ <div><strong>${r.peakThreat??0}</strong><span>Peak active horde</span></div>
+ <div><strong>${Math.ceil(r.hp)}</strong><span>Health remaining</span></div>
+ <div><strong>${Math.ceil(r.armor)}</strong><span>Armor remaining</span></div>
+ <div><strong>${r.allies.filter(a=>!a.dead).length}/4</strong><span>Squad survivors</span></div>
+ <div><strong>+${reward}</strong><span>Extraction credits</span></div>
+ </div>
+ <div class="menurow"><button id="extraction-continue">CONTINUE TO ARMORY</button><button id="extraction-cashout">END RUN SUCCESSFULLY</button></div></article>`;
+ overlay.querySelector<HTMLButtonElement>('#extraction-continue')!.onclick=shop;
+ overlay.querySelector<HTMLButtonElement>('#extraction-cashout')!.onclick=()=>finishRun(true);
+}
+function elevator(){
+ if(!run||!plan||run.stage!=='fight'||(run.playerDowned??0)>0)return;
+ const p=plan.map.extraction;
+ if(Math.hypot(run.player.x-p.x,run.player.y-p.y)>1.5){notice('Find the green elevator on the map');return}
+ run.credits+=clearPayout(run.wave);
+ run.cleared++;
+ if(!run.waveHit)run.flawlessWaves=(run.flawlessWaves??0)+1;
+ run.bestSquad=Math.max(run.bestSquad??0,run.allies.filter(a=>!a.dead).length);
+ updateAchievements(run);
+ run.stage='shop';
+ save();
+ waveReport();
+}
 type NearbyInteraction={kind:'loot';index:number}|{kind:'elevator'};
 function nearbyInteraction():NearbyInteraction|null{
  if(!run||!plan||paused||run.stage!=='fight'||(run.playerDowned??0)>0)return null;
@@ -319,7 +354,41 @@ function squadPanel(){if(!run)return;paused=true;overlay.hidden=false;const r=ru
  });
  overlay.querySelector<HTMLButtonElement>('#squad-return')!.onclick=()=>{save();if(atShop)shop();else{paused=false;overlay.hidden=true}};
 }
-function death(){if(!run)return;const performance=runPerformance(run),achieved=progressAchievements(profile,performance),base=permanentPayout(run.cleared,run.bosses),bonus=performancePayout(performance),result=base+bonus;profile.tokens+=result;profile.bestWave=Math.max(profile.bestWave,run.wave);profile.runs++;const wave=run.wave,clearedCount=run.cleared;run=null;save();paused=true;overlay.hidden=false;overlay.innerHTML=`<article><h1>RUN OVER</h1><p>Reached wave ${wave}. Cleared ${clearedCount} waves.</p><p>Wave and boss rewards: ${base} · Performance: ${bonus} · New achievements: ${achieved.reward}.</p><p><strong>${result+achieved.reward} LEGACY TOKENS EARNED</strong></p>${achieved.names.length?'<p>Achievements: '+achieved.names.join(', ')+'</p>':''}<div class="menurow"><button id="again">PREPARE NEXT RUN</button><button id="back">MAIN MENU</button></div></article>`;overlay.querySelector<HTMLButtonElement>('#again')!.onclick=preRun;overlay.querySelector<HTMLButtonElement>('#back')!.onclick=menu}
+function finishRun(success:boolean){
+ if(!run)return;
+ const r=run;
+ const performance=runPerformance(r),achieved=progressAchievements(profile,performance);
+ const base=permanentPayout(r.cleared,r.bosses),bonus=performancePayout(performance);
+ const total=base+bonus+achieved.reward;
+ profile.tokens+=base+bonus;
+ profile.bestWave=Math.max(profile.bestWave,r.wave);
+ profile.runs++;
+ const wave=r.wave,clearedCount=r.cleared;
+ const elapsed=formatRunTime(r.runSeconds??0),waveElapsed=formatRunTime(r.waveSeconds??0);
+ const kills=r.killsTotal??0,loot=r.lootedTotal??0,bosses=r.bosses;
+ const health=Math.ceil(r.hp),armor=Math.ceil(r.armor);
+ const squad=r.allies.filter(a=>!a.dead).length;
+ const peak=r.peakThreat??0;
+ run=null;plan=null;fog=null;combatFx=[];paused=true;save();overlay.hidden=false;
+ overlay.innerHTML=`<article class="run-results"><h1>${success?'RUN COMPLETED':'RUN OVER'}</h1><p>${success?'Successfully extracted':'Squad lost'} · ${elapsed} total survival time · ${waveElapsed} in final wave</p>
+ <div class="results-grid">
+ <div><strong>${wave}</strong><span>Highest wave</span></div>
+ <div><strong>${clearedCount}</strong><span>Successful extractions</span></div>
+ <div><strong>${kills}</strong><span>Zombies eliminated</span></div>
+ <div><strong>${loot}</strong><span>Containers searched</span></div>
+ <div><strong>${bosses}</strong><span>Bosses defeated</span></div>
+ <div><strong>${peak}</strong><span>Peak final-wave horde</span></div>
+ <div><strong>${success?health:0} HP / ${armor} ARM</strong><span>Final condition</span></div>
+ <div><strong>${squad}/4</strong><span>Squad survivors</span></div>
+ </div>
+ <p>Legacy rewards: ${base} extraction + ${bonus} performance + ${achieved.reward} achievements</p>
+ <h2>${total} LEGACY TOKENS EARNED</h2>
+ ${achieved.names.length?'<p>Achievements: '+achieved.names.join(', ')+'</p>':''}
+ <div class="menurow"><button id="again">PREPARE NEXT RUN</button><button id="back">MAIN MENU</button></div></article>`;
+ overlay.querySelector<HTMLButtonElement>('#again')!.onclick=preRun;
+ overlay.querySelector<HTMLButtonElement>('#back')!.onclick=menu;
+}
+function death(){finishRun(false)}
 function orderLabel(order:SquadOrder){return order==='focus'?'FOCUS FIRE':order.toUpperCase()}
 function setOrder(order:SquadOrder){
  if(!run||run.stage!=='fight'||paused)return;
