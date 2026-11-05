@@ -420,7 +420,7 @@ if((run.playerDowned??0)===0){
  if(manualFire){const nearest=run.enemies.filter(e=>e.alive&&canSee(p.x,p.y,e.x,e.y)&&Math.hypot(e.x-p.x,e.y-p.y)<=(activeWeapon(run!)?effectiveStats(activeWeapon(run!)!).range:1.3)).sort((a,b)=>Math.hypot(a.x-p.x,a.y-p.y)-Math.hypot(b.x-p.x,b.y-p.y))[0];if(nearest&&keys.has('Space')){const length=Math.hypot(nearest.x-p.x,nearest.y-p.y)||1;aim={x:(nearest.x-p.x)/length,y:(nearest.y-p.y)/length}}shoot()}
  else if(aimAnalog.magnitude>0&&shotCooldown<=0){
   const w=activeWeapon(run);
-  if(w&&aimHasTarget(plan.map,p,aim,effectiveStats(w).range,run.enemies,w.model))shoot();
+  if(w&&(!weaponDefs[w.model].ammo||w.mag>0)&&aimHasTarget(plan.map,p,aim,effectiveStats(w).range,run.enemies.filter(e=>!fog||discoveredAt(plan!.map,fog,e.x,e.y)),w.model))shoot();
  }
 }
 spawnClock+=dt;if(run.spawned<plan.total&&spawnClock>(run.layoutVersion===3?1.05:1.45)){spawnClock=0;const active=run.enemies.filter(e=>e.alive).length;const cap=run.layoutVersion===3?Math.min(44,16+Math.ceil(run.wave)):Math.min(22,8+Math.ceil(run.wave/2));if(active<cap)spawnOne(false)}
