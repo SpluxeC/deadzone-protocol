@@ -77,13 +77,53 @@ export function renderDungeon(ctx:CanvasRenderingContext2D,map:DungeonLayout,v:V
  const vgn=ctx.createRadialGradient(v.width/2,v.height/2,Math.min(v.width,v.height)*.2,v.width/2,v.height/2,Math.max(v.width,v.height)*.72);
  vgn.addColorStop(0,'rgba(4,10,13,0)');vgn.addColorStop(1,'rgba(2,5,9,.46)');ctx.fillStyle=vgn;ctx.fillRect(0,0,v.width,v.height);
 }
-export function drawSprite(ctx:CanvasRenderingContext2D,kind:SpriteKind,v:View,x:number,y:number,opts?:{angle?:number;scale?:number;down?:boolean;alpha?:number;glow?:string;bob?:number}):void{
+export function drawSprite(ctx:CanvasRenderingContext2D,kind:SpriteKind,v:View,x:number,y:number,opts?:{angle?:number;scale?:number;down?:boolean;alpha?:number;glow?:string;bob?:number;stride?:number;motionSpeed?:number}):void{
  if(!visible(v,x,y))return;
- const px=v.ox+x*v.tile,py=v.oy+y*v.tile+(opts?.bob??0),sz=v.tile*(opts?.scale??1);
- ctx.save();ctx.translate(px,py);ctx.rotate((opts?.angle??0)+(opts?.down?Math.PI*.5:0));ctx.globalAlpha=opts?.alpha??1;
- if(opts?.glow){ctx.fillStyle=opts.glow;ctx.globalAlpha=.17;ctx.beginPath();ctx.ellipse(0,0,sz*.72,sz*.65,0,0,Math.PI*2);ctx.fill();ctx.globalAlpha=opts.alpha??1}
- if(ready&&atlas)ctx.drawImage(atlas,spriteIndex[kind]*spriteSize,0,spriteSize,spriteSize,-sz*.6,-sz*.7,sz*1.2,sz*1.2);
- else{ctx.fillStyle=kind==='player'?'#dcd0b3':kind==='elevator'?'#61cda0':kind==='crate'?'#b9975d':'#7b9991';ctx.beginPath();ctx.arc(0,0,sz*.35,0,Math.PI*2);ctx.fill()}
+ const living=['player','rifleman','medic','heavy','scout','engineer','shambler','runner','armored','bruiser','boss'].includes(kind);
+ const walking=living&&!opts?.down&&(opts?.motionSpeed??0)>.12;
+ const gait=walking?Math.min(1,(opts?.motionSpeed??0)/2.3):0;
+ const step=Math.sin(opts?.stride??0)*gait,other=Math.sin((opts?.stride??0)+Math.PI)*gait;
+ const px=v.ox+x*v.tile,py=v.oy+y*v.tile,sz=v.tile*(opts?.scale??1);
+ const zombie=['shambler','runner','armored','bruiser','boss'].includes(kind);
+ ctx.save();ctx.translate(px,py);
+ ctx.globalAlpha=opts?.alpha??1;
+ // The ground shadow stays anchored as the upper body bobs and the feet alternate.
+ ctx.fillStyle='rgba(0,5,6,.35)';ctx.beginPath();ctx.ellipse(0,sz*.36,sz*.38,sz*.115,0,0,Math.PI*2);ctx.fill();
+ ctx.rotate((opts?.angle??0)+Math.PI/2+(opts?.down?Math.PI*.5:0));
+ const bounce=walking?Math.abs(Math.sin(opts?.stride??0))*sz*(zombie?.016:.025):0;
+ ctx.translate(0,-bounce+(opts?.bob??0));
+ if(opts?.glow){ctx.fillStyle=opts.glow;ctx.globalAlpha=.16;ctx.beginPath();ctx.ellipse(0,0,sz*.72,sz*.65,0,0,Math.PI*2);ctx.fill();ctx.globalAlpha=opts.alpha??1}
+ if(ready&&atlas){
+  if(walking){
+   // The original atlas has rigid legs. Replace only the lower part with articulated
+   // alternating legs and visible foot placement, preserving the character's own torso/gear.
+   const sx=spriteIndex[kind]*spriteSize;
+   const spread=zombie?.15:.13,hipY=sz*.075,footY=sz*.36;
+   for(const [side,swing] of [[-1,step],[1,other]] as const){
+    const hipX=side*sz*spread;
+    const footX=hipX+sz*swing*(zombie?.20:.18);
+    const footYAdjusted=footY-sz*Math.max(0,swing)*(zombie?.11:.13);
+    const kneeX=(hipX+footX)*.5+side*sz*.018;
+    const kneeY=(hipY+footYAdjusted)*.52;
+    ctx.lineCap='round';ctx.lineJoin='round';
+    ctx.strokeStyle=zombie?'#3d4540':'#1b302e';
+    ctx.lineWidth=sz*(kind==='heavy'||kind==='bruiser'?.16:.125);
+    ctx.beginPath();ctx.moveTo(hipX,hipY);ctx.lineTo(kneeX,kneeY);ctx.lineTo(footX,footYAdjusted);ctx.stroke();
+    ctx.strokeStyle=zombie?'#647065':'#65756b';ctx.lineWidth=sz*.055;
+    ctx.beginPath();ctx.moveTo(kneeX,kneeY);ctx.lineTo(footX,footYAdjusted);ctx.stroke();
+    ctx.fillStyle=zombie?'#252e2b':'#152623';
+    ctx.beginPath();ctx.ellipse(footX,footYAdjusted+sz*.025,sz*.085,sz*.052,side*.09,0,Math.PI*2);ctx.fill();
+   }
+   // Source cropping avoids painting the old, stationary legs over the new walk cycle.
+   const torsoHeight=69;
+   ctx.drawImage(atlas,sx,0,spriteSize,torsoHeight,-sz*.6,-sz*.7,sz*1.2,sz*1.2*torsoHeight/spriteSize);
+  }else{
+   ctx.drawImage(atlas,spriteIndex[kind]*spriteSize,0,spriteSize,spriteSize,-sz*.6,-sz*.7,sz*1.2,sz*1.2);
+  }
+ }else{
+  ctx.fillStyle=kind==='player'?'#dcd0b3':kind==='elevator'?'#61cda0':kind==='crate'?'#b9975d':'#7b9991';
+  ctx.beginPath();ctx.arc(0,0,sz*.35,0,Math.PI*2);ctx.fill();
+ }
  ctx.restore();
 }
 export function drawBar(ctx:CanvasRenderingContext2D,v:View,x:number,y:number,ratio:number,color:string,width=.8):void{
