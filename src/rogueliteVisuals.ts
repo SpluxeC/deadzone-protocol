@@ -89,7 +89,7 @@ export function drawSprite(ctx:CanvasRenderingContext2D,kind:SpriteKind,v:View,x
  ctx.globalAlpha=opts?.alpha??1;
  // The ground shadow stays anchored as the upper body bobs and the feet alternate.
  ctx.fillStyle='rgba(0,5,6,.35)';ctx.beginPath();ctx.ellipse(0,sz*.36,sz*.38,sz*.115,0,0,Math.PI*2);ctx.fill();
- ctx.rotate((opts?.angle??0)+Math.PI/2+(opts?.down?Math.PI*.5:0));
+ ctx.rotate((opts?.angle??0)+(living?Math.PI/2:0)+(opts?.down?Math.PI*.5:0));
  const bounce=walking?Math.abs(Math.sin(opts?.stride??0))*sz*(zombie?.016:.025):0;
  ctx.translate(0,-bounce+(opts?.bob??0));
  if(opts?.glow){ctx.fillStyle=opts.glow;ctx.globalAlpha=.16;ctx.beginPath();ctx.ellipse(0,0,sz*.72,sz*.65,0,0,Math.PI*2);ctx.fill();ctx.globalAlpha=opts.alpha??1}
