@@ -54,3 +54,13 @@ export function meleeHits<T extends TargetCircle>(
  return found.slice(0,model==='axe'?2:1);
 }
 export const penetrationFor=(model:WeaponId):number=>weaponDefs[model].penetration??0;
+
+/** True only when the current aim would strike a zombie within weapon reach.
+ * Does not fire at empty space, through walls, or beyond range.
+ */
+export function aimHasTarget<T extends TargetCircle>(
+ map:DungeonLayout,origin:Point,direction:Point,range:number,targets:readonly T[],model:WeaponId
+):boolean{
+ if(model==='knife'||model==='axe')return meleeHits(map,origin,direction,range,targets,model).length>0;
+ return traceBullet(map,origin,direction,range,targets,0).hits.length>0;
+}
