@@ -297,3 +297,28 @@
  #rogue #mobile-squad[hidden],
  #rogue #mobile-squad[aria-hidden="true"]{display:none!important;visibility:hidden!important;pointer-events:none!important}
 }
+
+/* Inventory and other menus are regular touch interfaces, not joystick surfaces.
+   The game play area uses touch-action:none only during live gameplay. */
+#rogue.menu-open #playarea,
+#rogue[data-menu-open="true"] #playarea{
+ touch-action:auto!important;
+}
+#rogue #overlay,
+#rogue #overlay article,
+#rogue #overlay .inventory-screen,
+#rogue #overlay .inventory-screen button{
+ touch-action:pan-y pinch-zoom!important;
+}
+#rogue #overlay .inventory-screen{
+ max-height:calc(100dvh - 18px);
+ overflow-y:auto!important;
+ overscroll-behavior:contain;
+ -webkit-overflow-scrolling:touch;
+}
+#rogue #overlay .inventory-screen button{
+ pointer-events:auto!important;
+ user-select:none!important;
+ -webkit-user-select:none!important;
+ -webkit-tap-highlight-color:transparent;
+}
