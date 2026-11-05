@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {traceBullet,meleeHits,penetrationFor} from './hitDetection.ts';
+import {traceBullet,meleeHits,penetrationFor,aimHasTarget} from './hitDetection.ts';
 import type {DungeonLayout} from './dungeon.ts';
 
 const room=():DungeonLayout=>({
@@ -41,4 +41,22 @@ test('melee arcs only hit zombies in reach in front and not behind a wall',()=>{
  assert.equal(meleeHits(map,{x:2,y:8},{x:1,y:0},1.6,[front,second],'axe').length,2);
  map.tiles[8*map.width+3]=1;
  assert.equal(meleeHits(map,{x:2,y:8},{x:1,y:0},1.6,[front],'knife').length,0);
+});
+
+test('automatic fire requires a zombie directly in weapon range and aim',()=>{
+ const map=room(),inLine=zombie(5,8),side=zombie(5,10),far=zombie(14,8);
+ const start={x:2,y:8},right={x:1,y:0};
+ assert.equal(aimHasTarget(map,start,right,7,[inLine],'carbine'),true);
+ assert.equal(aimHasTarget(map,start,right,7,[side],'carbine'),false);
+ assert.equal(aimHasTarget(map,start,right,7,[far],'carbine'),false);
+ assert.equal(aimHasTarget(map,start,{x:-1,y:0},7,[inLine],'carbine'),false);
+ map.tiles[8*map.width+4]=1;
+ assert.equal(aimHasTarget(map,start,right,7,[inLine],'carbine'),false);
+});
+test('auto melee only triggers in reach and in the attack arc',()=>{
+ const map=room(),near=zombie(3,8),far=zombie(8,8),behind=zombie(1,8);
+ const start={x:2,y:8},facing={x:1,y:0};
+ assert.equal(aimHasTarget(map,start,facing,1.4,[near],'knife'),true);
+ assert.equal(aimHasTarget(map,start,facing,1.4,[far],'knife'),false);
+ assert.equal(aimHasTarget(map,start,facing,1.4,[behind],'knife'),false);
 });
