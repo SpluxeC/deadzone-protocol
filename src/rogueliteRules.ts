@@ -34,7 +34,7 @@ export function permanentPayout(clearedWaves:number,bosses:number):number{return
 export function extractionSpawnInterval(elapsedSeconds:number,wave:number):number{
  const elapsed=Math.max(0,Number.isFinite(elapsedSeconds)?elapsedSeconds:0);
  const difficulty=Math.min(.18,(Math.max(1,wave)-1)*.011);
- return Math.max(.24,1.25-difficulty-elapsed*.022);
+ return Math.max(.24,1.25-difficulty-elapsed*.015);
 }
 export function extractionActiveCap(elapsedSeconds:number,wave:number):number{
  const elapsed=Math.max(0,Number.isFinite(elapsedSeconds)?elapsedSeconds:0);
