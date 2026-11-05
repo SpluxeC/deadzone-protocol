@@ -33,12 +33,12 @@ export function permanentPayout(clearedWaves:number,bosses:number):number{return
  */
 export function extractionSpawnInterval(elapsedSeconds:number,wave:number):number{
  const elapsed=Math.max(0,Number.isFinite(elapsedSeconds)?elapsedSeconds:0);
- const difficulty=Math.min(.2,(Math.max(1,wave)-1)*.012);
- return Math.max(.4,2.4-difficulty-elapsed*.012);
+ const difficulty=Math.min(.18,(Math.max(1,wave)-1)*.011);
+ return Math.max(.24,1.25-difficulty-elapsed*.022);
 }
 export function extractionActiveCap(elapsedSeconds:number,wave:number):number{
  const elapsed=Math.max(0,Number.isFinite(elapsedSeconds)?elapsedSeconds:0);
- return Math.min(55,Math.max(16,Math.floor(18+Math.max(1,wave)*.8+elapsed/18)));
+ return Math.min(65,Math.max(24,Math.floor(25+Math.max(1,wave)*.9+elapsed/12)));
 }
 export function formatRunTime(seconds:number):string{
  const whole=Math.max(0,Math.floor(Number.isFinite(seconds)?seconds:0));
