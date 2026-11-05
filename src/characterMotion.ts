@@ -7,14 +7,15 @@ export function nextCharacterMotion(
  point:MovingPoint,
  now:number,
  fallbackFacing:number,
- turnRate=4
+ turnRate=4,
+ preferFacing=false
 ):CharacterMotion{
  if(!previous)return{x:point.x,y:point.y,angle:wrapAngle(fallbackFacing),phase:0,speed:0,time:now};
  const dt=Math.max(0,Math.min(.09,(now-previous.time)/1000));
  const dx=point.x-previous.x,dy=point.y-previous.y,dist=Math.hypot(dx,dy);
  // Only real travel should steer the body; tiny movement/collision jitter must not spin it.
  const moving=dt>0&&dist>Math.max(.005,dt*.18);
- const desired=moving?Math.atan2(dy,dx):fallbackFacing;
+ const desired=preferFacing?fallbackFacing:moving?Math.atan2(dy,dx):previous.angle;
  const delta=wrapAngle(desired-previous.angle);
  const nextAngle=wrapAngle(previous.angle+Math.max(-turnRate*dt,Math.min(turnRate*dt,delta)));
  const rawSpeed=dt>0?Math.min(5,dist/dt):0;
