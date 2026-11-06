@@ -342,3 +342,83 @@
  #rogue #overlay .run-results .menurow{margin:4px 0 0;gap:5px}
  #rogue #overlay .run-results .menurow button{min-height:29px;padding:5px!important;font-size:10px!important}
 }
+
+/* Desktop-only menu usability. No changes to touch/landscape phone styling. */
+@media (hover:hover) and (pointer:fine) and (min-width:900px){
+ /* Hide every combat readout whenever any menu or Armory overlay is open. */
+ #rogue.menu-open > header,
+ #rogue[data-menu-open="true"] > header,
+ #rogue.menu-open #combat-hud,
+ #rogue[data-menu-open="true"] #combat-hud{display:none!important}
+ #rogue.menu-open > footer,
+ #rogue[data-menu-open="true"] > footer{display:none!important}
+ #rogue.menu-open #overlay{
+  display:flex;align-items:center;justify-content:center;
+  padding:clamp(12px,2vh,28px) clamp(18px,3vw,42px)!important;
+  overflow-y:auto;
+ }
+ #rogue #overlay article{
+  box-sizing:border-box;
+  margin:auto!important;
+  max-height:calc(100dvh - 32px);
+  padding:clamp(15px,2vh,24px)!important;
+ }
+ #rogue #overlay h1{font-size:clamp(20px,2.3vw,27px);line-height:1.15;margin:0 0 6px}
+ #rogue #overlay h2{margin:10px 0 6px;padding:5px 0;font-size:12px}
+ #rogue #overlay p{line-height:1.4;margin:6px 0}
+ #rogue #overlay .menurow{gap:8px;margin-top:10px}
+ #rogue #overlay .menurow button{min-height:38px}
+ #rogue #overlay .main-menu-screen{
+  width:min(760px,100%);max-width:760px;display:flex;flex-direction:column;gap:8px;
+ }
+ #rogue #overlay .main-menu-screen label{display:flex;align-items:center;gap:14px;margin:2px 0}
+ #rogue #overlay .main-menu-screen label select{width:210px;min-height:36px;margin:0}
+ #rogue #overlay .main-menu-screen .menurow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
+ #rogue #overlay .prepare-run-screen{max-width:960px;width:min(960px,100%)}
+ #rogue #overlay .prepare-run-screen .prep-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:9px 16px;margin:12px 0}
+ #rogue #overlay .prepare-run-screen .prep-grid label{margin:0}
+ #rogue #overlay .prepare-run-screen .prep-grid select{min-height:35px;max-width:none;margin:4px 0 0}
+ #rogue #overlay .prepare-run-screen #loadout-preview{margin:8px 0}
+ #rogue #overlay .prepare-run-screen .menurow{display:grid;grid-template-columns:minmax(180px,2fr) minmax(120px,1fr)}
+ #rogue #overlay .progression-screen{width:min(1010px,100%);max-width:1010px}
+ #rogue #overlay .progression-screen .progression-category{display:flex;align-items:center;gap:12px;margin:9px 0}
+ #rogue #overlay .progression-screen .progression-category select{max-width:440px;margin:0}
+ #rogue #overlay .progression-screen .shop{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+ #rogue #overlay .progression-screen .shop button{min-height:60px;padding:8px 10px!important;line-height:1.25}
+ #rogue #overlay .progression-screen .shop button small{line-height:1.3}
+ #rogue #overlay .progression-screen .achievement-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+ #rogue #overlay .progression-screen .achievement-item{padding:8px}
+ /* Armory columns scroll independently without hiding the extraction/management actions. */
+ #rogue #overlay .armory-screen{
+  display:flex;flex-direction:column;
+  width:min(1240px,100%);max-width:1240px;
+  height:min(790px,calc(100dvh - 32px));max-height:calc(100dvh - 32px);
+  min-height:0;overflow:hidden;
+ }
+ #rogue #overlay .armory-screen > p{flex:none;margin:3px 0;font-size:12px}
+ #rogue #overlay .armory-columns{
+  flex:1 1 auto;min-height:0;
+  display:grid;grid-template-columns:minmax(0,1.03fr) minmax(0,.97fr);
+  gap:16px;margin:12px 0 10px;
+ }
+ #rogue #overlay .armory-section{
+  min-height:0;overflow-y:auto;overscroll-behavior:contain;
+  padding:8px 12px 10px;
+  background:#112725b8;border:1px solid #48695f;border-radius:10px;
+  scrollbar-width:thin;
+ }
+ #rogue #overlay .armory-section h2{position:sticky;top:-8px;z-index:1;margin:0 0 8px;padding:8px 0;background:#112725}
+ #rogue #overlay .armory-section p{font-size:11px;margin:4px 0 8px}
+ #rogue #overlay .armory-section .shop{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+ #rogue #overlay .armory-section .shop button{min-height:65px;padding:7px 9px!important;line-height:1.25;font-size:11px;text-align:left}
+ #rogue #overlay .armory-section .gear-mini{width:29px;height:29px;background-size:696px 29px;margin-right:6px}
+ #rogue #overlay .armory-actions{flex:none;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));margin:0;gap:7px}
+ #rogue #overlay .armory-actions button{width:100%;min-width:0;font-size:11px;padding:8px 6px!important;min-height:45px}
+ #rogue #overlay .armory-actions #descend{background:linear-gradient(#39765a,#24553f)!important;border-color:#88b996!important}
+}
+@media (hover:hover) and (pointer:fine) and (min-width:900px) and (max-height:600px){
+ #rogue #overlay .armory-screen{height:calc(100dvh - 20px);max-height:calc(100dvh - 20px)}
+ #rogue #overlay .armory-section .shop button{min-height:49px}
+ #rogue #overlay .armory-actions button{min-height:33px}
+ #rogue #overlay .prepare-run-screen .prep-grid{gap:5px 12px;margin:7px 0}
+}
