@@ -1,5 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {weaponDefs,attachmentDefs,ammoPack,ammoTypes,newWeapon,newMod,canEquipMod,canClassEquip,effectiveStats,emptyAmmo,usedSlots,canAddItem,addAmmo,rarityForWave,armoryOffers,rareLoot,upgradePrice,weaponPrice,salePrice,backpackUpgradePrice,ammoStack} from './equipmentArmory.ts';
+import {weaponDefs,attachmentDefs,attachmentDescriptions,ammoPack,ammoTypes,newWeapon,newMod,canEquipMod,canClassEquip,effectiveStats,emptyAmmo,usedSlots,canAddItem,addAmmo,rarityForWave,armoryOffers,rareLoot,upgradePrice,weaponPrice,salePrice,backpackUpgradePrice,ammoStack} from './equipmentArmory.ts';
 test('five tiers improve weapon stats without changing weapon category',()=>{
  const basic=newWeapon('assault',1,'base'),legendary=newWeapon('assault',5,'legend');
  assert.ok(effectiveStats(legendary).damage>effectiveStats(basic).damage);
@@ -70,4 +70,14 @@ test('expanded weapon categories remain compatible with the Armory, class permis
  const offers=armoryOffers(311,4,0);
  assert.equal(offers.filter(o=>o.kind==='weapon'&&weaponDefs[o.model as keyof typeof weaponDefs].slot==='secondary').length,1);
  assert.equal(offers.filter(o=>o.kind==='weapon'&&weaponDefs[o.model as keyof typeof weaponDefs].slot==='melee').length,1);
+});
+
+test('all Armory attachments explain their effect in plain language',()=>{
+ const keys=Object.keys(attachmentDefs).sort();
+ assert.deepEqual(Object.keys(attachmentDescriptions).sort(),keys);
+ for(const key of keys){
+  const description=attachmentDescriptions[key as keyof typeof attachmentDescriptions];
+  assert.ok(description.length>=16&&description.length<=90);
+  assert.ok(description.endsWith('.'));
+ }
 });
