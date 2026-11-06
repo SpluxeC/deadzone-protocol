@@ -1,4 +1,4 @@
-import test from 'node:test';import assert from 'node:assert/strict';import {generateDungeon,elevatorCells,elevatorInRange} from './dungeon.ts';
+import test from 'node:test';import assert from 'node:assert/strict';import {generateDungeon,elevatorCells,elevatorInRange,crateCells,crateInRange} from './dungeon.ts';
 test('deterministic layout and reachable extraction',()=>{for(let seed=1;seed<101;seed++){const a=generateDungeon(seed),b=generateDungeon(seed);assert.deepEqual(a,b);assert.equal(a.tiles[a.entrance.y*a.width+a.entrance.x],0);const seen=new Set([a.entrance.y*a.width+a.entrance.x]),queue=[a.entrance];for(let i=0;i<queue.length;i++){const p=queue[i];for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){const x=p.x+dx,y=p.y+dy,key=y*a.width+x;if(x>=0&&y>=0&&x<a.width&&y<a.height&&a.tiles[key]===0&&!seen.has(key)){seen.add(key);queue.push({x,y})}}}assert.ok(seen.has(a.extraction.y*a.width+a.extraction.x));for(const p of [...a.loot,...a.enemies])assert.ok(seen.has(p.y*a.width+p.x))}});
 test('invalid dimensions are rejected',()=>{assert.throws(()=>generateDungeon(10,10,10))});
 test('all dungeon item and enemy positions are unique and accessible',()=>{
