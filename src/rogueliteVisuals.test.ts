@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {camera,toWorld,visible,spriteIndex,spriteSize,hudColor,environmentTileId,environmentArtReady} from './rogueliteVisuals.ts';
+import {camera,toWorld,visible,spriteIndex,spriteSize,hudColor,environmentTileId,environmentArtReady,playerMuzzle,PLAYER_BARREL_ANGLE} from './rogueliteVisuals.ts';
 import {generateDungeon} from './dungeon.ts';
 import {readFileSync} from 'node:fs';
 test('all 5 specialists and 5 infected have distinct sprite atlas cells',()=>{
@@ -56,4 +56,18 @@ test('optional environment atlas maps only flooring to floor art and walls to wa
  assert.equal(environmentTileId(true,0),0);
  assert.equal(environmentTileId(true,.999),9);
  assert.equal(environmentArtReady(),false); // Node has no Image; browser downloads it after upload
+});
+
+test('player muzzle follows the actual painted rifle barrel on every aim angle',()=>{
+ const base={x:10,y:20},scale=1.25;
+ for(const heading of [0,Math.PI/2,Math.PI,-Math.PI/2,2.3]){
+  const muzzle=playerMuzzle(base.x,base.y,heading,scale);
+  const rotation=heading-PLAYER_BARREL_ANGLE;
+  const gripX=.075*scale,gripY=-.075*scale;
+  const grip={x:base.x+gripX*Math.cos(rotation)-gripY*Math.sin(rotation),
+   y:base.y+gripX*Math.sin(rotation)+gripY*Math.cos(rotation)};
+  const actual=Math.atan2(muzzle.y-grip.y,muzzle.x-grip.x);
+  const difference=Math.atan2(Math.sin(actual-heading),Math.cos(actual-heading));
+  assert.ok(Math.abs(difference)<1e-9);
+ }
 });
