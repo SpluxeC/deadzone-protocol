@@ -34,7 +34,7 @@ export function makeAttackFx(model:WeaponId,x:number,y:number,dx:number,dy:numbe
  const length=Math.hypot(dx,dy)||1,ux=dx/length,uy=dy/length;
  if(['knife','axe','machete','bat','crowbar'].includes(model))
   return [{kind:'swing',model,x,y,dx:ux,dy:uy,age:0,duration:model==='axe'||model==='crowbar'?.37:.23,distance:range,angleOffset:0}];
- const profile=shots[model],maximum=Math.max(0,range);
+ const profile=shots[model as keyof typeof shots],maximum=Math.max(0,range);
  return Array.from({length:profile.count},(_,i)=>{
   const offset=profile.count===1?0:(i/(profile.count-1)*2-1)*profile.spread;
   const theta=Math.atan2(uy,ux)+offset;
