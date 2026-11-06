@@ -70,3 +70,36 @@ test('legacy maps retain original single-tile elevator layout and interaction',(
   assert.equal(elevatorInRange(a,a.entrance),false);
  }
 });
+
+test('modern maps have rarer two-tile weapon cases and non-overlapping military supply cases',()=>{
+ for(let seed=1;seed<=300;seed++){
+  const map=generateDungeon(seed,64,48,3);
+  const weapons=map.loot.filter(c=>c.kind==='weapon');
+  const supplies=map.loot.filter(c=>c.kind!=='weapon');
+  assert.equal(weapons.length,2,'two weapon cases expected, seed '+seed);
+  assert.equal(supplies.length,8,'eight supply crates expected, seed '+seed);
+  const claimed=new Set<string>();
+  for(const crate of map.loot){
+   const cells=crateCells(crate);
+   assert.equal(cells.length,crate.kind==='weapon'?2:1);
+   assert.ok(crateInRange(crate,cells[0]),'reachable from its first tile');
+   for(const p of cells){
+    const key=p.x+','+p.y;
+    assert.ok(Number.isInteger(p.x)&&Number.isInteger(p.y),'case lies on integer tile centers');
+    assert.ok(!claimed.has(key),'no shared crate tile: '+key);
+    claimed.add(key);
+    assert.equal(map.tiles[p.y*map.width+p.x],0,'crate lies on floor');
+    assert.ok(Math.hypot(p.x-map.entrance.x,p.y-map.entrance.y)>7,'crate not in player spawn');
+    assert.ok(Math.hypot(p.x-map.extraction.x,p.y-map.extraction.y)>2,'crate not in elevator');
+   }
+  }
+  assert.ok(weapons.length<supplies.length);
+  assert.deepEqual(map,generateDungeon(seed,64,48,3),'same seed gives identical case placement');
+ }
+});
+test('older dungeon layouts preserve one-tile supply crate footprint',()=>{
+ for(const version of [1,2] as const){
+  const map=generateDungeon(2458,32,24,version);
+  assert.ok(map.loot.every(c=>crateCells(c).length===1));
+ }
+});
