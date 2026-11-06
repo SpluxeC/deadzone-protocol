@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {camera,toWorld,visible,spriteIndex,spriteSize,hudColor,environmentTileId,environmentArtReady,playerMuzzle,PLAYER_BARREL_ANGLE} from './rogueliteVisuals.ts';
+import {camera,toWorld,visible,spriteIndex,spriteSize,hudColor,environmentTileId,environmentArtReady,playerMuzzle} from './rogueliteVisuals.ts';
 import {generateDungeon} from './dungeon.ts';
 import {readFileSync} from 'node:fs';
 test('all 5 specialists and 5 infected have distinct sprite atlas cells',()=>{
@@ -38,10 +38,10 @@ test('offscreen culling and health feedback have valid ranges',()=>{
 import {gearIconModels,gearIcon} from './gearIcons.ts';
 test('all weapon, attachment and supply icons resolve to one atlas cell',()=>{
  const svg=readFileSync(new URL('./assets/deadzone-gear.svg',import.meta.url),'utf8');
- assert.equal(gearIconModels.length,24);
+ assert.equal(gearIconModels.length,36);
  assert.equal(new Set(gearIconModels).size,24);
- assert.match(svg,/viewBox="0 0 1536 64"/);
- assert.equal((svg.match(/<g transform="translate\(\d+ 0\)"/g)||[]).length,24);
+ assert.match(svg,/viewBox="0 0 2304 64"/);
+ assert.equal((svg.match(/<g transform="translate\(\d+ 0\)"/g)||[]).length,36);
  for(const id of gearIconModels)assert.match(gearIcon(id),/class="gear-mini"/);
  assert.equal(gearIcon('unknown-gear'), '');
 });
@@ -58,16 +58,28 @@ test('optional environment atlas maps only flooring to floor art and walls to wa
  assert.equal(environmentArtReady(),false); // Node has no Image; browser downloads it after upload
 });
 
-test('player muzzle follows the actual painted rifle barrel on every aim angle',()=>{
- const base={x:10,y:20},scale=1.25;
- for(const heading of [0,Math.PI/2,Math.PI,-Math.PI/2,2.3]){
-  const muzzle=playerMuzzle(base.x,base.y,heading,scale);
-  const rotation=heading-PLAYER_BARREL_ANGLE;
-  const gripX=.075*scale,gripY=-.075*scale;
-  const grip={x:base.x+gripX*Math.cos(rotation)-gripY*Math.sin(rotation),
-   y:base.y+gripX*Math.sin(rotation)+gripY*Math.cos(rotation)};
-  const actual=Math.atan2(muzzle.y-grip.y,muzzle.x-grip.x);
-  const difference=Math.atan2(Math.sin(actual-heading),Math.cos(actual-heading));
-  assert.ok(Math.abs(difference)<1e-9);
+
+import {heldWeaponMuzzle,weaponVisualFamily} from './weaponVisuals.ts';
+import {weaponDefs} from './equipmentArmory.ts';
+test('every equipped weapon has a visual family, muzzle and inventory icon',()=>{
+ for(const id of Object.keys(weaponDefs) as (keyof typeof weaponDefs)[]){
+  assert.ok(weaponVisualFamily[id],id);
+  const muzzle=heldWeaponMuzzle(id,1.25);
+  assert.ok(Number.isFinite(muzzle.x)&&Number.isFinite(muzzle.y));
+  assert.match(gearIcon(id),/gear-mini/);
+ }
+});
+test('player muzzle follows each equipped weapon for every aim angle',()=>{
+ const base={x:10,y:20};
+ for(const model of ['pistol','carbine','battleRifle','sniper','shotgun'] as const){
+  const local=heldWeaponMuzzle(model,1.25);
+  for(const heading of [0,Math.PI/2,Math.PI,-Math.PI/2,2.3]){
+   const muzzle=playerMuzzle(base.x,base.y,heading,1.25,model);
+   const rotation=heading+Math.PI/2;
+   const grip={x:base.x+local.x*Math.cos(rotation),y:base.y+local.x*Math.sin(rotation)};
+   const actual=Math.atan2(muzzle.y-grip.y,muzzle.x-grip.x);
+   const difference=Math.atan2(Math.sin(actual-heading),Math.cos(actual-heading));
+   assert.ok(Math.abs(difference)<1e-9);
+  }
  }
 });
