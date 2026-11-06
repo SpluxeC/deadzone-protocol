@@ -77,10 +77,21 @@ export function renderDungeon(ctx:CanvasRenderingContext2D,map:DungeonLayout,v:V
  const vgn=ctx.createRadialGradient(v.width/2,v.height/2,Math.min(v.width,v.height)*.2,v.width/2,v.height/2,Math.max(v.width,v.height)*.72);
  vgn.addColorStop(0,'rgba(4,10,13,0)');vgn.addColorStop(1,'rgba(2,5,9,.46)');ctx.fillStyle=vgn;ctx.fillRect(0,0,v.width,v.height);
 }
-export function drawSprite(ctx:CanvasRenderingContext2D,kind:SpriteKind,v:View,x:number,y:number,opts?:{angle?:number;scale?:number;down?:boolean;alpha?:number;glow?:string;bob?:number;stride?:number;motionSpeed?:number}):void{
+/** The painted player rifle runs from the grip at (54,50) to (90,40)
+ * in a 96px sprite. Keep its muzzle, attack guide, and facing in one transform.
+ */
+export const PLAYER_BARREL_ANGLE=Math.atan2(-.125,.45);
+export function playerMuzzle(x:number,y:number,angle:number,scale=1):Point{
+ const rotation=angle-PLAYER_BARREL_ANGLE;
+ const localX=.525*scale,localY=-.20*scale;
+ return {x:x+localX*Math.cos(rotation)-localY*Math.sin(rotation),
+  y:y+localX*Math.sin(rotation)+localY*Math.cos(rotation)};
+}
+export function drawSprite(ctx:CanvasRenderingContext2D,kind:SpriteKind,v:View,x:number,y:number,opts?:{angle?:number;scale?:number;down?:boolean;alpha?:number;glow?:string;bob?:number;stride?:number;motionSpeed?:number;idleTime?:number;showAim?:boolean}):void{
  if(!visible(v,x,y))return;
  const living=['player','rifleman','medic','heavy','scout','engineer','shambler','runner','armored','bruiser','boss'].includes(kind);
  const walking=living&&!opts?.down&&(opts?.motionSpeed??0)>.12;
+ const resting=living&&!walking&&!opts?.down;
  const gait=walking?Math.min(1,(opts?.motionSpeed??0)/2.3):0;
  const step=Math.sin(opts?.stride??0)*gait,other=Math.sin((opts?.stride??0)+Math.PI)*gait;
  const px=v.ox+x*v.tile,py=v.oy+y*v.tile,sz=v.tile*(opts?.scale??1);
@@ -89,9 +100,19 @@ export function drawSprite(ctx:CanvasRenderingContext2D,kind:SpriteKind,v:View,x
  ctx.globalAlpha=opts?.alpha??1;
  // The ground shadow stays anchored as the upper body bobs and the feet alternate.
  ctx.fillStyle='rgba(0,5,6,.35)';ctx.beginPath();ctx.ellipse(0,sz*.36,sz*.38,sz*.115,0,0,Math.PI*2);ctx.fill();
- ctx.rotate((opts?.angle??0)+(living?Math.PI/2:0)+(opts?.down?Math.PI*.5:0));
+ // Humans and infected use the original head-forward transform. For the player,
+ // correct the rifle's diagonal angle so the barrel actually faces their aim.
+ const rotation=kind==='player'?(opts?.angle??0)-PLAYER_BARREL_ANGLE:
+  (opts?.angle??0)+(living?Math.PI/2:0)+(opts?.down?Math.PI*.5:0);
+ ctx.rotate(rotation);
  const bounce=walking?Math.abs(Math.sin(opts?.stride??0))*sz*(zombie?.016:.025):0;
  ctx.translate(0,-bounce+(opts?.bob??0));
+ if(resting){
+  // Subtle breathing and shifting weight, not a full-body rotation.
+  const breath=Math.sin((opts?.idleTime??0)*1.8+spriteIndex[kind]*.7);
+  ctx.translate(0,sz*.009*breath);
+  ctx.scale(1+breath*.005,1-breath*.009);
+ }
  if(opts?.glow){ctx.fillStyle=opts.glow;ctx.globalAlpha=.16;ctx.beginPath();ctx.ellipse(0,0,sz*.72,sz*.65,0,0,Math.PI*2);ctx.fill();ctx.globalAlpha=opts.alpha??1}
  if(ready&&atlas){
   if(walking){
@@ -123,6 +144,18 @@ export function drawSprite(ctx:CanvasRenderingContext2D,kind:SpriteKind,v:View,x
  }else{
   ctx.fillStyle=kind==='player'?'#dcd0b3':kind==='elevator'?'#61cda0':kind==='crate'?'#b9975d':'#7b9991';
   ctx.beginPath();ctx.arc(0,0,sz*.35,0,Math.PI*2);ctx.fill();
+ }
+ if(kind==='player'&&opts?.showAim&&!opts?.down){
+  // Draw in the same local frame as the artwork. The guide begins at the
+  // actual rifle muzzle and extends in the direction the painted barrel points.
+  const barrelX=Math.cos(PLAYER_BARREL_ANGLE),barrelY=Math.sin(PLAYER_BARREL_ANGLE);
+  const startX=sz*.525,startY=-sz*.20;
+  ctx.strokeStyle='rgba(255,231,185,.82)';
+  ctx.lineWidth=Math.max(1,v.tile*.035);
+  ctx.lineCap='round';
+  ctx.beginPath();ctx.moveTo(startX,startY);
+  ctx.lineTo(startX+barrelX*v.tile*.95,startY+barrelY*v.tile*.95);
+  ctx.stroke();
  }
  ctx.restore();
 }
