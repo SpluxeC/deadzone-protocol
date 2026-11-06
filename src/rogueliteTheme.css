@@ -458,3 +458,18 @@
 @media (pointer:coarse){
  #rogue #overlay .inventory-screen .gear-mini{width:27px;height:27px;background-size:972px 27px;margin-right:4px}
 }
+
+/* Dynamic atlas indexing keeps every item centered at its actual display size. */
+#rogue .gear-mini{
+ --gear-icon-size:34px;
+ background-position:calc(var(--gear-index,0) * var(--gear-icon-size) * -1) 0!important;
+ background-size:calc(var(--gear-icon-size) * 36) var(--gear-icon-size)!important;
+}
+@media (pointer:coarse) and (orientation:landscape){
+ #rogue #loadout-preview .gear-mini{--gear-icon-size:23px}
+}
+#rogue #overlay .armory-section .gear-mini{--gear-icon-size:29px}
+#rogue #overlay .inventory-screen .gear-mini{--gear-icon-size:38px}
+@media (pointer:coarse){
+ #rogue #overlay .inventory-screen .gear-mini{--gear-icon-size:27px}
+}
