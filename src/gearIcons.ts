@@ -4,5 +4,5 @@ export type GearIconId=typeof gearIconModels[number];
 export function gearIcon(id:string):string{
  const index=gearIconModels.indexOf(id as GearIconId);
  if(index<0)return '';
- return '<span class="gear-mini" aria-hidden="true" style="background-image:url('+gearUrl+');background-position:-'+(index*34)+'px 0"></span>';
+ return '<span class="gear-mini" aria-hidden="true" style="background-image:url('+gearUrl+');--gear-index:'+index+'"></span>';
 }
