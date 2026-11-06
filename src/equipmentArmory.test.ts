@@ -54,7 +54,7 @@ test('loot is seeded, bosses grant guaranteed equipment, later waves offer highe
 });
 
 test('expanded weapon categories remain compatible with the Armory, class permissions, and tier progression',()=>{
- const expected=['revolver','machinePistol','compactSmg','suppressedSmg','battleRifle','burstRifle','doubleBarrel','tacticalShotgun','heavyMarksman','machete','bat','crowbar'] as const;
+ const expected=['revolver','machinePistol','compactSmg','suppressedSmg','battleRifle','burstRifle','doubleBarrel','tacticalShotgun','heavyMarksman','machete','bat','crowbar','squadAutomatic','heavyMachineGun'] as const;
  for(const model of expected){
   const definition=weaponDefs[model],item=newWeapon(model,1,'expanded-'+model);
   assert.equal(item.model,model);
