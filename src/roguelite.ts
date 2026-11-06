@@ -326,7 +326,7 @@ function armoryStatus(r:Run):string{
   display('BACKPACK',inventorySummary(r))+
   display('WEAPON',weapon?weaponDefs[weapon.model].name:'Unarmed')+
   display('AMMO',ammo)+display('MEDKITS',r.medkits)+
-  '</div>';
+  '</div><div class="armory-reserves" aria-label="Ammo reserves">'+ammoTypes.map(type=>'<span>'+ammoLabels[type]+': <b>'+eq.ammo[type]+'</b></span>').join('')+'</div>';
 }
 /** Retain scroll location when interacting with inventory or purchasing supplies. */
 let inventoryScroll:{left:number;right:number;page:number}|null=null;
