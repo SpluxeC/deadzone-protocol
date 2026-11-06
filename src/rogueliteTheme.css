@@ -422,3 +422,31 @@
  #rogue #overlay .armory-actions button{min-height:33px}
  #rogue #overlay .prepare-run-screen .prep-grid{gap:5px 12px;margin:7px 0}
 }
+
+/* Desktop inventory uses two independent panes; phone layout remains stacked. */
+@media (hover:hover) and (pointer:fine) and (min-width:900px){
+ #rogue #overlay .inventory-screen{
+  display:flex;flex-direction:column;
+  width:min(1140px,100%);max-width:1140px;
+  height:min(790px,calc(100dvh - 32px));max-height:calc(100dvh - 32px);
+  overflow:hidden!important;min-height:0;
+ }
+ #rogue #overlay .inventory-screen > p{flex:none;font-size:12px;margin:4px 0}
+ #rogue #overlay .inventory-columns{
+  flex:1 1 auto;min-height:0;
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:14px;margin:10px 0;
+ }
+ #rogue #overlay .inventory-section{
+  min-height:0;overflow-y:auto;overscroll-behavior:contain;
+  border:1px solid #48695f;border-radius:10px;
+  background:#112725b8;padding:5px 11px 12px;scrollbar-width:thin;
+ }
+ #rogue #overlay .inventory-section > h2{position:sticky;top:-5px;z-index:2;background:#112725;margin:0 0 4px;padding:10px 0 7px}
+ #rogue #overlay .inventory-section > section{font-size:12px;line-height:1.45}
+ #rogue #overlay .inventory-section .menurow{gap:5px;margin-top:6px}
+ #rogue #overlay .inventory-section button{font-size:11px;padding:6px 8px!important;min-height:30px}
+ #rogue #overlay .inventory-screen > .menurow{flex:none;margin-top:5px}
+ #rogue #overlay .inventory-screen > .menurow:last-child{justify-content:flex-end}
+ #rogue #overlay .inventory-screen #close-inventory{flex:0 0 auto;min-width:190px}
+}
