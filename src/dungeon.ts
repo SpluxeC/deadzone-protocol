@@ -1,4 +1,17 @@
 export type DungeonLayout={width:number;height:number;seed:number;tiles:number[];entrance:{x:number;y:number};extraction:{x:number;y:number};extractionSize?:1|2;loot:{x:number;y:number}[];enemies:{x:number;y:number}[]};
+/** All four cells covered by a modern elevator; old save layouts use one cell. */
+export function elevatorCells(map:DungeonLayout):{x:number;y:number}[]{
+ const {x,y}=map.extraction;
+ if(map.extractionSize!==2)return [{x,y}];
+ return [{x:x-.5,y:y-.5},{x:x+.5,y:y-.5},{x:x-.5,y:y+.5},{x:x+.5,y:y+.5}];
+}
+/** Players can activate the elevator while on its floor or beside its threshold. */
+export function elevatorInRange(map:DungeonLayout,player:{x:number;y:number}):boolean{
+ const {x,y}=map.extraction;
+ if(map.extractionSize!==2)return Math.hypot(player.x-x,player.y-y)<=1.5;
+ const dx=Math.max(0,Math.abs(player.x-x)-.5),dy=Math.max(0,Math.abs(player.y-y)-.5);
+ return Math.hypot(dx,dy)<=1.15;
+}
 /** Seeded procedural connected dungeon: 0=floor, 1=wall. */
 export function generateDungeon(seed:number,width=42,height=30,layoutVersion:1|2|3=2):DungeonLayout{
 if(!Number.isInteger(seed)||width<22||height<18)throw Error('Invalid dungeon parameters');
