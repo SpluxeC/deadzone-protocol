@@ -22,7 +22,7 @@ type Run={wave:number;credits:number;hp:number;armor:number;mag:number;reserve:n
 type Profile=ProfileV5;
 const root=document.querySelector<HTMLDivElement>('#app')!;
 root.innerHTML=`<div id="rogue" style="height:100dvh;display:flex;flex-direction:column;background:#0c1416;color:#eaf0eb;font:14px system-ui;overflow:hidden">
-<header><strong class="game-title">DEADZONE <span style="color:#f18567">PROTOCOL</span></strong><div id="combat-hud" aria-label="Survivor status"><span id="stats" class="top-stat">WAVE 1</span><div class="hud-meter" aria-label="Health"><span>HP</span><div><i id="hud-hp"></i></div><b id="hud-hp-text">100</b></div><div class="hud-meter" aria-label="Armor"><span>ARM</span><div><i id="hud-armor"></i></div><b id="hud-armor-text">50</b></div><span class="top-stat" id="hud-weapon">CARBINE · 30/90</span><span class="top-stat" id="hud-team">SQUAD 0/4</span><span class="top-stat" id="hud-credits">₡0</span><span class="top-stat" id="hud-enemies">INFECTED 0</span></div><button id="menu" type="button">MENU</button></header>
+<header><strong class="game-title">DEADZONE <span style="color:#f18567">PROTOCOL</span></strong><div id="combat-hud" aria-label="Survivor status"><span id="stats" class="top-stat">WAVE 1</span><div class="hud-meter" aria-label="Health"><span>HP</span><div><i id="hud-hp"></i></div><b id="hud-hp-text">100</b></div><div class="hud-meter" aria-label="Armor"><span>ARM</span><div><i id="hud-armor"></i></div><b id="hud-armor-text">50</b></div><span class="top-stat" id="hud-weapon">CARBINE · 30/90</span><span class="top-stat" id="hud-team">SQUAD 0/4</span><span class="top-stat" id="hud-credits">₡0</span></div><button id="menu" type="button">MENU</button></header>
 <div id="playarea" style="position:relative;min-height:0;flex:1;display:flex;justify-content:center;align-items:center;background:#0a1113"><canvas id="rogue-canvas" style="width:100%;height:100%;object-fit:contain;touch-action:none"></canvas><div id="mobile-sticks" aria-label="Touch analog controls"><div class="analog-group analog-left"><button id="mobile-inventory-team" type="button" aria-label="Tap inventory; hold for team">INVENTORY / TEAM</button><div class="analog-base" id="move-stick" role="group" aria-label="Move"><div class="analog-ring"></div><div class="analog-knob"></div></div><span class="analog-caption">MOVE</span></div><div id="mobile-squad" aria-label="Squad commands"><button type="button" data-squad-order="follow">FOLLOW</button><button type="button" data-squad-order="hold">HOLD</button><button type="button" data-squad-order="focus">FOCUS</button><button type="button" data-squad-order="regroup">REGROUP</button><button type="button" data-squad-order="defensive">DEFEND</button></div><button id="mobile-medkit-revive" type="button" aria-label="Tap to use medkit; hold to revive">MEDKIT / REVIVE</button><div id="mobile-actions"><button id="mobile-interact" type="button" disabled>INTERACT</button></div><div class="analog-group analog-right"><button id="mobile-weapon-swap" type="button" aria-label="Tap to swap primary and secondary; hold for melee">SWAP WEAPON</button><div class="analog-base" id="aim-stick" role="group" aria-label="Aim and fire"><div class="analog-ring"></div><div class="analog-knob"></div></div><span class="analog-caption">AIM · AUTO ATTACK</span></div></div><div id="rotate-phone" role="status" aria-live="polite"><div class="rotate-symbol" aria-hidden="true">↻</div><h2>Rotate Your Device</h2><p>Deadzone Protocol is played in landscape mode.</p></div><div id="overlay" style="position:absolute;inset:0;display:flex;align-items:flex-start;justify-content:center;background:#081112df;overflow:auto;padding:14px;box-sizing:border-box"></div></div>
 <footer style="display:flex;flex-wrap:wrap;justify-content:center;gap:6px;padding:8px;background:#152521"><button id="weapon-primary">1 PRIMARY</button><button id="weapon-secondary">2 SIDEARM</button><button id="weapon-melee">3 MELEE</button><button id="heal">MEDKIT (H)</button><button id="inventory">INVENTORY (I)</button><button id="orders">SQUAD: FOLLOW (Q)</button><button id="squad-panel">TEAM</button><button id="revive">HOLD REVIVE (V)</button><button id="moveup">▲</button><button id="moveleft">◀</button><button id="movedown">▼</button><button id="moveright">▶</button><button id="interact" disabled>INTERACT (E)</button></footer>
 <div id="toast" style="position:fixed;left:50%;bottom:78px;transform:translateX(-50%);pointer-events:none;background:#243c37e8;padding:6px 12px;border-radius:6px;color:white;z-index:5"></div></div>`;
@@ -273,7 +273,6 @@ function waveReport(){
  <div><strong>${waveKills}</strong><span>Zombies eliminated</span></div>
  <div><strong>${waveLoot}</strong><span>Containers searched</span></div>
  <div><strong>${r.spawned}</strong><span>Zombies spawned</span></div>
- <div><strong>${r.peakThreat??0}</strong><span>Peak active horde</span></div>
  <div><strong>${Math.ceil(r.hp)}</strong><span>Health remaining</span></div>
  <div><strong>${Math.ceil(r.armor)}</strong><span>Armor remaining</span></div>
  <div><strong>${r.allies.filter(a=>!a.dead).length}/4</strong><span>Squad survivors</span></div>
@@ -407,7 +406,6 @@ function finishRun(success:boolean){
  const kills=r.killsTotal??0,loot=r.lootedTotal??0,bosses=r.bosses;
  const health=Math.ceil(r.hp),armor=Math.ceil(r.armor);
  const squad=r.allies.filter(a=>!a.dead).length;
- const peak=r.peakThreat??0;
  run=null;plan=null;fog=null;combatFx=[];paused=true;save();overlay.hidden=false;
  overlay.innerHTML=`<article class="run-results"><h1>${success?'RUN COMPLETED':'RUN OVER'}</h1><p>${success?'Successfully extracted':'Squad lost'} · ${elapsed} total survival time · ${waveElapsed} in final wave</p>
  <div class="results-grid">
@@ -416,7 +414,6 @@ function finishRun(success:boolean){
  <div><strong>${kills}</strong><span>Zombies eliminated</span></div>
  <div><strong>${loot}</strong><span>Containers searched</span></div>
  <div><strong>${bosses}</strong><span>Bosses defeated</span></div>
- <div><strong>${peak}</strong><span>Peak final-wave horde</span></div>
  <div><strong>${success?health:0} HP / ${armor} ARM</strong><span>Final condition</span></div>
  <div><strong>${squad}/4</strong><span>Squad survivors</span></div>
  </div>
@@ -647,7 +644,7 @@ function draw(){
  const mobileSquad=document.querySelector<HTMLElement>('#mobile-squad')!;
  mobileSquad.hidden=!hasActiveSquad;
  mobileSquad.setAttribute('aria-hidden',String(!hasActiveSquad));
- const order=orderLabel(r.squadOrder??'follow'),status='INFECTED '+remaining()+' · '+formatRunTime(r.waveSeconds??0);
+ const order=orderLabel(r.squadOrder??'follow');
  stats.textContent='WAVE '+r.wave;
  document.querySelector<HTMLButtonElement>('#orders')!.textContent='SQUAD: '+order+' (Q)';
  document.querySelectorAll<HTMLButtonElement>('#mobile-squad [data-squad-order]').forEach(button=>{
@@ -670,7 +667,6 @@ function draw(){
  hpBar.style.width=(hpRatio*100)+'%';hpBar.style.background=hudColor(hpRatio);
  armorBar.style.width=(armorRatio*100)+'%';armorBar.style.background=hudColor(armorRatio);
  document.querySelector('#hud-credits')!.textContent='₡'+r.credits;
- document.querySelector('#hud-enemies')!.textContent=status;
  document.querySelector('#hud-hp-text')!.textContent=String(Math.ceil(r.hp));
  document.querySelector('#hud-armor-text')!.textContent=String(Math.ceil(r.armor));
  document.querySelector('#hud-weapon')!.textContent=(w?weaponDefs[w.model].name:'UNARMED')+' · '+ammo+(r.reloadTimer?' · RELOADING':'');
