@@ -7,7 +7,16 @@ export type CombatFx={
  age:number;duration:number;distance:number;angleOffset:number;
 };
 export type ShotProfile={speed:number;distance:number;duration:number;count:number;spread:number;width:number;color:string;trail:number;flash:number};
-const shots:Record<Exclude<WeaponId,'knife'|'axe'>,ShotProfile>={
+const shots:Record<Exclude<WeaponId,'knife'|'axe'|'machete'|'bat'|'crowbar'>,ShotProfile>={
+ revolver:{speed:38,distance:8,duration:.30,count:1,spread:0,width:.11,color:'#ffd9aa',trail:.64,flash:.33},
+ machinePistol:{speed:23,distance:5,duration:.26,count:1,spread:.04,width:.06,color:'#ffd891',trail:.3,flash:.15},
+ compactSmg:{speed:24,distance:5.2,duration:.27,count:1,spread:.037,width:.057,color:'#ffda91',trail:.30,flash:.15},
+ suppressedSmg:{speed:26,distance:6.2,duration:.27,count:1,spread:.019,width:.057,color:'#d8ebbd',trail:.28,flash:.08},
+ battleRifle:{speed:39,distance:9,duration:.27,count:1,spread:.012,width:.095,color:'#ffe0a0',trail:.66,flash:.26},
+ burstRifle:{speed:35,distance:8.5,duration:.29,count:1,spread:.018,width:.075,color:'#ffefbe',trail:.52,flash:.21},
+ doubleBarrel:{speed:23,distance:4.3,duration:.26,count:9,spread:.24,width:.05,color:'#ffba7b',trail:.22,flash:.34},
+ tacticalShotgun:{speed:24,distance:4.8,duration:.26,count:7,spread:.18,width:.05,color:'#ffcc82',trail:.26,flash:.26},
+ heavyMarksman:{speed:50,distance:12,duration:.3,count:1,spread:.006,width:.1,color:'#c4efff',trail:.95,flash:.32},
  pistol:{speed:22,distance:6,duration:.30,count:1,spread:0,width:.075,color:'#ffe0a1',trail:.38,flash:.20},
  smg:{speed:25,distance:5.8,duration:.27,count:1,spread:.035,width:.055,color:'#ffd784',trail:.30,flash:.15},
  carbine:{speed:31,distance:7,duration:.27,count:1,spread:.012,width:.075,color:'#ffe9bd',trail:.43,flash:.20},
@@ -19,12 +28,12 @@ const shots:Record<Exclude<WeaponId,'knife'|'axe'>,ShotProfile>={
  sniper:{speed:57,distance:13,duration:.28,count:1,spread:0,width:.105,color:'#b6ecff',trail:1.2,flash:.38}
 };
 export function shotProfile(model:WeaponId):ShotProfile|null{
- return model==='knife'||model==='axe'?null:shots[model];
+ return ['knife','axe','machete','bat','crowbar'].includes(model)?null:shots[model as keyof typeof shots];
 }
 export function makeAttackFx(model:WeaponId,x:number,y:number,dx:number,dy:number,range:number,hitDistances?:readonly number[]):CombatFx[]{
  const length=Math.hypot(dx,dy)||1,ux=dx/length,uy=dy/length;
- if(model==='knife'||model==='axe')
-  return [{kind:'swing',model,x,y,dx:ux,dy:uy,age:0,duration:model==='axe'?.37:.23,distance:range,angleOffset:0}];
+ if(['knife','axe','machete','bat','crowbar'].includes(model))
+  return [{kind:'swing',model,x,y,dx:ux,dy:uy,age:0,duration:model==='axe'||model==='crowbar'?.37:.23,distance:range,angleOffset:0}];
  const profile=shots[model],maximum=Math.max(0,range);
  return Array.from({length:profile.count},(_,i)=>{
   const offset=profile.count===1?0:(i/(profile.count-1)*2-1)*profile.spread;
@@ -44,7 +53,7 @@ export function drawCombatFx(ctx:CanvasRenderingContext2D,v:View,effects:readonl
   ctx.save();
   ctx.translate(px,py);ctx.rotate(Math.atan2(fx.dy,fx.dx));
   if(fx.kind==='swing'){
-   const axe=fx.model==='axe',radius=v.tile*Math.max(.55,fx.distance-.18);
+   const axe=fx.model==='axe'||fx.model==='crowbar'||fx.model==='bat',radius=v.tile*Math.max(.55,fx.distance-.18);
    const sweep=axe?2.15:1.55,origin=axe?-1.05:-.78,head=origin+sweep*progress;
    ctx.globalAlpha=Math.min(1,(1-progress)*1.5);
    ctx.lineCap='round';
