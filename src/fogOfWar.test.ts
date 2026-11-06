@@ -40,7 +40,7 @@ test('revealed areas never darken again after exploring elsewhere',()=>{
 test('unexplored tiles are darkened but terrain remains visible; entities are hidden until reveal',()=>{
  const map=generateDungeon(481,42,30),fog=createFog(map),origin=map.entrance;
  const i=origin.y*map.width+origin.x;
- assert.ok(UNKNOWN_TERRAIN_ALPHA>.65&&UNKNOWN_TERRAIN_ALPHA<1);
+ assert.ok(UNKNOWN_TERRAIN_ALPHA>=.5&&UNKNOWN_TERRAIN_ALPHA<=.65);
  assert.equal(fogAlpha(fog,i),UNKNOWN_TERRAIN_ALPHA);
  assert.equal(discoveredAt(map,fog,origin.x,origin.y),false);
  updateFog(map,fog,[{x:origin.x,y:origin.y,radius:3}]);
