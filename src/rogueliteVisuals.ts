@@ -86,6 +86,61 @@ export function playerMuzzle(x:number,y:number,angle:number,scale=1,model:Weapon
  return {x:x+local.x*Math.cos(rotation)-local.y*Math.sin(rotation),
   y:y+local.x*Math.sin(rotation)+local.y*Math.cos(rotation)};
 }
+/** 2x2 tile elevator, drawn as one machine in the same top-down world frame.
+ * Center x/y are half-integer tile coordinates; the outer frame spans exactly 2 tiles.
+ */
+export function drawElevator(ctx:CanvasRenderingContext2D,v:View,x:number,y:number,active:boolean,time=0):void{
+ if(!visible(v,x,y,2))return;
+ const t=v.tile,px=v.ox+(x-1)*t,py=v.oy+(y-1)*t,s=t*2;
+ const glow=active?.6:.2;
+ ctx.save();ctx.translate(px,py);
+ // Underframe and deep recess.
+ ctx.fillStyle='rgba(0,0,0,.55)';ctx.fillRect(-t*.07,-t*.04,s+t*.14,s+t*.16);
+ ctx.fillStyle='#101d23';ctx.fillRect(0,0,s,s);
+ ctx.strokeStyle='#798b88';ctx.lineWidth=t*.115;ctx.strokeRect(t*.055,t*.055,s-t*.11,s-t*.11);
+ ctx.strokeStyle='#1b2d35';ctx.lineWidth=t*.06;ctx.strokeRect(t*.19,t*.19,s-t*.38,s-t*.38);
+ // Elevator cabin with a broad, unmistakable pair of brushed-steel doors.
+ const doorX=t*.34,doorY=t*.20,doorW=s-t*.68,doorH=t*1.06;
+ const leftDoor=ctx.createLinearGradient(doorX,0,doorX+doorW,0);
+ leftDoor.addColorStop(0,'#6c8083');leftDoor.addColorStop(.22,'#bac7c0');
+ leftDoor.addColorStop(.47,'#6e8587');leftDoor.addColorStop(.53,'#546a6f');
+ leftDoor.addColorStop(.8,'#b1c3be');leftDoor.addColorStop(1,'#5e7479');
+ ctx.fillStyle=leftDoor;ctx.fillRect(doorX,doorY,doorW,doorH);
+ ctx.strokeStyle='#0b242b';ctx.lineWidth=t*.055;ctx.strokeRect(doorX,doorY,doorW,doorH);
+ ctx.strokeStyle='#1d3038';ctx.lineWidth=t*.085;
+ ctx.beginPath();ctx.moveTo(t,doorY);ctx.lineTo(t,doorY+doorH);ctx.stroke();
+ ctx.strokeStyle='rgba(233,246,238,.28)';ctx.lineWidth=t*.025;
+ for(const xx of [doorX+t*.1,doorX+doorW-t*.13]){
+  ctx.beginPath();ctx.moveTo(xx,doorY+t*.12);ctx.lineTo(xx,doorY+doorH-t*.12);ctx.stroke();
+ }
+ // Floor threshold, safety strips, and hatch lip.
+ ctx.fillStyle='#1c3031';ctx.fillRect(t*.23,t*1.33,t*1.54,t*.37);
+ ctx.fillStyle='#cbad52';ctx.fillRect(t*.25,t*1.36,t*1.5,t*.095);
+ ctx.strokeStyle='#13282b';ctx.lineWidth=t*.085;
+ for(let xx=t*.31;xx<t*1.67;xx+=t*.22){
+  ctx.beginPath();ctx.moveTo(xx,t*1.36);ctx.lineTo(xx+t*.13,t*1.455);ctx.stroke();
+ }
+ ctx.fillStyle='#4e6666';ctx.fillRect(t*.19,t*1.74,t*1.62,t*.09);
+ ctx.strokeStyle='#aabbb6';ctx.lineWidth=t*.025;
+ for(let i=0;i<5;i++){
+  ctx.beginPath();ctx.moveTo(t*(.35+i*.31),t*1.76);ctx.lineTo(t*(.35+i*.31),t*1.81);ctx.stroke();
+ }
+ // Call panel and an illuminated directional arrow/ready indicator.
+ ctx.fillStyle='#283e44';ctx.fillRect(t*1.6,t*.45,t*.22,t*.55);
+ ctx.strokeStyle='#9baeb0';ctx.lineWidth=t*.035;ctx.strokeRect(t*1.6,t*.45,t*.22,t*.55);
+ ctx.fillStyle=active?'#76ffc5':'#8caa94';
+ ctx.beginPath();ctx.arc(t*1.71,t*.58,t*.063,0,Math.PI*2);ctx.fill();
+ ctx.fillStyle='#152a30';ctx.fillRect(t*.72,t*.02,t*.56,t*.25);
+ ctx.fillStyle=active?'#7bffc3':'#a3bdaf';ctx.font='bold '+Math.max(9,t*.20)+'px system-ui';ctx.textAlign='center';ctx.textBaseline='middle';
+ ctx.fillText('↑',t,t*.15);
+ // A restrained rim pulse makes an available extraction visually clear.
+ if(active){
+  const pulse=.55+.25*Math.sin(time/390);
+  ctx.strokeStyle='rgba(86,250,176,'+pulse+')';ctx.lineWidth=t*.052;ctx.strokeRect(t*.09,t*.09,s-t*.18,s-t*.18);
+ }
+ ctx.fillStyle='rgba(62,239,165,'+glow+')';ctx.fillRect(t*.37,t*1.58,t*1.26,t*.085);
+ ctx.restore();
+}
 export function drawSprite(ctx:CanvasRenderingContext2D,kind:SpriteKind,v:View,x:number,y:number,opts?:{angle?:number;scale?:number;down?:boolean;alpha?:number;glow?:string;bob?:number;stride?:number;motionSpeed?:number;idleTime?:number;showAim?:boolean;weapon?:WeaponId|null}):void{
  if(!visible(v,x,y))return;
  const living=['player','rifleman','medic','heavy','scout','engineer','shambler','runner','armored','bruiser','boss'].includes(kind);
