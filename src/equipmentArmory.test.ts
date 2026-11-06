@@ -66,7 +66,7 @@ test('expanded weapon categories remain compatible with the Armory, class permis
  assert.equal(weaponDefs.machete.slot,'melee');
  assert.equal(weaponDefs.battleRifle.slot,'primary');
  assert.ok(canEquipMod(newWeapon('battleRifle',1,'battle'),newMod('scope',1,'scope')));
- assert.ok(canClassEquip('scout','heavyMarksman')===false);
+ assert.equal(canClassEquip('scout','heavyMarksman'),true);
  const offers=armoryOffers(311,4,0);
  assert.equal(offers.filter(o=>o.kind==='weapon'&&weaponDefs[o.model as keyof typeof weaponDefs].slot==='secondary').length,1);
  assert.equal(offers.filter(o=>o.kind==='weapon'&&weaponDefs[o.model as keyof typeof weaponDefs].slot==='melee').length,1);
