@@ -141,6 +141,95 @@ export function drawElevator(ctx:CanvasRenderingContext2D,v:View,x:number,y:numb
  ctx.fillStyle='rgba(62,239,165,'+glow+')';ctx.fillRect(t*.37,t*1.58,t*1.26,t*.085);
  ctx.restore();
 }
+/** Top-down military shipping case: stamped olive steel, raised lid, metal hinges,
+ * reinforced corners, recessed latches and stencil markings.
+ * Long weapon cases occupy two adjacent floor tiles as one object.
+ */
+export function drawMilitaryCrate(ctx:CanvasRenderingContext2D,v:View,x:number,y:number,weapon=false,orientation:'horizontal'|'vertical'='horizontal',opened=false):void{
+ if(!visible(v,x,y,2.5))return;
+ const t=v.tile,px=v.ox+x*t,py=v.oy+y*t;
+ const w=t*(weapon?1.92:.92),h=t*(weapon?.85:.86);
+ ctx.save();ctx.translate(px,py);
+ if(weapon&&orientation==='vertical')ctx.rotate(Math.PI/2);
+ ctx.globalAlpha=opened?.72:1;
+ ctx.fillStyle='rgba(0,6,7,.55)';ctx.beginPath();ctx.ellipse(0,t*.18,w*.53,h*.42,0,0,Math.PI*2);ctx.fill();
+ const left=-w/2,top=-h/2;
+ ctx.fillStyle='#151d1b';ctx.fillRect(left-t*.035,top+t*.07,w+t*.07,h+t*.07);
+ ctx.fillStyle=weapon?'#526157':'#556445';
+ ctx.fillRect(left,top,w,h);
+ const metallic=ctx.createLinearGradient(left,top,left+w,top+h);
+ metallic.addColorStop(0,weapon?'#697a6f':'#7d8962');
+ metallic.addColorStop(.5,weapon?'#404e49':'#46543c');
+ metallic.addColorStop(1,weapon?'#73857a':'#697655');
+ ctx.fillStyle=metallic;ctx.fillRect(left+t*.09,top+t*.09,w-t*.18,h-t*.18);
+ ctx.strokeStyle='#182722';ctx.lineWidth=t*.075;ctx.strokeRect(left+t*.035,top+t*.035,w-t*.07,h-t*.07);
+ ctx.strokeStyle='#a0a88c';ctx.lineWidth=t*.026;ctx.strokeRect(left+t*.125,top+t*.13,w-t*.25,h-t*.26);
+ // Lengthwise pressed-steel ribs and reinforced runners.
+ ctx.strokeStyle='rgba(16,31,27,.52)';ctx.lineWidth=t*.045;
+ const count=weapon?7:3;
+ for(let i=1;i<count;i++){const q=left+w*i/count;ctx.beginPath();ctx.moveTo(q,top+t*.18);ctx.lineTo(q,top+h-t*.17);ctx.stroke()}
+ // Lid seam, handles, hinges, and locking latches.
+ ctx.fillStyle='#192825';ctx.fillRect(left+t*.085,top+h*.43,w-t*.17,t*.07);
+ for(const xoff of [left+w*.2,left+w*.8]){
+  ctx.fillStyle='#202f2e';ctx.fillRect(xoff-t*.075,top-t*.045,t*.15,t*.12);
+  ctx.fillRect(xoff-t*.075,top+h-t*.065,t*.15,t*.11);
+  ctx.fillStyle='#c0c7b4';ctx.fillRect(xoff-t*.043,top+h-t*.045,t*.086,t*.086);
+ }
+ for(const side of [-1,1]){
+  const handleX=side*(w*.48);
+  ctx.strokeStyle='#adbaa8';ctx.lineWidth=t*.035;
+  ctx.strokeRect(handleX-t*.047,-t*.095,t*.094,t*.19);
+ }
+ // Stencil lettering, warning triangles and military inventory tags.
+ ctx.save();
+ ctx.fillStyle=weapon?'#e2d8a5':'#c9d1b3';ctx.textAlign='center';ctx.textBaseline='middle';
+ ctx.font='bold '+Math.max(6,t*(weapon?.18:.16))+'px monospace';
+ ctx.fillText(weapon?'WEAPONS':'SUPPLY',0,-h*.16);
+ ctx.font='bold '+Math.max(5,t*.105)+'px monospace';
+ ctx.fillText(weapon?'MIL-SPEC  //  SECURED':'MILITARY  //  RATION',0,h*.21);
+ ctx.restore();
+ if(weapon){
+  ctx.strokeStyle='#e5c987';ctx.lineWidth=t*.034;
+  ctx.strokeRect(left+t*.18,top+t*.15,w-t*.36,h-t*.3);
+ }else{
+  ctx.strokeStyle='#b4b987';ctx.lineWidth=t*.037;
+  ctx.beginPath();ctx.moveTo(-t*.12,top+t*.16);ctx.lineTo(0,top+t*.31);ctx.lineTo(t*.12,top+t*.16);ctx.stroke();
+ }
+ if(opened){
+  ctx.fillStyle='rgba(9,18,15,.42)';ctx.fillRect(left+t*.1,top+t*.09,w-t*.2,h-t*.18);
+  ctx.strokeStyle='#99a98d';ctx.lineWidth=t*.027;
+  ctx.beginPath();ctx.moveTo(left+t*.15,top+t*.12);ctx.lineTo(left+w-t*.15,top+h-t*.13);ctx.stroke();
+ }
+ ctx.restore();
+}
+const lootAtlas=typeof Image==='undefined'?null:new Image();
+let lootIconsReady=false;
+if(lootAtlas){
+ lootAtlas.onload=()=>{lootIconsReady=true};
+ lootAtlas.onerror=()=>{lootIconsReady=false};
+ lootAtlas.src=new URL('./assets/deadzone-gear.svg',import.meta.url).href;
+}
+/** Temporary item reward marker in the game world; labels follow floating icons. */
+export function drawLootPopup(ctx:CanvasRenderingContext2D,v:View,x:number,y:number,iconIndex:number,label:string,progress:number):void{
+ if(!visible(v,x,y,3))return;
+ const t=v.tile,p=Math.max(0,Math.min(1,progress));
+ const alpha=Math.min(1,p*7,(1-p)*5);
+ const px=v.ox+x*t,py=v.oy+(y-.9-p*.4)*t;
+ const size=Math.max(23,t*.9),width=Math.max(size+16,Math.min(t*6,Math.max(t*2.5,label.length*t*.22)));
+ ctx.save();ctx.globalAlpha=Math.max(0,alpha);
+ ctx.fillStyle='rgba(11,25,24,.94)';ctx.strokeStyle='#b2c7a5';ctx.lineWidth=Math.max(1,t*.04);
+ ctx.beginPath();ctx.roundRect(px-width/2,py-size*.55,width,size*1.38,Math.max(5,t*.15));ctx.fill();ctx.stroke();
+ if(lootAtlas&&lootIconsReady&&iconIndex>=0){
+  ctx.drawImage(lootAtlas,iconIndex*64,0,64,64,px-size*.43,py-size*.5,size*.86,size*.86);
+ }else{
+  ctx.fillStyle='#b6dcb4';ctx.font='bold '+Math.max(12,size*.58)+'px sans-serif';ctx.textAlign='center';
+  ctx.fillText('+',px,py+size*.1);
+ }
+ ctx.fillStyle='#f5f3db';ctx.textAlign='center';ctx.textBaseline='middle';
+ ctx.font='bold '+Math.max(9,t*.24)+'px system-ui';
+ ctx.fillText(label,px,py+size*.58,width-8);
+ ctx.restore();
+}
 export function drawSprite(ctx:CanvasRenderingContext2D,kind:SpriteKind,v:View,x:number,y:number,opts?:{angle?:number;scale?:number;down?:boolean;alpha?:number;glow?:string;bob?:number;stride?:number;motionSpeed?:number;idleTime?:number;showAim?:boolean;weapon?:WeaponId|null}):void{
  if(!visible(v,x,y))return;
  const living=['player','rifleman','medic','heavy','scout','engineer','shambler','runner','armored','bruiser','boss'].includes(kind);
