@@ -59,7 +59,21 @@ async function setupExtraction(page){
  await page.reload();
  await page.waitForFunction(()=>document.documentElement.dataset.deadzoneReady==='true');
  await action(page,'#continue-run',page.context().__auditTouch);
- await page.waitForFunction(()=>!document.querySelector('#interact')?.disabled,{timeout:8000});
+ try{
+  await page.waitForFunction(()=>!document.querySelector('#interact')?.disabled,null,{timeout:8000});
+ }catch(error){
+  const state=await page.evaluate(()=>{
+   const button=document.querySelector('#interact'),overlay=document.querySelector('#overlay');
+   const key=Object.keys(localStorage).find(k=>k.endsWith('-run')&&k.startsWith('deadzone-roguelite'));
+   const run=key?JSON.parse(localStorage.getItem(key)):null;
+   return {disabled:button?.disabled,title:button?.title,overlayHidden:overlay?.hidden,
+    ready:document.documentElement.dataset.deadzoneReady,
+    stage:run?.stage,player:run?.player,hp:run?.hp,downed:run?.playerDowned,
+    seed:run?.seed,wave:run?.wave,layoutVersion:run?.layoutVersion};
+  });
+  console.error('EXTRACTION CONTROL DIAGNOSTICS',state);
+  throw error;
+ }
 }
 async function runScenario(touch){
  const context=await browser.newContext(touch?{
