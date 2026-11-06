@@ -1,5 +1,10 @@
 /** Phase 3 shared equipment, loot, backpack and Armory rules. All values are run-scoped. */
-export type Tier=1|2|3|4|5;
+export type Tier=1|2|3|4|5|6;
+export type RarityName='Basic'|'Common'|'Uncommon'|'Rare'|'Legendary'|'Exotic';
+export const rarityNames:Record<Tier,RarityName>={1:'Basic',2:'Common',3:'Uncommon',4:'Rare',5:'Legendary',6:'Exotic'};
+export function rarityName(tier:number):RarityName{return rarityNames[Math.max(1,Math.min(6,Math.floor(Number.isFinite(tier)?tier:1))) as Tier]}
+export function rarityClass(tier:number):string{return 'rarity-'+rarityName(tier).toLowerCase()}
+export function gearLabel(item:Gear):string{return (item.kind==='weapon'?weaponDefs[item.model].name:attachmentDefs[item.model].name)+' · '+rarityName(item.tier)}
 export type AmmoType='light'|'rifle'|'shotgun'|'heavy'|'precision';
 export type Slot='primary'|'secondary'|'melee';
 export type AttachmentSlot='optic'|'barrel'|'magazine'|'underbarrel';
@@ -95,11 +100,11 @@ export function newWeapon(model:WeaponId,tier:Tier,id:string):Weapon{return {kin
 export function newMod(model:AttachmentId,tier:Tier,id:string):Mod{return {kind:'attachment',id,model,tier}}
 export function canEquipMod(weapon:Weapon,mod:Mod):boolean{return attachmentDefs[mod.model].compatible.includes(weapon.model)}
 export function canClassEquip(role:ClassId,model:WeaponId):boolean{return weaponDefs[model].allowed.includes(role)}
-export function itemName(item:Gear):string{return (item.kind==='weapon'?weaponDefs[item.model].name:attachmentDefs[item.model].name)+' T'+item.tier}
+export function itemName(item:Gear):string{return (item.kind==='weapon'?weaponDefs[item.model].name:attachmentDefs[item.model].name)+' · '+rarityName(item.tier)}
 export function itemPrice(item:Gear):number{return item.kind==='weapon'?weaponPrice(item.model,item.tier):modPrice(item.model,item.tier)}
 export function weaponPrice(model:WeaponId,tier:Tier):number {const base=weaponDefs[model].slot==='melee'?180:weaponDefs[model].ammo==='heavy'||weaponDefs[model].ammo==='precision'?1050:weaponDefs[model].ammo==='shotgun'?720:weaponDefs[model].slot==='secondary'?330:680;return Math.round(base*Math.pow(1.65,tier-1)/10)*10}
 export function modPrice(_model:AttachmentId,tier:Tier):number {return Math.round(180*Math.pow(1.55,tier-1)/10)*10}
-export function upgradePrice(item:Gear):number {if(item.tier>=5)return Infinity;const next=(item.tier+1) as Tier;return Math.round(itemPrice({...item,tier:next} as Gear)*1.28/10)*10}
+export function upgradePrice(item:Gear):number {if(item.tier>=6)return Infinity;const next=(item.tier+1) as Tier;return Math.round(itemPrice({...item,tier:next} as Gear)*1.28/10)*10}
 export function salePrice(item:Gear):number {return Math.floor(itemPrice(item)*.45)}
 export function effectiveStats(weapon:Weapon):{damage:number;capacity:number;rate:number;range:number;reload:number;accuracy:number;noise:number}{
  const b=weaponDefs[weapon.model],n=weapon.tier-1;
@@ -140,9 +145,9 @@ export function addAmmo(ammo:AmmoBank,type:AmmoType,count:number,bag:Gear[],medk
  ammo[type]=current+added;return added;
 }
 export function rarityForWave(wave:number,roll:number):Tier{
- const tier=Math.min(5,1+Math.floor((Math.max(1,wave)-1)/5));
+ const tier=Math.min(6,1+Math.floor((Math.max(1,wave)-1)/5));
  const r=Math.min(.999999,Math.max(0,roll));
- if(r<.07&&tier<5)return (tier+1) as Tier;
+ if(r<.07&&tier<6)return (tier+1) as Tier;
  if(r<.43)return tier as Tier;
  return Math.max(1,tier-1) as Tier;
 }
