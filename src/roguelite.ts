@@ -1,13 +1,13 @@
 import {generateDungeon,type DungeonLayout} from './dungeon';
 import {makeWave,killPayout,clearPayout,permanentPayout,extractionSpawnInterval,extractionActiveCap,formatRunTime,type WavePlan} from './rogueliteRules';
 import {zombieKind,zombieStats,weaponStats,reloadTransfer,distanceField,nextZombieWaypoint,incomingDamage,bossAttack,bossImpact,type ZombieKind,type WeaponSlot} from './combatSystems';
-import {weaponDefs,attachmentDefs,attachmentDescriptions,rarityName,rarityClass,canClassEquip,ammoTypes,ammoLabels,ammoPack,ammoStack,newWeapon,newMod,usedSlots,addAmmo,canAddItem,canEquipMod,itemName,salePrice,effectiveStats,armoryOffers,rareLoot,advanceOfferPrice,backpackUpgradePrice,upgradePrice,type Weapon,type Mod,type Gear,type AmmoBank,type Loadout,type AmmoType,type Tier,type WeaponId,type AttachmentId,type Slot} from './equipmentArmory';
+import {weaponDefs,attachmentDefs,attachmentDescriptions,rarityName,rarityClass,canClassEquip,ammoTypes,ammoLabels,ammoPack,ammoStack,newWeapon,newMod,usedSlots,addAmmo,canAddItem,canEquipMod,itemName,salePrice,effectiveStats,armoryOffers,rareLoot,crateLoot,advanceOfferPrice,backpackUpgradePrice,upgradePrice,type Weapon,type Mod,type Gear,type AmmoBank,type Loadout,type AmmoType,type Tier,type WeaponId,type AttachmentId,type Slot} from './equipmentArmory';
 import {CLASS_INFO,classIds,makeSquadmate,migrateSquadmate,applyLethalDamage,bleed,revive,reviveDuration,shouldRevive,canRecruit,equipClassWeapon,classFireDelay,classRange,classDamage,canHeal,gearUpgradeCost,PLAYER_BLEEDOUT,ALLY_BLEEDOUT,type Squadmate,type SquadOrder} from './squadSystems';
 import {migrateProfile,unlocks,achievements,buyUnlock,allowedPrimary,allowedMelee,allowedTeammates,sanitizeChoice,startingKit,progressAchievements,performancePayout,eligibleRecruit,type ProfileV5,type UnlockId,type RunPerformance} from './metaprogression';
-import {camera,toWorld,renderDungeon,drawSprite,drawElevator,drawBar,drawHazard,hudColor,type View,type SpriteKind} from './rogueliteVisuals';
-import {elevatorInRange,elevatorCells} from './dungeon';
+import {camera,toWorld,renderDungeon,drawSprite,drawElevator,drawMilitaryCrate,drawLootPopup,drawBar,drawHazard,hudColor,type View,type SpriteKind} from './rogueliteVisuals';
+import {elevatorInRange,elevatorCells,crateInRange} from './dungeon';
 import {nextCharacterMotion,type CharacterMotion} from './characterMotion';
-import {gearIcon} from './gearIcons';
+import {gearIcon,gearIconModels} from './gearIcons';
 import {makeAttackFx,ageCombatFx,drawCombatFx,shotProfile,type CombatFx} from './combatFx';
 import {traceBullet,meleeHits,unit,penetrationFor,aimHasTarget} from './hitDetection';
 import {createFog,updateFog,renderFog,exploredIndices,discoveredAt,clipToExplored,type FogState,type Explorer} from './fogOfWar';
@@ -60,6 +60,8 @@ const stats=document.querySelector<HTMLElement>('#stats')!,keys=new Set<string>(
 let slot=1,profile:Profile=migrateProfile(null),run:Run|null=null,plan:WavePlan|null=null;
 let last=performance.now(),lastSave=0,spawnClock=0,shotCooldown=0,allyClock=0,noticeUntil=0,aim={x:1,y:0},paused=false;
 const zeroStick=():StickVector=>({x:0,y:0,magnitude:0});
+type LootPopup={x:number;y:number;model:string;label:string;start:number};
+let lootPopups:LootPopup[]=[];
 let combatFx:CombatFx[]=[],fog:FogState|null=null;
 let moveAnalog=zeroStick(),aimAnalog=zeroStick(),cameraZoom=1;
 // Desktop mouse aiming is active only while the pointer is over the dungeon canvas.
@@ -95,7 +97,7 @@ function loadRun(){try{const r=JSON.parse(localStorage.getItem(store('run'))||'n
  for(const a of run.allies){const p=nearestWalkable(plan.map,a);const placed=spacedSquadPosition(plan.map,p,occupied);a.x=placed.x;a.y=placed.y;occupied.push(a);}
  ensureEquipment(run);fog=createFog(plan.map,run.explored??[]);for(const enemy of run.enemies){
  const p=nearestWalkable(plan.map,enemy);enemy.x=p.x;enemy.y=p.y;enemy.kind??=enemy.boss?'boss':'shambler';enemy.attack??=0;enemy.windup??=0;enemy.phase??=0;enemy.aggro??=0;enemy.suppressed??=0;enemy.scoutMarked??=0;}return true}catch{return false}}
-function menu(){combatFx=[];paused=true;overlay.hidden=false;overlay.innerHTML=`<article class="main-menu-screen"><h1>DEADZONE <span style="color:#f18567">PROTOCOL</span></h1><p>Wave-based survival roguelite. Outrun an endless growing horde, extract by elevator, upgrade in the Armory, and descend again. The old FOB campaign remains preserved in source code.</p><label>Save slot <select id="slot-select"><option value="1">SLOT 01</option><option value="2">SLOT 02</option><option value="3">SLOT 03</option></select></label><p id="career"></p><div class="menurow"><button id="continue-run">CONTINUE RUN</button><button id="new-run">NEW RUN</button><button id="upgrades">PERMANENT UNLOCKS</button></div></article>`;
+function menu(){combatFx=[];lootPopups=[];paused=true;overlay.hidden=false;overlay.innerHTML=`<article class="main-menu-screen"><h1>DEADZONE <span style="color:#f18567">PROTOCOL</span></h1><p>Wave-based survival roguelite. Outrun an endless growing horde, extract by elevator, upgrade in the Armory, and descend again. The old FOB campaign remains preserved in source code.</p><label>Save slot <select id="slot-select"><option value="1">SLOT 01</option><option value="2">SLOT 02</option><option value="3">SLOT 03</option></select></label><p id="career"></p><div class="menurow"><button id="continue-run">CONTINUE RUN</button><button id="new-run">NEW RUN</button><button id="upgrades">PERMANENT UNLOCKS</button></div></article>`;
 const sel=overlay.querySelector<HTMLSelectElement>('#slot-select')!;sel.value=String(slot);const refresh=()=>{loadProfile();const active=localStorage.getItem(store('run'));overlay.querySelector('#career')!.textContent='BEST WAVE '+profile.bestWave+' · LEGACY TOKENS '+profile.tokens+' · RUNS '+profile.runs+(active?' · RUN IN PROGRESS':'');(overlay.querySelector<HTMLButtonElement>('#continue-run'))!.disabled=!active};refresh();
 sel.onchange=()=>{slot=Number(sel.value);run=null;plan=null;refresh()};
 overlay.querySelector<HTMLButtonElement>('#continue-run')!.onclick=()=>{if(!loadRun()){notice('No valid run found');return}paused=false;if(run!.stage==='shop')shop();else overlay.hidden=true};
@@ -149,7 +151,7 @@ function preRun(){loadProfile();paused=true;overlay.hidden=false;const p=profile
  overlay.querySelector<HTMLButtonElement>('#launch-run')!.onclick=()=>{read();newRun()};
  overlay.querySelector<HTMLButtonElement>('#prep-back')!.onclick=menu;
 }
-function buildFloor(seed:number,wave:number){combatFx=[];poseCache=new WeakMap<object,CharacterMotion>();if(run)run.layoutVersion=3;plan=makeWave(seed,wave,3);if(!run)return;run.explored=[];fog=createFog(plan.map);const p=plan.map.entrance;run.player={x:p.x,y:p.y};run.enemies=[];run.spawned=0;run.kills=0;run.looted=[];run.stage='fight';run.reloadTimer=0;run.reloadSlot=null;ensureEquipment(run).rerolls=0;run.focusTarget=null;run.waveHit=false;run.waveSeconds=0;run.waveStartKills=run.killsTotal??0;run.waveStartLooted=run.lootedTotal??0;run.peakThreat=0;run.waveStartHp=run.hp;run.waveStartArmor=run.armor;pathClock=0;pathField=null;bossPulse=0;noiseClock=0;const occupied=[run.player];for(let i=0;i<run.allies.length;i++){const ally=run.allies[i];const wanted={x:p.x-1-i*.45,y:p.y+1+i*.45};const placed=spacedSquadPosition(plan.map,wanted,occupied);ally.x=placed.x;ally.y=placed.y;occupied.push(ally);ally.anchor={x:ally.x,y:ally.y};ally.reviveProgress=0}spawnClock=0;allyClock=0;spawnInitial();save()}
+function buildFloor(seed:number,wave:number){combatFx=[];lootPopups=[];poseCache=new WeakMap<object,CharacterMotion>();if(run)run.layoutVersion=3;plan=makeWave(seed,wave,3);if(!run)return;run.explored=[];fog=createFog(plan.map);const p=plan.map.entrance;run.player={x:p.x,y:p.y};run.enemies=[];run.spawned=0;run.kills=0;run.looted=[];run.stage='fight';run.reloadTimer=0;run.reloadSlot=null;ensureEquipment(run).rerolls=0;run.focusTarget=null;run.waveHit=false;run.waveSeconds=0;run.waveStartKills=run.killsTotal??0;run.waveStartLooted=run.lootedTotal??0;run.peakThreat=0;run.waveStartHp=run.hp;run.waveStartArmor=run.armor;pathClock=0;pathField=null;bossPulse=0;noiseClock=0;const occupied=[run.player];for(let i=0;i<run.allies.length;i++){const ally=run.allies[i];const wanted={x:p.x-1-i*.45,y:p.y+1+i*.45};const placed=spacedSquadPosition(plan.map,wanted,occupied);ally.x=placed.x;ally.y=placed.y;occupied.push(ally);ally.anchor={x:ally.x,y:ally.y};ally.reviveProgress=0}spawnClock=0;allyClock=0;spawnInitial();save()}
 function newRun(){loadProfile();const kit=startingKit(profile);run={wave:1,credits:kit.credits,hp:100,armor:kit.armor,mag:kit.loadout.primary?.mag??0,reserve:kit.ammo.rifle,medkits:kit.medkits,weaponTier:1,damage:1,maxMag:kit.loadout.primary?.mag??0,player:{x:0,y:0},enemies:[],allies:kit.teammate==='none'?[]:[makeSquadmate(kit.teammate,'starter-01',0,0)],spawned:0,kills:0,bosses:0,cleared:0,seed:Math.floor(Math.random()*2000000000),stage:'fight',looted:[],squadAmmo:kit.teammate==='none'?0:8,activeSlot:'primary',sideMag:kit.loadout.secondary?.mag??12,sideReserve:kit.ammo.light,reloadTimer:0,reloadSlot:null,playerDowned:0,playerDead:false,squadOrder:'follow',focusTarget:null,reviveProgress:0,killsTotal:0,lootedTotal:0,flawlessWaves:0,bestSquad:kit.teammate==='none'?0:1,waveHit:false,equipment:{loadout:kit.loadout,bag:[],ammo:kit.ammo,capacity:kit.capacity,rerolls:0}};buildFloor(run.seed,1);overlay.hidden=true;paused=false;notice('WAVE 1 · Reach the elevator before the horde overwhelms you')}
 function isFloor(x:number,y:number){return !!plan&&walkableTile(plan.map,x,y)}
 function canSee(ax:number,ay:number,bx:number,by:number){const dist=Math.hypot(ax-bx,ay-by),count=Math.ceil(dist*4);for(let i=1;i<count;i++){const a=i/count;if(!isFloor(ax+(bx-ax)*a,ay+(by-ay)*a))return false}return true}
@@ -249,18 +251,44 @@ function reload(){if(!run||run.stage!=='fight'||run.reloadTimer||(run.playerDown
 function finishReload(){if(!run||!run.reloadSlot)return;const w=ensureEquipment(run).loadout[run.reloadSlot];if(w){const type=weaponDefs[w.model].ammo;if(type){const eq=ensureEquipment(run),n=Math.min(Math.max(0,effectiveStats(w).capacity-w.mag),eq.ammo[type]);w.mag+=n;eq.ammo[type]-=n}}
  run.reloadTimer=0;run.reloadSlot=null;save()}
 function heal(){if(!run||run.stage!=='fight'||(run.playerDowned??0)>0||run.medkits<=0||run.hp>=100)return;run.medkits--;run.hp=Math.min(100,run.hp+40);save()}
-function search(targetIndex?:number){if(!run||!plan||run.stage!=='fight'||(run.playerDowned??0)>0)return;
- const i=targetIndex===undefined?plan.map.loot.findIndex((p,j)=>!run!.looted.includes(j)&&Math.hypot(p.x-run!.player.x,p.y-run!.player.y)<1.4):targetIndex;
- if(i>=0&&(run.looted.includes(i)||!plan.map.loot[i]||Math.hypot(plan.map.loot[i].x-run.player.x,plan.map.loot[i].y-run.player.y)>=1.4)){notice('Move closer to search this container');return}
+function search(targetIndex?:number){
+ if(!run||!plan||run.stage!=='fight'||(run.playerDowned??0)>0)return;
+ const map=plan.map;
+ const i=targetIndex===undefined?map.loot.findIndex((p,j)=>!run!.looted.includes(j)&&crateInRange(p,run!.player)):targetIndex;
  if(i<0){notice('No unopened supply container nearby');return}
- const eq=ensureEquipment(run),rare=rareLoot(run.seed,run.wave,i);
- if(rare){if(!canAddItem(eq.bag,eq.ammo,run.medkits,eq.capacity)){notice('BACKPACK FULL — clear space before looting');return}eq.bag.push(rare);notice('Rare cache: '+itemName(rare)+' added to backpack')}
- else{const reward=(i+run.wave)%4;
-  if(reward===0){run.credits+=75+run.wave*5;notice('Cache found: credits')}
-  else if(reward===1){const type:AmmoType=(['rifle','light','shotgun','precision','heavy'] as AmmoType[])[(i+run.wave)%5],added=addAmmo(eq.ammo,type,ammoPack[type].count,eq.bag,run.medkits,eq.capacity);if(!added){notice('BACKPACK FULL — cannot carry ammo');return}notice('Cache: '+ammoLabels[type]+' +'+added)}
-  else if(reward===2){if(usedSlots(eq.bag,eq.ammo,run.medkits+1)>eq.capacity){notice('BACKPACK FULL — cannot carry medkit');return}run.medkits++;notice('Cache found: medkit')}
-  else{run.credits+=45+run.wave*4;notice('Scavenged credits')}}
- run.looted.push(i);run.lootedTotal=(run.lootedTotal??0)+1;save()}
+ const crate=map.loot[i];
+ if(!crate||run.looted.includes(i)||!crateInRange(crate,run.player)){notice('Move closer to search this container');return}
+ const eq=ensureEquipment(run),kind=crate.kind==='weapon'?'weapon':'supply';
+ const gear=crateLoot(run.seed,run.wave,i,kind);
+ let model='credits',label='CREDITS';
+ if(gear){
+  if(!canAddItem(eq.bag,eq.ammo,run.medkits,eq.capacity)){
+   notice('BACKPACK FULL — clear space before looting');return;
+  }
+  eq.bag.push(gear);model=gear.model;label=gear.kind==='weapon'?weaponDefs[gear.model].name:attachmentDefs[gear.model].name;
+  notice((kind==='weapon'?'Weapon case: ':'Supply crate: ')+itemName(gear)+' added to backpack');
+ }else{
+  // Regular crates exclusively contain supplies (no guns). Attachments are bonus finds.
+  const reward=(i+run.wave)%4;
+  if(reward===0){
+   const credits=75+run.wave*5;run.credits+=credits;label='+'+credits+' CREDITS';notice('Supply crate: '+label);
+  }else if(reward===1){
+   const type:AmmoType=(['rifle','light','shotgun','precision','heavy'] as AmmoType[])[(i+run.wave)%5];
+   const added=addAmmo(eq.ammo,type,ammoPack[type].count,eq.bag,run.medkits,eq.capacity);
+   if(!added){notice('BACKPACK FULL — cannot carry ammo');return}
+   model='ammo';label=ammoLabels[type]+' +'+added;notice('Supply crate: '+label);
+  }else if(reward===2){
+   if(usedSlots(eq.bag,eq.ammo,run.medkits+1)>eq.capacity){notice('BACKPACK FULL — cannot carry medkit');return}
+   run.medkits++;model='medkit';label='MEDKIT +1';notice('Supply crate: medkit');
+  }else{
+   const credits=45+run.wave*4;run.credits+=credits;label='+'+credits+' CREDITS';notice('Supply crate: '+label);
+  }
+ }
+ run.looted.push(i);run.lootedTotal=(run.lootedTotal??0)+1;
+ lootPopups=lootPopups.filter(p=>performance.now()-p.start<2200);
+ lootPopups.push({x:crate.x,y:crate.y,model,label,start:performance.now()});
+ save();
+}
 /** Every extraction produces a wave report; the player may continue deeper or bank the run. */
 function waveReport(){
  if(!run)return;
@@ -300,7 +328,7 @@ type NearbyInteraction={kind:'loot';index:number}|{kind:'elevator'};
 function nearbyInteraction():NearbyInteraction|null{
  if(!run||!plan||paused||run.stage!=='fight'||(run.playerDowned??0)>0)return null;
  const p=run.player;
- const index=plan.map.loot.findIndex((item,i)=>!run!.looted.includes(i)&&Math.hypot(item.x-p.x,item.y-p.y)<1.4);
+ const index=plan.map.loot.findIndex((item,i)=>!run!.looted.includes(i)&&crateInRange(item,p));
  if(index>=0)return {kind:'loot',index};
  const exit=plan.map.extraction;
  if(elevatorInRange(plan.map,p))return {kind:'elevator'};
@@ -646,11 +674,21 @@ function draw(){
  const isKnown=(x:number,y:number)=>!fog||discoveredAt(m,fog,x,y);
  const now=performance.now(),bob=Math.sin(now/340)*v.tile*.025;
  for(const sp of plan.spawnPoints)if(isKnown(sp.x,sp.y))drawSprite(ctx,'spawn',v,sp.x,sp.y,{scale:.71,alpha:.72});
- for(const [i,l] of m.loot.entries())if(!r.looted.includes(i)&&isKnown(l.x,l.y))drawSprite(ctx,'crate',v,l.x,l.y,{scale:.94,glow:'#deae69'});
+ for(const [i,l] of m.loot.entries()){
+  const known=l.kind==='weapon'?crateInRange(l,{x:r.player.x,y:r.player.y})||isKnown(l.x,l.y):isKnown(l.x,l.y);
+  // Both cells of a long weapon crate must be discoverable before the case appears.
+  const visibleCrate=l.kind==='weapon'?(isKnown(l.x-.5,l.y)||isKnown(l.x+.5,l.y)||isKnown(l.x,l.y-.5)||isKnown(l.x,l.y+.5)):known;
+  if(visibleCrate)drawMilitaryCrate(ctx,v,l.x,l.y,l.kind==='weapon',l.orientation??'horizontal',r.looted.includes(i));
+ }
  // One elevator machine covers all four floor cells, visible after any part is discovered.
  if(elevatorCells(m).some(cell=>isKnown(cell.x,cell.y))){
   if(m.extractionSize===2)drawElevator(ctx,v,m.extraction.x,m.extraction.y,cleared(),now);
   else drawSprite(ctx,'elevator',v,m.extraction.x,m.extraction.y,{scale:1.18,alpha:cleared()?1:.5,glow:cleared()?'#3beaa6':undefined,bob:cleared()?bob:0});
+ }
+ lootPopups=lootPopups.filter(p=>now-p.start<2200);
+ for(const popup of lootPopups){
+  const iconIndex=gearIconModels.indexOf(popup.model as typeof gearIconModels[number]);
+  drawLootPopup(ctx,v,popup.x,popup.y,iconIndex,popup.label,(now-popup.start)/2200);
  }
  for(const e of r.enemies){if(!e.alive||!isKnown(e.x,e.y))continue;const kind=(e.kind??(e.boss?'boss':'shambler')) as SpriteKind;
   const direction=Math.atan2(r.player.y-e.y,r.player.x-e.x);
@@ -698,7 +736,7 @@ function draw(){
   const button=document.querySelector<HTMLButtonElement>('#'+id)!;
   button.disabled=!action;
   button.classList.toggle('in-range',!!action);
-  button.title=action?(action.kind==='loot'?'Search supply container':'Use elevator'):'Move closer to an object';
+  button.title=action?(action.kind==='loot'?(plan?.map.loot[action.index]?.kind==='weapon'?'Search weapon case':'Search supply container'):'Use elevator'):'Move closer to an object';
  }
  const hpRatio=Math.max(0,r.hp/100),armorRatio=Math.max(0,r.armor/100);
  const hpBar=document.querySelector<HTMLElement>('#hud-hp')!,armorBar=document.querySelector<HTMLElement>('#hud-armor')!;
