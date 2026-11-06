@@ -1,6 +1,6 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {weaponDefs,attachmentDefs,attachmentDescriptions,ammoPack,ammoTypes,newWeapon,newMod,canEquipMod,canClassEquip,effectiveStats,emptyAmmo,usedSlots,canAddItem,addAmmo,rarityForWave,armoryOffers,rareLoot,upgradePrice,weaponPrice,salePrice,backpackUpgradePrice,ammoStack} from './equipmentArmory.ts';
-test('five tiers improve weapon stats without changing weapon category',()=>{
+import {weaponDefs,attachmentDefs,attachmentDescriptions,ammoPack,ammoTypes,newWeapon,newMod,canEquipMod,canClassEquip,effectiveStats,emptyAmmo,usedSlots,canAddItem,addAmmo,rarityForWave,rarityName,rarityClass,itemName,armoryOffers,rareLoot,upgradePrice,weaponPrice,salePrice,backpackUpgradePrice,ammoStack} from './equipmentArmory.ts';
+test('six rarity tiers improve weapon stats without changing weapon category',()=>{
  const basic=newWeapon('assault',1,'base'),legendary=newWeapon('assault',5,'legend');
  assert.ok(effectiveStats(legendary).damage>effectiveStats(basic).damage);
  assert.ok(effectiveStats(legendary).rate<effectiveStats(basic).rate);
@@ -114,4 +114,24 @@ test('rotating Armory always offers one of each attachment mount type',()=>{
    ['optic','barrel','magazine','underbarrel']);
   assert.equal(new Set(offers.map(o=>o.model)).size,4);
  }
+});
+
+test('six named rarities preserve old gear levels and offer a new Exotic level',()=>{
+ const expected=['Basic','Common','Uncommon','Rare','Legendary','Exotic'];
+ for(let i=1;i<=6;i++){
+  assert.equal(rarityName(i),expected[i-1]);
+  assert.equal(rarityClass(i),'rarity-'+expected[i-1].toLowerCase());
+  const gun=newWeapon('carbine',i as 1|2|3|4|5|6,'tier-'+i);
+  assert.equal(itemName(gun),'Light Carbine · '+expected[i-1]);
+ }
+ assert.equal(rarityName(0),'Basic');
+ assert.equal(rarityName(99),'Exotic');
+ assert.equal(rarityForWave(21,.3),5);
+ assert.equal(rarityForWave(26,.3),6);
+ assert.equal(rarityForWave(100,.3),6);
+ const legendary=newWeapon('assault',5,'legacy');
+ assert.ok(Number.isFinite(upgradePrice(legendary)));
+ legendary.tier=6;
+ assert.equal(upgradePrice(legendary),Infinity);
+ assert.ok(effectiveStats(legendary).damage>effectiveStats(newWeapon('assault',5,'previous')).damage);
 });
