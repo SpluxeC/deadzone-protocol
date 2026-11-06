@@ -1,7 +1,7 @@
 import {generateDungeon,type DungeonLayout} from './dungeon';
 import {makeWave,killPayout,clearPayout,permanentPayout,extractionSpawnInterval,extractionActiveCap,formatRunTime,type WavePlan} from './rogueliteRules';
 import {zombieKind,zombieStats,weaponStats,reloadTransfer,distanceField,nextZombieWaypoint,incomingDamage,bossAttack,bossImpact,type ZombieKind,type WeaponSlot} from './combatSystems';
-import {weaponDefs,attachmentDefs,canClassEquip,ammoTypes,ammoLabels,ammoPack,ammoStack,newWeapon,newMod,usedSlots,addAmmo,canAddItem,canEquipMod,itemName,salePrice,effectiveStats,armoryOffers,rareLoot,advanceOfferPrice,backpackUpgradePrice,upgradePrice,type Weapon,type Mod,type Gear,type AmmoBank,type Loadout,type AmmoType,type Tier,type WeaponId,type AttachmentId,type Slot} from './equipmentArmory';
+import {weaponDefs,attachmentDefs,attachmentDescriptions,canClassEquip,ammoTypes,ammoLabels,ammoPack,ammoStack,newWeapon,newMod,usedSlots,addAmmo,canAddItem,canEquipMod,itemName,salePrice,effectiveStats,armoryOffers,rareLoot,advanceOfferPrice,backpackUpgradePrice,upgradePrice,type Weapon,type Mod,type Gear,type AmmoBank,type Loadout,type AmmoType,type Tier,type WeaponId,type AttachmentId,type Slot} from './equipmentArmory';
 import {CLASS_INFO,classIds,makeSquadmate,migrateSquadmate,applyLethalDamage,bleed,revive,reviveDuration,shouldRevive,canRecruit,equipClassWeapon,classFireDelay,classRange,classDamage,canHeal,gearUpgradeCost,PLAYER_BLEEDOUT,ALLY_BLEEDOUT,type Squadmate,type SquadOrder} from './squadSystems';
 import {migrateProfile,unlocks,achievements,buyUnlock,allowedPrimary,allowedMelee,allowedTeammates,sanitizeChoice,startingKit,progressAchievements,performancePayout,eligibleRecruit,type ProfileV5,type UnlockId,type RunPerformance} from './metaprogression';
 import {camera,toWorld,renderDungeon,drawSprite,drawBar,drawHazard,hudColor,type View,type SpriteKind} from './rogueliteVisuals';
@@ -312,17 +312,49 @@ function interact(){
  else elevator();
 }
 function buySupply(cost:number,action:()=>boolean){if(!run||run.credits<cost){notice('Insufficient credits');return}if(!action())return;run.credits-=cost;save();shop()}
+/** Compact, fixed-in-panel survivor status shared by the Armory and inventory. */
+function armoryStatus(r:Run):string{
+ const eq=ensureEquipment(r),weapon=eq.loadout[r.activeSlot??'primary']??eq.loadout.primary;
+ const ammo=weapon&&weaponDefs[weapon.model].ammo
+  ?weapon.mag+'/'+eq.ammo[weaponDefs[weapon.model].ammo!]
+  :'MELEE';
+ const display=(label:string,value:string|number)=>'<span class="armory-stat"><small>'+label+'</small><strong>'+value+'</strong></span>';
+ return '<div class="armory-status" role="group" aria-label="Survivor stats">'+
+  display('WAVE',r.wave)+display('CREDITS','₡'+r.credits)+
+  display('HEALTH',Math.ceil(r.hp)+'/100')+display('ARMOR',Math.ceil(r.armor)+'/100')+
+  display('SQUAD',r.allies.filter(a=>!a.dead).length+'/4')+
+  display('BACKPACK',inventorySummary(r))+
+  display('WEAPON',weapon?weaponDefs[weapon.model].name:'Unarmed')+
+  display('AMMO',ammo)+display('MEDKITS',r.medkits)+
+  '</div>';
+}
+/** Retain scroll location when interacting with inventory or purchasing supplies. */
+let inventoryScroll:{left:number;right:number;page:number}|null=null;
+function captureInventoryScroll(){
+ const panes=overlay.querySelectorAll<HTMLElement>('.inventory-section');
+ inventoryScroll={left:panes[0]?.scrollTop??0,right:panes[1]?.scrollTop??0,page:overlay.scrollTop};
+}
+function restoreInventoryScroll(){
+ if(!inventoryScroll)return;
+ const panes=overlay.querySelectorAll<HTMLElement>('.inventory-section');
+ if(panes[0])panes[0].scrollTop=inventoryScroll.left;
+ if(panes[1])panes[1].scrollTop=inventoryScroll.right;
+ overlay.scrollTop=inventoryScroll.page;
+}
 function shop(){if(!run)return;
  paused=true;overlay.hidden=false;const r=run,eq=ensureEquipment(r);const baseOffers=armoryOffers(r.seed,r.wave,eq.rerolls);
  const offers=baseOffers.filter(o=>o.kind!=='recruit'||eligibleRecruit(profile,o.model as keyof typeof CLASS_INFO));
  if(!offers.some(o=>o.kind==='recruit'))offers.push({kind:'recruit',model:'rifleman',tier:1,price:CLASS_INFO.rifleman.cost});
  if(profile.unlocked.includes('armoryCatalog')){const more=armoryOffers(r.seed^0x71ecad,r.wave,eq.rerolls+1).filter(o=>o.kind!=='recruit');offers.push(...more.slice(0,2))}
- const ammoButtons=ammoTypes.map(type=>`<button id="ammo-${type}">${gearIcon("ammo")}${ammoLabels[type].toUpperCase()} AMMO +${ammoPack[type].count}<br>${ammoPack[type].price} credits</button>`).join('');
- const offerButtons=offers.map((offer,i)=>`<button id="offer-${i}">${gearIcon(offer.kind==="recruit"?"armor":offer.model)}${offer.kind==='weapon'?weaponDefs[offer.model as WeaponId].name:offer.kind==='attachment'?attachmentDefs[offer.model as AttachmentId].name:CLASS_INFO[offer.model as keyof typeof CLASS_INFO].label+' Recruit'} ${offer.kind==='recruit'?'':'T'+offer.tier}<br>${offer.price} credits</button>`).join('');
+ const ammoButtons=ammoTypes.map(type=>`<button class="armory-item" id="ammo-${type}">${gearIcon("ammo")}<span class="armory-item-copy"><b>${ammoLabels[type]} +${ammoPack[type].count}</b><small>${ammoPack[type].price} credits</small></span></button>`).join('');
+ const offerButtons=offers.map((offer,i)=>{
+  const name=offer.kind==='weapon'?weaponDefs[offer.model as WeaponId].name:offer.kind==='attachment'?attachmentDefs[offer.model as AttachmentId].name:CLASS_INFO[offer.model as keyof typeof CLASS_INFO].label+' Recruit';
+  const description=offer.kind==='attachment'?attachmentDescriptions[offer.model as AttachmentId]:'';
+  return `<button class="armory-item" id="offer-${i}" title="${description}">${gearIcon(offer.kind==='recruit'?'armor':offer.model)}<span class="armory-item-copy"><b>${name} ${offer.kind==='recruit'?'':'T'+offer.tier}</b>${description?'<em class="armory-item-description">'+description+'</em>':''}<small>${offer.price} credits</small></span></button>`;
+ }).join('');
  const bag=inventorySummary(r);
- overlay.innerHTML=`<article class="armory-screen"><h1>ARMORY · WAVE ${r.wave} COMPLETE</h1><p><strong>${r.credits} CREDITS</strong> · Next: Wave ${r.wave+1}${(r.wave+1)%5===0?' (BOSS)':''} · Backpack ${bag}</p>
- <p>HP ${r.hp}/100 · ARMOR ${r.armor}/100 · TEAM ${r.allies.length}/4 · ${ammoTypes.map(t=>ammoLabels[t]+': '+eq.ammo[t]).join(' · ')}</p>
- <div class="armory-columns"><section class="armory-section armory-supplies"><h2>Essential Supplies — Always Available</h2><div class="shop">${ammoButtons}<button id="med-buy">${gearIcon("medkit")}MEDKIT +1<br>200 credits</button><button id="heal-buy">${gearIcon("medkit")}HEAL +35 HP<br>175 credits</button><button id="armor-buy">${gearIcon("armor")}ARMOR +40<br>220 credits</button><button id="pack-buy">${gearIcon("armor")}UPGRADE BACKPACK +4<br>${backpackUpgradePrice(eq.capacity)} credits (max 24)</button></div>
+ overlay.innerHTML=`<article class="armory-screen"><div class="armory-top"><h1>ARMORY · WAVE ${r.wave} COMPLETE</h1>${armoryStatus(r)}</div>
+ <div class="armory-columns"><section class="armory-section armory-supplies"><h2>Essential Supplies — Always Available</h2><div class="shop">${ammoButtons}<button class="armory-item" id="med-buy">${gearIcon("medkit")}<span class="armory-item-copy"><b>Medkit +1</b><small>200 credits</small></span></button><button class="armory-item" id="heal-buy">${gearIcon("medkit")}<span class="armory-item-copy"><b>Heal +35 HP</b><small>175 credits</small></span></button><button class="armory-item" id="armor-buy">${gearIcon("armor")}<span class="armory-item-copy"><b>Armor +40</b><small>220 credits</small></span></button><button class="armory-item" id="pack-buy">${gearIcon("armor")}<span class="armory-item-copy"><b>Backpack +4 slots</b><small>${backpackUpgradePrice(eq.capacity)} credits · max 24</small></span></button></div>
  </section><section class="armory-section armory-offers"><h2>Rotating Armory Offers</h2><p>Higher tiers become more common later. Gear enters your backpack; use Inventory to equip, upgrade, attach or sell it.</p><div class="shop">${offerButtons}</div></section></div>
  <div class="menurow armory-actions"><button id="reroll-buy">REROLL OFFERS — ${advanceOfferPrice(eq.rerolls)} credits</button><button id="shop-inventory">MANAGE INVENTORY (${bag})</button><button id="shop-squad">SQUAD MANAGEMENT</button><button id="descend">DESCEND TO WAVE ${r.wave+1}</button><button id="save-menu">SAVE & MENU</button></div></article>`;
  const bind=(id:string,cost:number,action:()=>boolean,allowed=true)=>{const el=overlay.querySelector<HTMLButtonElement>('#'+id)!;el.disabled=!allowed||r.credits<cost;el.onclick=()=>buySupply(cost,action)};
@@ -338,7 +370,7 @@ function shop(){if(!run)return;
   const item=offer.kind==='weapon'?newWeapon(offer.model as WeaponId,offer.tier,gearId(r)):newMod(offer.model as AttachmentId,offer.tier,gearId(r));eq.bag.push(item);notice(itemName(item)+' purchased');return true
  },offer.kind!=='recruit'||canRecruit(r.allies.length)));
  bind('reroll-buy',advanceOfferPrice(eq.rerolls),()=>{eq.rerolls++;return true});
- overlay.querySelector<HTMLButtonElement>('#shop-inventory')!.onclick=inventory;overlay.querySelector<HTMLButtonElement>('#shop-squad')!.onclick=squadPanel;
+ overlay.querySelector<HTMLButtonElement>('#shop-inventory')!.onclick=()=>{inventoryScroll=null;inventory()};overlay.querySelector<HTMLButtonElement>('#shop-squad')!.onclick=squadPanel;
  overlay.querySelector<HTMLButtonElement>('#descend')!.onclick=()=>{if(!run)return;run.wave++;run.seed=(run.seed^Math.imul(run.wave,0x9e3779b1))>>>0;buildFloor(run.seed,run.wave);overlay.hidden=true;paused=false;notice('WAVE '+run.wave+' · Find the elevator before the endless horde catches you')};
  overlay.querySelector<HTMLButtonElement>('#save-menu')!.onclick=()=>{save();menu()};
 }
@@ -347,8 +379,9 @@ function inventory(){if(!run)return;paused=true;overlay.hidden=false;
  const slotRows=(['primary','secondary','melee'] as Slot[]).map(slot=>{const w=eq.loadout[slot];const mods=w?Object.values(w.mods).filter((m):m is Mod=>!!m):[];
   return `<section style="padding:7px;border-bottom:1px solid #3f6055"><b>${slot.toUpperCase()}</b> — ${w?gearIcon(w.model)+itemName(w):'EMPTY'} ${w?(' · '+(weaponDefs[w.model].ammo?'MAG '+w.mag+'/'+effectiveStats(w).capacity:'MELEE')):''}<br>${mods.map(m=>itemName(m)).join(' · ')||'No attachments'} ${w?'<button id="remove-'+slot+'">UNEQUIP</button>':''} ${w&&atShop&&w.tier<5?'<button id="upgrade-equipped-'+slot+'">UPGRADE '+upgradePrice(w)+' CR</button>':''} ${mods.map(m=>'<button id="detach-'+slot+'-'+attachmentDefs[m.model].slot+'">REMOVE '+attachmentDefs[m.model].slot+'</button>'+(atShop&&m.tier<5?'<button id="upgrade-mod-'+slot+'-'+attachmentDefs[m.model].slot+'">UPGRADE MOD '+upgradePrice(m)+' CR</button>':'')).join(' ')}</section>`}).join('');
  const rows=eq.bag.map((gear,i)=>`<section style="padding:8px;border-bottom:1px solid #3f6055"><b>${gearIcon(gear.model)}${itemName(gear)}</b> ${gear.kind==='weapon'?' · DMG '+effectiveStats(gear).damage.toFixed(1)+' · '+(weaponDefs[gear.model].ammo??'no ammo'):' · '+attachmentDefs[gear.model].stat} · Sell ${salePrice(gear)} credits <div class="menurow">${gear.kind==='weapon'?'<button id="equip-item-'+i+'">EQUIP '+weaponDefs[gear.model].slot.toUpperCase()+'</button>':(['primary','secondary'] as Slot[]).filter(slot=>{const w=eq.loadout[slot];return w&&canEquipMod(w,gear)}).map(slot=>'<button id="attach-'+i+'-'+slot+'">ATTACH '+slot+'</button>').join('')}${atShop&&gear.tier<5?'<button id="upgrade-item-'+i+'">UPGRADE '+upgradePrice(gear)+' CR</button>':''}<button id="dispose-'+i+'">${atShop?'SELL':'DROP'}</button></div></section>`).join('');
- overlay.innerHTML=`<article class="inventory-screen"><h1>INVENTORY · ${inventorySummary(r)} SLOTS</h1><p>Gear uses one backpack slot. Ammo reserves stack into slots; medkits stack three per slot. Equipped gear does not occupy backpack space.</p><div class="inventory-columns"><section class="inventory-section"><h2>Equipped Gear</h2>${slotRows}</section><section class="inventory-section"><h2>Backpack</h2>${rows||'<p>Backpack empty</p>'}</section></div><h2>Supplies</h2><p>${ammoTypes.map(t=>ammoLabels[t]+': '+eq.ammo[t]).join(' · ')} · Medkits: ${r.medkits}</p><div class="menurow">${ammoTypes.filter(t=>eq.ammo[t]>0).map(t=>'<button id="discard-'+t+'">'+(atShop?'SELL':'DROP')+' '+ammoLabels[t]+' '+Math.min(ammoStack[t],eq.ammo[t])+'</button>').join('')} ${r.medkits>0?'<button id="discard-med">'+(atShop?'SELL':'DROP')+' 1 MEDKIT</button>':''}</div><div class="menurow"><button id="close-inventory">${atShop?'BACK TO ARMORY':'RETURN TO DUNGEON'}</button></div></article>`;
- const refresh=()=>{save();inventory()};
+ overlay.innerHTML=`<article class="inventory-screen"><div class="armory-top"><h1>INVENTORY · ${inventorySummary(r)} SLOTS</h1>${atShop?armoryStatus(r):''}</div><p>Gear uses one backpack slot. Ammo reserves stack into slots; medkits stack three per slot. Equipped gear does not occupy backpack space.</p><div class="inventory-columns"><section class="inventory-section"><h2>Equipped Gear</h2>${slotRows}</section><section class="inventory-section"><h2>Backpack</h2>${rows||'<p>Backpack empty</p>'}</section></div><h2>Supplies</h2><p>${ammoTypes.map(t=>ammoLabels[t]+': '+eq.ammo[t]).join(' · ')} · Medkits: ${r.medkits}</p><div class="menurow">${ammoTypes.filter(t=>eq.ammo[t]>0).map(t=>'<button id="discard-'+t+'">'+(atShop?'SELL':'DROP')+' '+ammoLabels[t]+' '+Math.min(ammoStack[t],eq.ammo[t])+'</button>').join('')} ${r.medkits>0?'<button id="discard-med">'+(atShop?'SELL':'DROP')+' 1 MEDKIT</button>':''}</div><div class="menurow"><button id="close-inventory">${atShop?'BACK TO ARMORY':'RETURN TO DUNGEON'}</button></div></article>`;
+ const refresh=()=>{captureInventoryScroll();save();inventory()};
+ restoreInventoryScroll();
  for(const slot of ['primary','secondary','melee'] as Slot[]){
   const w=eq.loadout[slot];if(!w)continue;
   const remove=overlay.querySelector<HTMLButtonElement>('#remove-'+slot)!;remove.disabled=!canAddItem(eq.bag,eq.ammo,r.medkits,eq.capacity);
@@ -375,7 +408,7 @@ function inventory(){if(!run)return;paused=true;overlay.hidden=false;
  });
  for(const type of ammoTypes){if(eq.ammo[type]<=0)continue;const btn=overlay.querySelector<HTMLButtonElement>('#discard-'+type)!;btn.onclick=()=>{const amount=Math.min(eq.ammo[type],ammoStack[type]);eq.ammo[type]-=amount;if(atShop)r.credits+=Math.floor(ammoPack[type].price*amount/ammoPack[type].count*.25);refresh()}}
  if(r.medkits>0){overlay.querySelector<HTMLButtonElement>('#discard-med')!.onclick=()=>{r.medkits--;if(atShop)r.credits+=45;refresh()}}
- overlay.querySelector<HTMLButtonElement>('#close-inventory')!.onclick=()=>{save();if(atShop)shop();else{paused=false;overlay.hidden=true}};
+ overlay.querySelector<HTMLButtonElement>('#close-inventory')!.onclick=()=>{inventoryScroll=null;save();if(atShop)shop();else{paused=false;overlay.hidden=true}};
 }
 function squadPanel(){if(!run)return;paused=true;overlay.hidden=false;const r=run,eq=ensureEquipment(r),atShop=r.stage==='shop';
  const cards=r.allies.map((a,i)=>{const eligible=eq.bag.map((item,j)=>item.kind==='weapon'&&canClassEquip(a.role,item.model)&&weaponDefs[item.model].slot!=='melee'?'<button id="sq-equip-'+i+'-'+j+'">EQUIP '+itemName(item)+'</button>':'').join('');
