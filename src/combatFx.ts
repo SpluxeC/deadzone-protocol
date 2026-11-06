@@ -4,7 +4,7 @@ import type {View} from './rogueliteVisuals';
 
 export type CombatFx={
  kind:'bullet'|'swing';model:WeaponId;x:number;y:number;dx:number;dy:number;
- age:number;duration:number;distance:number;angleOffset:number;
+ age:number;duration:number;distance:number;angleOffset:number;flash?:boolean;
 };
 export type ShotProfile={speed:number;distance:number;duration:number;count:number;spread:number;width:number;color:string;trail:number;flash:number};
 const shots:Record<Exclude<WeaponId,'knife'|'axe'|'machete'|'bat'|'crowbar'>,ShotProfile>={
@@ -32,7 +32,7 @@ const shots:Record<Exclude<WeaponId,'knife'|'axe'|'machete'|'bat'|'crowbar'>,Sho
 export function shotProfile(model:WeaponId):ShotProfile|null{
  return ['knife','axe','machete','bat','crowbar'].includes(model)?null:shots[model as keyof typeof shots];
 }
-export function makeAttackFx(model:WeaponId,x:number,y:number,dx:number,dy:number,range:number,hitDistances?:readonly number[]):CombatFx[]{
+export function makeAttackFx(model:WeaponId,x:number,y:number,dx:number,dy:number,range:number,hitDistances?:readonly number[],showFlash=true):CombatFx[]{
  const length=Math.hypot(dx,dy)||1,ux=dx/length,uy=dy/length;
  if(['knife','axe','machete','bat','crowbar'].includes(model))
   return [{kind:'swing',model,x,y,dx:ux,dy:uy,age:0,duration:model==='axe'||model==='crowbar'?.37:.23,distance:range,angleOffset:0}];
@@ -42,7 +42,7 @@ export function makeAttackFx(model:WeaponId,x:number,y:number,dx:number,dy:numbe
   const theta=Math.atan2(uy,ux)+offset;
   const distance=Math.max(0,Math.min(maximum,hitDistances?.[i]??maximum));
   return {kind:'bullet' as const,model,x,y,dx:Math.cos(theta),dy:Math.sin(theta),
-   age:0,duration:distance/profile.speed+.06,distance,angleOffset:offset};
+   age:0,duration:distance/profile.speed+.12,distance,angleOffset:offset,flash:i===0&&showFlash};
  });
 }
 export function ageCombatFx(effects:CombatFx[],dt:number):CombatFx[]{
@@ -67,17 +67,48 @@ export function drawCombatFx(ctx:CanvasRenderingContext2D,v:View,effects:readonl
    ctx.beginPath();ctx.arc(0,0,radius,head-.16,head);ctx.stroke();
   }else{
    const profile=shotProfile(fx.model)!;
-   const traveled=Math.min(fx.distance,fx.age*profile.speed),x=traveled*v.tile;
-   const length=Math.min(Math.max(0,traveled-.22),profile.trail)*v.tile;
-   ctx.globalAlpha=Math.min(1,(fx.duration-fx.age)/.075);
-   ctx.shadowColor=profile.color;ctx.shadowBlur=v.tile*.26;
-   ctx.strokeStyle=profile.color;ctx.lineWidth=Math.max(1.3,profile.width*v.tile);
-   ctx.lineCap='round';ctx.beginPath();ctx.moveTo(x-length,0);ctx.lineTo(x,0);ctx.stroke();
-   ctx.shadowBlur=0;ctx.fillStyle='#fffaf0';ctx.beginPath();ctx.arc(x,0,Math.max(1,profile.width*v.tile*.45),0,Math.PI*2);ctx.fill();
-   if(fx.age<.075&&fx.angleOffset===0){
-    ctx.globalAlpha=1-fx.age/.075;ctx.fillStyle='#ffe2a2';ctx.beginPath();
-    ctx.arc(v.tile*.43,0,v.tile*profile.flash*(1-fx.age/.075),0,Math.PI*2);ctx.fill();
+   // Bullets are visible projectiles with a bright core, tapered afterimage,
+   // small warm halo and a fading impact glint instead of a solid laser line.
+   const travelTime=fx.distance/profile.speed;
+   const traveled=Math.min(fx.distance,fx.age*profile.speed);
+   const x=traveled*v.tile,trail=Math.min(traveled,profile.trail*.8)*v.tile;
+   const fading=Math.max(0,Math.min(1,(fx.duration-fx.age)/.12));
+   const width=Math.max(1.1,profile.width*v.tile*.9);
+   ctx.lineCap='round';
+   if(fx.age<=travelTime){
+    ctx.globalAlpha=fading*.25;ctx.strokeStyle=profile.color;
+    ctx.lineWidth=width*3.4;ctx.beginPath();ctx.moveTo(x-trail,0);ctx.lineTo(x,0);ctx.stroke();
+    ctx.globalAlpha=fading*.65;ctx.strokeStyle=profile.color;
+    ctx.lineWidth=width*1.5;ctx.beginPath();ctx.moveTo(x-trail*.65,0);ctx.lineTo(x,0);ctx.stroke();
+    ctx.globalAlpha=fading;ctx.strokeStyle='#fff6d8';
+    ctx.lineWidth=Math.max(1,width*.57);
+    ctx.beginPath();ctx.moveTo(x-trail*.35,0);ctx.lineTo(x,0);ctx.stroke();
+    ctx.fillStyle='#fffdf1';ctx.beginPath();ctx.ellipse(x,0,width*.82,width*.48,0,0,Math.PI*2);ctx.fill();
+   }else{
+    const impactAge=fx.age-travelTime;
+    ctx.globalAlpha=Math.max(0,1-impactAge/.11)*.75;
+    ctx.strokeStyle=profile.color;ctx.lineWidth=Math.max(1,width*.48);
+    const r=v.tile*(.085+impactAge*1.25);
+    ctx.beginPath();ctx.arc(x,0,r,-.75,.8);ctx.stroke();
    }
+   // Suppressors and flash hiders opt out; other barrel attachments retain
+   // visible muzzle fire. First pellet only avoids a shotgun flash stack.
+   if(fx.flash&&fx.age<.105){
+    const lifetime=1-fx.age/.105;
+    const flame=Math.max(.18,profile.flash)*v.tile*lifetime;
+    ctx.globalAlpha=lifetime;
+    ctx.translate(v.tile*.37,0);
+    ctx.fillStyle='rgba(247,139,53,.25)';
+    ctx.beginPath();ctx.ellipse(flame*.3,0,flame*1.55,flame*.85,0,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#f39640';ctx.beginPath();
+    ctx.moveTo(0,0);ctx.lineTo(flame*.62,-flame*.52);ctx.lineTo(flame*.87,-flame*.16);
+    ctx.lineTo(flame*1.35,0);ctx.lineTo(flame*.87,flame*.16);
+    ctx.lineTo(flame*.62,flame*.52);ctx.closePath();ctx.fill();
+    ctx.fillStyle='#fff5c6';ctx.beginPath();
+    ctx.moveTo(0,0);ctx.lineTo(flame*.7,-flame*.19);ctx.lineTo(flame*1.02,0);
+    ctx.lineTo(flame*.7,flame*.19);ctx.closePath();ctx.fill();
+   }
+
   }
   ctx.restore();
  }
