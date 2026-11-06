@@ -23,6 +23,8 @@ const shots:Record<Exclude<WeaponId,'knife'|'axe'|'machete'|'bat'|'crowbar'>,Sho
  assault:{speed:34,distance:8,duration:.28,count:1,spread:.022,width:.075,color:'#fff0b9',trail:.55,flash:.23},
  shotgun:{speed:21,distance:4,duration:.25,count:7,spread:.20,width:.047,color:'#f9bf7e',trail:.22,flash:.30},
  autoShotgun:{speed:22,distance:4.4,duration:.26,count:6,spread:.17,width:.046,color:'#ffca88',trail:.24,flash:.23},
+ squadAutomatic:{speed:34,distance:7.8,duration:.3,count:1,spread:.047,width:.087,color:'#ffd478',trail:.63,flash:.27},
+ heavyMachineGun:{speed:36,distance:8.4,duration:.3,count:1,spread:.050,width:.11,color:'#ffd16b',trail:.76,flash:.32},
  lmg:{speed:31,distance:8,duration:.30,count:1,spread:.042,width:.095,color:'#ffcf6a',trail:.65,flash:.29},
  marksman:{speed:43,distance:11,duration:.31,count:1,spread:.005,width:.08,color:'#d5f4ff',trail:.82,flash:.24},
  sniper:{speed:57,distance:13,duration:.28,count:1,spread:0,width:.105,color:'#b6ecff',trail:1.2,flash:.38}
