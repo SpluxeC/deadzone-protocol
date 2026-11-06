@@ -188,7 +188,7 @@ export function rareLoot(seed:number,wave:number,container:number,boss=false):Ge
 export function crateLoot(seed:number,wave:number,container:number,kind:'supply'|'weapon'):Gear|null{
  const random=seeded(seed^Math.imul(container+1,0x9e3779b1)^Math.imul(wave,0x85ebca6b));
  if(kind==='weapon'){
-  const pool=[...primaryModels,...secondaryModels,...meleeModels];
+  const pool=[...primaryModels,...secondaryModels];
   const model=pool[Math.floor(random()*pool.length)];
   const tier=rarityForWave(wave,Math.min(.9,random()*.82));
   return newWeapon(model,tier,'crate-weapon-'+wave+'-'+container);
