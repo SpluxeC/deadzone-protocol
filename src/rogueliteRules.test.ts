@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {makeWave,waveDimensions,waveEnemyCount,canExit,clearPayout,permanentPayout,extractionSpawnInterval,extractionActiveCap,formatRunTime} from './rogueliteRules.ts';
+import {makeWave,waveDimensions,waveEnemyCount,canExit,clearPayout,permanentPayout,extractionSpawnInterval,extractionActiveCap,MAX_ACTIVE_ZOMBIES,formatRunTime} from './rogueliteRules.ts';
 
 test('new levels double each axis; old save dimensions are unchanged',()=>{
  assert.deepEqual(waveDimensions(1),{width:64,height:48});
@@ -46,8 +46,9 @@ test('endless zombie pressure accelerates the longer the player remains on a wav
   assert.ok(extractionSpawnInterval(0,wave)>extractionSpawnInterval(45,wave));
   assert.ok(extractionSpawnInterval(45,wave)>extractionSpawnInterval(100,wave));
   assert.ok(extractionSpawnInterval(500,wave)>=.24);
-  assert.ok(extractionActiveCap(0,wave)<extractionActiveCap(180,wave));
-  assert.ok(extractionActiveCap(10000,wave)<=65);
+  assert.equal(extractionActiveCap(0,wave),65);
+  assert.equal(extractionActiveCap(180,wave),65);
+  assert.equal(extractionActiveCap(10000,wave),MAX_ACTIVE_ZOMBIES);
  }
  assert.ok(extractionSpawnInterval(0,15)<extractionSpawnInterval(0,1));
  assert.equal(formatRunTime(0),'0:00');
