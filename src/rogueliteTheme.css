@@ -74,7 +74,7 @@
 @media(prefers-reduced-motion:reduce){#rogue button,#rogue #combat-hud .hud-meter i{transition:none}}
 
 /* Icon atlas: 24 cells rendered at 34 px each from 64 px source squares. */
-#rogue .gear-mini{display:inline-block;vertical-align:middle;flex:none;width:34px;height:34px;margin-right:8px;border-radius:6px;background-repeat:no-repeat;background-size:816px 34px;background-color:#1e3431;box-shadow:0 0 0 1px #617f73;image-rendering:auto}
+#rogue .gear-mini{display:inline-block;vertical-align:middle;flex:none;width:34px;height:34px;margin-right:8px;border-radius:6px;background-repeat:no-repeat;background-size:1224px 34px;background-color:#1e3431;box-shadow:0 0 0 1px #617f73;image-rendering:auto}
 #rogue #overlay .shop button .gear-mini{float:left;margin-top:1px;margin-bottom:2px}
 #rogue #loadout-preview .gear-mini{margin-right:4px}
 @media(max-width:780px){#rogue .gear-mini{margin-right:5px}}
@@ -190,7 +190,7 @@
  #rogue #overlay .prep-grid label{font-size:clamp(10px,2vh,12px);line-height:1.15}
  #rogue #overlay select{margin-top:2px;min-height:clamp(27px,5.5vh,34px);padding:3px 6px;font-size:clamp(11px,2.1vh,13px)}
  #rogue #overlay .prepare-run-screen #loadout-preview{display:flex;align-items:center;gap:3px;min-height:24px;white-space:normal}
- #rogue #overlay .prepare-run-screen #loadout-preview .gear-mini{width:23px;height:23px;background-size:552px 23px;margin-right:2px}
+ #rogue #overlay .prepare-run-screen #loadout-preview .gear-mini{width:23px;height:23px;background-size:828px 23px;margin-right:2px}
  #rogue #overlay .menurow{margin:2px 0 0;gap:6px}
  #rogue #overlay .main-menu-screen button,
  #rogue #overlay .prepare-run-screen button,
@@ -411,7 +411,7 @@
  #rogue #overlay .armory-section p{font-size:11px;margin:4px 0 8px}
  #rogue #overlay .armory-section .shop{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
  #rogue #overlay .armory-section .shop button{min-height:65px;padding:7px 9px!important;line-height:1.25;font-size:11px;text-align:left}
- #rogue #overlay .armory-section .gear-mini{width:29px;height:29px;background-size:696px 29px;margin-right:6px}
+ #rogue #overlay .armory-section .gear-mini{width:29px;height:29px;background-size:1044px 29px;margin-right:6px}
  #rogue #overlay .armory-actions{flex:none;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));margin:0;gap:7px}
  #rogue #overlay .armory-actions button{width:100%;min-width:0;font-size:11px;padding:8px 6px!important;min-height:45px}
  #rogue #overlay .armory-actions #descend{background:linear-gradient(#39765a,#24553f)!important;border-color:#88b996!important}
@@ -449,4 +449,12 @@
  #rogue #overlay .inventory-screen > .menurow{flex:none;margin-top:5px}
  #rogue #overlay .inventory-screen > .menurow:last-child{justify-content:flex-end}
  #rogue #overlay .inventory-screen #close-inventory{flex:0 0 auto;min-width:190px}
+}
+
+/* Inventory and Armory equipment artwork: crisp, readable silhouettes at a glance. */
+#rogue #overlay .gear-mini{box-sizing:border-box;vertical-align:middle;border:1px solid #8aa89d;border-radius:7px;box-shadow:inset 0 1px #d7eee32a,0 2px 5px #0008}
+#rogue #overlay .inventory-screen .gear-mini{width:38px;height:38px;background-size:1368px 38px;margin-right:8px}
+#rogue #overlay .armory-screen .shop button .gear-mini{float:left;margin:1px 9px 2px 0}
+@media (pointer:coarse){
+ #rogue #overlay .inventory-screen .gear-mini{width:27px;height:27px;background-size:972px 27px;margin-right:4px}
 }
