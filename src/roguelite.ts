@@ -152,17 +152,51 @@ function buildFloor(seed:number,wave:number){combatFx=[];poseCache=new WeakMap<o
 function newRun(){loadProfile();const kit=startingKit(profile);run={wave:1,credits:kit.credits,hp:100,armor:kit.armor,mag:kit.loadout.primary?.mag??0,reserve:kit.ammo.rifle,medkits:kit.medkits,weaponTier:1,damage:1,maxMag:kit.loadout.primary?.mag??0,player:{x:0,y:0},enemies:[],allies:kit.teammate==='none'?[]:[makeSquadmate(kit.teammate,'starter-01',0,0)],spawned:0,kills:0,bosses:0,cleared:0,seed:Math.floor(Math.random()*2000000000),stage:'fight',looted:[],squadAmmo:kit.teammate==='none'?0:8,activeSlot:'primary',sideMag:kit.loadout.secondary?.mag??12,sideReserve:kit.ammo.light,reloadTimer:0,reloadSlot:null,playerDowned:0,playerDead:false,squadOrder:'follow',focusTarget:null,reviveProgress:0,killsTotal:0,lootedTotal:0,flawlessWaves:0,bestSquad:kit.teammate==='none'?0:1,waveHit:false,equipment:{loadout:kit.loadout,bag:[],ammo:kit.ammo,capacity:kit.capacity,rerolls:0}};buildFloor(run.seed,1);overlay.hidden=true;paused=false;notice('WAVE 1 · Reach the elevator before the horde overwhelms you')}
 function isFloor(x:number,y:number){return !!plan&&walkableTile(plan.map,x,y)}
 function canSee(ax:number,ay:number,bx:number,by:number){const dist=Math.hypot(ax-bx,ay-by),count=Math.ceil(dist*4);for(let i=1;i<count;i++){const a=i/count;if(!isFloor(ax+(bx-ax)*a,ay+(by-ay)*a))return false}return true}
-function spawnOne(boss=false){if(!run||!plan)return false;const points=plan.spawnPoints.filter(p=>Math.hypot(p.x-run!.player.x,p.y-run!.player.y)>5);if(!points.length){const far=plan.spawnPoints.slice().sort((a,b)=>Math.hypot(b.x-run!.player.x,b.y-run!.player.y)-Math.hypot(a.x-run!.player.x,a.y-run!.player.y))[0];if(!far||Math.hypot(far.x-run.player.x,far.y-run.player.y)<2)return false;points.push(far)}const n=run.spawned,origin=points[(n*7+run.wave*3)%points.length];
-const map=plan.map,possible: {x:number;y:number;score:number}[]=[];
-for(let dy=-4;dy<=4;dy++)for(let dx=-4;dx<=4;dx++){const x=origin.x+dx,y=origin.y+dy;if(x<1||y<1||x>=map.width-1||y>=map.height-1||map.tiles[y*map.width+x]!==0)continue;
- if(Math.hypot(x-run.player.x,y-run.player.y)<4.5)continue;
- const overlap=run.enemies.some(e=>e.alive&&Math.hypot(e.x-x,e.y-y)<.68);
- if(overlap)continue;possible.push({x,y,score:Math.hypot(dx,dy)+Math.abs((n*13+x*7+y*11)%8)*.06})}
-if(!possible.length){for(let y=1;y<map.height-1;y++)for(let x=1;x<map.width-1;x++)if(map.tiles[y*map.width+x]===0&&Math.hypot(x-run.player.x,y-run.player.y)>4.5&&!run.enemies.some(e=>e.alive&&Math.hypot(e.x-x,e.y-y)<.68))possible.push({x,y,score:Math.hypot(x-origin.x,y-origin.y)})}
-if(!possible.length)return false;
-possible.sort((a,b)=>a.score-b.score);const p=possible[0],kind=zombieKind(run.wave,n,boss),stats=zombieStats(kind);
-run.enemies.push({x:p.x,y:p.y,hp:stats.hp,maxHp:stats.hp,speed:stats.speed,attack:0,boss,alive:true,kind,windup:0,phase:0,aggro:0,suppressed:0,scoutMarked:0});run.spawned++;return true}
-function spawnInitial(){if(!run||!plan)return;let count=0;const ordinaryQuota=Math.min(12,plan.boss?plan.initial-1:plan.initial);while(run.spawned<ordinaryQuota&&count++<plan.initial+5)if(!spawnOne(false))break;if(plan.boss)spawnOne(true)}
+/** Spawn close to the player, but never directly on top of the squad.
+ * Initial placement covers a wider ring; reinforcements tighten the pressure.
+ * Scan the nearby area first, widening only if floor geometry is restrictive.
+ */
+function spawnOne(boss=false,initial=false){
+ if(!run||!plan)return false;
+ const map=plan.map,n=run.spawned,player=run.player;
+ const possible:{x:number;y:number;score:number}[]=[];
+ const minDistance=initial?4.7:3.4;
+ const preferred=initial?10.5:6.8;
+ const maxPreferred=initial?17:12;
+ const occupied=(x:number,y:number)=>run!.enemies.some(e=>e.alive&&Math.hypot(e.x-x,e.y-y)<.78)
+  ||run!.allies.some(a=>!a.dead&&Math.hypot(a.x-x,a.y-y)<1.05);
+ const collect=(radius:number,limit:number)=>{
+  const lowX=Math.max(1,Math.floor(player.x-radius)),highX=Math.min(map.width-2,Math.ceil(player.x+radius));
+  const lowY=Math.max(1,Math.floor(player.y-radius)),highY=Math.min(map.height-2,Math.ceil(player.y+radius));
+  for(let y=lowY;y<=highY;y++)for(let x=lowX;x<=highX;x++){
+   const d=Math.hypot(x-player.x,y-player.y);
+   if(d<minDistance||d>limit||!canOccupy(map,x,y,.24)||occupied(x,y))continue;
+   const noise=((Math.imul(x+11,73856093)^Math.imul(y+17,19349663)^Math.imul(n+1,83492791))>>>0)/4294967296;
+   // Reinforcements prefer near approach routes, but still vary their angles.
+   const score=Math.abs(d-preferred)*.54+noise*3.1;
+   possible.push({x,y,score});
+  }
+ };
+ collect(maxPreferred,maxPreferred);
+ if(!possible.length)collect(30,30);
+ if(!possible.length)collect(Math.max(map.width,map.height),Math.max(map.width,map.height));
+ if(!possible.length)return false;
+ possible.sort((a,b)=>a.score-b.score);
+ const p=possible[0],kind=zombieKind(run.wave,n,boss),stats=zombieStats(kind);
+ run.enemies.push({x:p.x,y:p.y,hp:stats.hp,maxHp:stats.hp,speed:stats.speed,attack:0,boss,alive:true,kind,windup:0,phase:0,aggro:0,suppressed:0,scoutMarked:0});
+ run.spawned++;
+ return true;
+}
+function spawnInitial(){
+ if(!run||!plan)return;
+ // A boss occupies one of the 65 available enemy slots on boss waves.
+ const total=extractionActiveCap(0,run.wave),ordinary=total-(plan.boss?1:0);
+ for(let attempt=0;run.enemies.length<ordinary&&attempt<ordinary+8;attempt++){
+  if(!spawnOne(false,true))break;
+ }
+ if(plan.boss)spawnOne(true,true);
+ run.peakThreat=Math.max(run.peakThreat??0,run.enemies.filter(e=>e.alive).length);
+}
 function remaining(){return run?run.enemies.filter(e=>e.alive).length:0}
 function cleared(){return !!run&&!!plan&&run.stage==='fight'}
 function equip(slot:WeaponSlot){if(!run||paused||run.stage!=='fight'||(run.playerDowned??0)>0)return;if(!ensureEquipment(run).loadout[slot]){notice('No weapon equipped in '+slot);return}run.activeSlot=slot;run.reloadTimer=0;run.reloadSlot=null;shotCooldown=.18;notice(itemName(activeWeapon(run)!));save()}
