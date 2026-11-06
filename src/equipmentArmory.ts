@@ -56,6 +56,18 @@ export const attachmentDefs:Record<AttachmentId,{name:string;slot:AttachmentSlot
  grip:{name:'Foregrip',slot:'underbarrel',compatible:[...allSmgs,...allRifles,...allShotguns,'lmg','squadAutomatic','heavyMachineGun','marksman','heavyMarksman'],stat:'accuracy'},
  bipod:{name:'Bipod',slot:'underbarrel',compatible:['lmg','squadAutomatic','heavyMachineGun',...allMarksman],stat:'range'}
 };
+/** Plain-language player-facing effects, matching effectiveStats calculations. */
+export const attachmentDescriptions:Record<AttachmentId,string>={
+ redDot:'Improves aiming accuracy.',
+ scope:'Increases effective range and accuracy.',
+ suppressor:'Reduces gunfire noise and enemy attraction.',
+ compensator:'Improves shot accuracy and control.',
+ longBarrel:'Increases range and slightly boosts damage.',
+ extended:'Adds rounds to magazine capacity.',
+ quickMag:'Shortens weapon reload time.',
+ grip:'Improves accuracy while firing.',
+ bipod:'Increases range and accuracy.'
+};
 export const ammoTypes:AmmoType[]=['light','rifle','shotgun','heavy','precision'];
 export const ammoLabels:Record<AmmoType,string>={light:'Pistol / SMG',rifle:'Rifle',shotgun:'Shotgun',heavy:'Heavy',precision:'Precision'};
 export const ammoStack:Record<AmmoType,number>={light:90,rifle:90,shotgun:36,heavy:120,precision:40};
