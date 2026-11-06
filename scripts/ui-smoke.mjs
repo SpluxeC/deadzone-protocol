@@ -108,6 +108,33 @@ async function runScenario(touch){
  console.log(label,'checking Armory and inventory interactions');
  await setupShop(page);
  await checkWiring(page,label+' armory');
+ // Exercise every available Armory/inventory/squad button separately, restoring
+ // a known valid save between taps so purchases and destructive actions cannot
+ // obscure later buttons.
+ const snapshot=await getRun(page);
+ const restore=async(screen)=>{
+  await page.evaluate(({key,run})=>localStorage.setItem(key,JSON.stringify(run)),snapshot);
+  await page.reload();
+  await page.waitForFunction(()=>document.documentElement.dataset.deadzoneReady==='true');
+  await tap('#continue-run');
+  if(screen==='inventory')await tap('#shop-inventory');
+  if(screen==='squad')await tap('#shop-squad');
+ };
+ for(const screen of ['armory','inventory','squad']){
+  await restore(screen);
+  const ids=await page.locator('#overlay button:not(:disabled)').evaluateAll(nodes=>
+   nodes.filter(n=>n.id).map(n=>n.id));
+  console.log(label,'tapping',ids.length,screen,'buttons');
+  for(const id of ids){
+   await restore(screen);
+   // Conditional controls may change with gear state, but a fresh snapshot
+   // should preserve the original screen and button availability.
+   await checkWiring(page,label+' '+screen+' '+id);
+   await tap('#'+id);
+   assert.deepEqual(errors,[],'No errors after '+label+' '+screen+' '+id);
+  }
+ }
+ await restore('armory');
  const initialCredits=(await getRun(page)).run.credits;
  await tap('#med-buy');
  assert.ok((await getRun(page)).run.credits<initialCredits);
