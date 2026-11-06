@@ -33,8 +33,8 @@ test('legacy Phase 1-3 squad saves migrate to default riflemen',()=>{
  assert.equal(unit.hp,55);assert.equal(unit.downed,0);assert.equal(unit.weapon.model,'assault');
  const medic=migrateSquadmate({...old,role:'medic'},0);assert.equal(medic.role,'medic');assert.equal(medic.weapon.model,'smg');
 });
-test('class tier upgrades cost more while remaining finite up to legendary',()=>{
- const ally=makeSquadmate('engineer','e',1,1);const p=gearUpgradeCost(ally);ally.gearTier=3;assert.ok(gearUpgradeCost(ally)>p);ally.gearTier=5;assert.equal(gearUpgradeCost(ally),Infinity);
+test('class rarity upgrades cost more through legendary and finish at exotic',()=>{
+ const ally=makeSquadmate('engineer','e',1,1);const p=gearUpgradeCost(ally);ally.gearTier=3;assert.ok(gearUpgradeCost(ally)>p);ally.gearTier=5;assert.ok(Number.isFinite(gearUpgradeCost(ally)));ally.gearTier=6;assert.equal(gearUpgradeCost(ally),Infinity);
 });
 test('rotating recruit offers contain a real allowed specialist',()=>{
  for(let w=1;w<=24;w++){const offer=armoryOffers(1223,w,0).find(v=>v.kind==='recruit');assert.ok(offer);assert.ok(classIds.includes(offer!.model as typeof classIds[number]));assert.equal(offer!.price,CLASS_INFO[offer!.model as keyof typeof CLASS_INFO].cost)}
