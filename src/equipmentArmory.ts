@@ -184,5 +184,18 @@ export function rareLoot(seed:number,wave:number,container:number,boss=false):Ge
  if(isWeapon){const allWeapons=[...primaryModels,...secondaryModels,...meleeModels];const model=allWeapons[Math.floor(random()*allWeapons.length)];return newWeapon(model,tier,'loot-w'+wave+'-'+container)}
  const model=modModels[Math.floor(random()*modModels.length)];return newMod(model,tier,'loot-m'+wave+'-'+container);
 }
+/** Weapon cases contain a gun; ordinary supply cases can contain attachments but never guns. */
+export function crateLoot(seed:number,wave:number,container:number,kind:'supply'|'weapon'):Gear|null{
+ const random=seeded(seed^Math.imul(container+1,0x9e3779b1)^Math.imul(wave,0x85ebca6b));
+ if(kind==='weapon'){
+  const pool=[...primaryModels,...secondaryModels,...meleeModels];
+  const model=pool[Math.floor(random()*pool.length)];
+  const tier=rarityForWave(wave,Math.min(.9,random()*.82));
+  return newWeapon(model,tier,'crate-weapon-'+wave+'-'+container);
+ }
+ if(random()>.22)return null;
+ const model=modModels[Math.floor(random()*modModels.length)];
+ return newMod(model,rarityForWave(wave,random()),'crate-mod-'+wave+'-'+container);
+}
 export function advanceOfferPrice(rerolls:number):number{return 100+rerolls*75}
 export function backpackUpgradePrice(capacity:number):number{return capacity>=24?Infinity:200+Math.floor((capacity-12)/4)*150}
