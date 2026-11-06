@@ -9,6 +9,7 @@ import {elevatorInRange,elevatorCells,crateInRange} from './dungeon';
 import {nextCharacterMotion,type CharacterMotion} from './characterMotion';
 import {gearIcon,gearIconModels} from './gearIcons';
 import {makeAttackFx,ageCombatFx,drawCombatFx,shotProfile,type CombatFx} from './combatFx';
+import {bloodOnHit,ageBloodFx,drawBloodFx,MAX_BLOOD_EFFECTS,type BloodFx} from './bloodFx';
 import {traceBullet,meleeHits,unit,penetrationFor,aimHasTarget} from './hitDetection';
 import {createFog,updateFog,renderFog,exploredIndices,discoveredAt,clipToExplored,type FogState,type Explorer} from './fogOfWar';
 import {normalizeStick,stickKnob,type StickVector} from './mobileControls';
@@ -62,7 +63,7 @@ let last=performance.now(),lastSave=0,spawnClock=0,shotCooldown=0,allyClock=0,no
 const zeroStick=():StickVector=>({x:0,y:0,magnitude:0});
 type LootPopup={x:number;y:number;model:string;label:string;start:number};
 let lootPopups:LootPopup[]=[];
-let combatFx:CombatFx[]=[],fog:FogState|null=null;
+let combatFx:CombatFx[]=[],bloodFx:BloodFx[]=[],fog:FogState|null=null;
 let moveAnalog=zeroStick(),aimAnalog=zeroStick(),cameraZoom=1;
 // Desktop mouse aiming is active only while the pointer is over the dungeon canvas.
 let mouseAimActive=false,mouseAimX=.5,mouseAimY=.5;let pathClock=0,pathField:Int32Array|null=null,bossPulse=0,noiseClock=0,squadClock=0;
@@ -97,7 +98,7 @@ function loadRun(){try{const r=JSON.parse(localStorage.getItem(store('run'))||'n
  for(const a of run.allies){const p=nearestWalkable(plan.map,a);const placed=spacedSquadPosition(plan.map,p,occupied);a.x=placed.x;a.y=placed.y;occupied.push(a);}
  ensureEquipment(run);fog=createFog(plan.map,run.explored??[]);for(const enemy of run.enemies){
  const p=nearestWalkable(plan.map,enemy);enemy.x=p.x;enemy.y=p.y;enemy.kind??=enemy.boss?'boss':'shambler';enemy.attack??=0;enemy.windup??=0;enemy.phase??=0;enemy.aggro??=0;enemy.suppressed??=0;enemy.scoutMarked??=0;}return true}catch{return false}}
-function menu(){combatFx=[];lootPopups=[];paused=true;overlay.hidden=false;overlay.innerHTML=`<article class="main-menu-screen"><h1>DEADZONE <span style="color:#f18567">PROTOCOL</span></h1><p>Wave-based survival roguelite. Outrun an endless growing horde, extract by elevator, upgrade in the Armory, and descend again. The old FOB campaign remains preserved in source code.</p><label>Save slot <select id="slot-select"><option value="1">SLOT 01</option><option value="2">SLOT 02</option><option value="3">SLOT 03</option></select></label><p id="career"></p><div class="menurow"><button id="continue-run">CONTINUE RUN</button><button id="new-run">NEW RUN</button><button id="upgrades">PERMANENT UNLOCKS</button></div></article>`;
+function menu(){combatFx=[];bloodFx=[];lootPopups=[];paused=true;overlay.hidden=false;overlay.innerHTML=`<article class="main-menu-screen"><h1>DEADZONE <span style="color:#f18567">PROTOCOL</span></h1><p>Wave-based survival roguelite. Outrun an endless growing horde, extract by elevator, upgrade in the Armory, and descend again. The old FOB campaign remains preserved in source code.</p><label>Save slot <select id="slot-select"><option value="1">SLOT 01</option><option value="2">SLOT 02</option><option value="3">SLOT 03</option></select></label><p id="career"></p><div class="menurow"><button id="continue-run">CONTINUE RUN</button><button id="new-run">NEW RUN</button><button id="upgrades">PERMANENT UNLOCKS</button></div></article>`;
 const sel=overlay.querySelector<HTMLSelectElement>('#slot-select')!;sel.value=String(slot);const refresh=()=>{loadProfile();const active=localStorage.getItem(store('run'));overlay.querySelector('#career')!.textContent='BEST WAVE '+profile.bestWave+' · LEGACY TOKENS '+profile.tokens+' · RUNS '+profile.runs+(active?' · RUN IN PROGRESS':'');(overlay.querySelector<HTMLButtonElement>('#continue-run'))!.disabled=!active};refresh();
 sel.onchange=()=>{slot=Number(sel.value);run=null;plan=null;refresh()};
 overlay.querySelector<HTMLButtonElement>('#continue-run')!.onclick=()=>{if(!loadRun()){notice('No valid run found');return}paused=false;if(run!.stage==='shop')shop();else overlay.hidden=true};
@@ -151,7 +152,7 @@ function preRun(){loadProfile();paused=true;overlay.hidden=false;const p=profile
  overlay.querySelector<HTMLButtonElement>('#launch-run')!.onclick=()=>{read();newRun()};
  overlay.querySelector<HTMLButtonElement>('#prep-back')!.onclick=menu;
 }
-function buildFloor(seed:number,wave:number){combatFx=[];lootPopups=[];poseCache=new WeakMap<object,CharacterMotion>();if(run)run.layoutVersion=3;plan=makeWave(seed,wave,3);if(!run)return;run.explored=[];fog=createFog(plan.map);const p=plan.map.entrance;run.player={x:p.x,y:p.y};run.enemies=[];run.spawned=0;run.kills=0;run.looted=[];run.stage='fight';run.reloadTimer=0;run.reloadSlot=null;ensureEquipment(run).rerolls=0;run.focusTarget=null;run.waveHit=false;run.waveSeconds=0;run.waveStartKills=run.killsTotal??0;run.waveStartLooted=run.lootedTotal??0;run.peakThreat=0;run.waveStartHp=run.hp;run.waveStartArmor=run.armor;pathClock=0;pathField=null;bossPulse=0;noiseClock=0;const occupied=[run.player];for(let i=0;i<run.allies.length;i++){const ally=run.allies[i];const wanted={x:p.x-1-i*.45,y:p.y+1+i*.45};const placed=spacedSquadPosition(plan.map,wanted,occupied);ally.x=placed.x;ally.y=placed.y;occupied.push(ally);ally.anchor={x:ally.x,y:ally.y};ally.reviveProgress=0}spawnClock=0;allyClock=0;spawnInitial();save()}
+function buildFloor(seed:number,wave:number){combatFx=[];bloodFx=[];lootPopups=[];poseCache=new WeakMap<object,CharacterMotion>();if(run)run.layoutVersion=3;plan=makeWave(seed,wave,3);if(!run)return;run.explored=[];fog=createFog(plan.map);const p=plan.map.entrance;run.player={x:p.x,y:p.y};run.enemies=[];run.spawned=0;run.kills=0;run.looted=[];run.stage='fight';run.reloadTimer=0;run.reloadSlot=null;ensureEquipment(run).rerolls=0;run.focusTarget=null;run.waveHit=false;run.waveSeconds=0;run.waveStartKills=run.killsTotal??0;run.waveStartLooted=run.lootedTotal??0;run.peakThreat=0;run.waveStartHp=run.hp;run.waveStartArmor=run.armor;pathClock=0;pathField=null;bossPulse=0;noiseClock=0;const occupied=[run.player];for(let i=0;i<run.allies.length;i++){const ally=run.allies[i];const wanted={x:p.x-1-i*.45,y:p.y+1+i*.45};const placed=spacedSquadPosition(plan.map,wanted,occupied);ally.x=placed.x;ally.y=placed.y;occupied.push(ally);ally.anchor={x:ally.x,y:ally.y};ally.reviveProgress=0}spawnClock=0;allyClock=0;spawnInitial();save()}
 function newRun(){loadProfile();const kit=startingKit(profile);run={wave:1,credits:kit.credits,hp:100,armor:kit.armor,mag:kit.loadout.primary?.mag??0,reserve:kit.ammo.rifle,medkits:kit.medkits,weaponTier:1,damage:1,maxMag:kit.loadout.primary?.mag??0,player:{x:0,y:0},enemies:[],allies:kit.teammate==='none'?[]:[makeSquadmate(kit.teammate,'starter-01',0,0)],spawned:0,kills:0,bosses:0,cleared:0,seed:Math.floor(Math.random()*2000000000),stage:'fight',looted:[],squadAmmo:kit.teammate==='none'?0:8,activeSlot:'primary',sideMag:kit.loadout.secondary?.mag??12,sideReserve:kit.ammo.light,reloadTimer:0,reloadSlot:null,playerDowned:0,playerDead:false,squadOrder:'follow',focusTarget:null,reviveProgress:0,killsTotal:0,lootedTotal:0,flawlessWaves:0,bestSquad:kit.teammate==='none'?0:1,waveHit:false,equipment:{loadout:kit.loadout,bag:[],ammo:kit.ammo,capacity:kit.capacity,rerolls:0}};buildFloor(run.seed,1);overlay.hidden=true;paused=false;notice('WAVE 1 · Reach the elevator before the horde overwhelms you')}
 function isFloor(x:number,y:number){return !!plan&&walkableTile(plan.map,x,y)}
 function canSee(ax:number,ay:number,bx:number,by:number){const dist=Math.hypot(ax-bx,ay-by),count=Math.ceil(dist*4);for(let i=1;i<count;i++){const a=i/count;if(!isFloor(ax+(bx-ax)*a,ay+(by-ay)*a))return false}return true}
@@ -212,6 +213,15 @@ function swapFirearm(){
  else if(ensureEquipment(run).loadout.primary)equip('primary');
  else if(ensureEquipment(run).loadout.secondary)equip('secondary');
 }
+/** Visual-only impact blood on enemies struck by bullets or melee. */
+function zombieBlood(enemy:Unit,direction:{x:number;y:number},melee=false,lethal=false){
+ const seed=Math.imul((run?.killsTotal??0)+1,73)+Math.floor(enemy.hp*31)+Math.floor(performance.now()*10);
+ bloodFx.push(...bloodOnHit(enemy.x,enemy.y,direction.x,direction.y,melee,seed,lethal));
+ if(bloodFx.length>MAX_BLOOD_EFFECTS)bloodFx.splice(0,bloodFx.length-MAX_BLOOD_EFFECTS);
+}
+function weaponFlashAllowed(w:Weapon):boolean{
+ return w.mods?.barrel?.model!=='suppressor'&&w.mods?.barrel?.model!=='flashHider'&&w.model!=='suppressedSmg';
+}
 function shoot(){
  if(!run||!plan||run.stage!=='fight'||paused||shotCooldown>0||run.hp<=0||(run.playerDowned??0)>0||run.reloadTimer)return;
  const w=activeWeapon(run);if(!w)return;
@@ -222,7 +232,7 @@ function shoot(){
  const facing=unit(aim.x,aim.y);
  if(def.slot==='melee'){
   const hits=meleeHits(plan.map,p,facing,handling.range,run.enemies,w.model==='axe'?'axe':'knife');
-  for(const hit of hits){hit.target.hp-=handling.damage;if(hit.target.hp<=0)defeat(hit.target)}
+  for(const hit of hits){hit.target.hp-=handling.damage;zombieBlood(hit.target,facing,true,hit.target.hp<=0);if(hit.target.hp<=0)defeat(hit.target)}
   combatFx.push(...makeAttackFx(w.model,p.x,p.y,facing.x,facing.y,handling.range));
  }else{
   const profile=shotProfile(w.model)!;
@@ -235,9 +245,9 @@ function shoot(){
    distances.push(trace.distance);
    // A shotgun shell shares damage across its pellets; every pellet uses its own hit ray.
    const damage=handling.damage/profile.count;
-   for(const hit of trace.hits){hit.target.hp-=damage;if(hit.target.hp<=0)defeat(hit.target)}
+   for(const hit of trace.hits){hit.target.hp-=damage;zombieBlood(hit.target,dir,false,hit.target.hp<=0);if(hit.target.hp<=0)defeat(hit.target)}
   }
-  combatFx.push(...makeAttackFx(w.model,p.x,p.y,facing.x,facing.y,handling.range,distances));
+  combatFx.push(...makeAttackFx(w.model,p.x,p.y,facing.x,facing.y,handling.range,distances,weaponFlashAllowed(w)));
  }
  if(combatFx.length>120)combatFx.splice(0,combatFx.length-120);
  // Begin the normal timed reload immediately after spending the last round.
@@ -468,7 +478,7 @@ function finishRun(success:boolean){
  const kills=r.killsTotal??0,loot=r.lootedTotal??0,bosses=r.bosses;
  const health=Math.ceil(r.hp),armor=Math.ceil(r.armor);
  const squad=r.allies.filter(a=>!a.dead).length;
- run=null;plan=null;fog=null;combatFx=[];paused=true;save();overlay.hidden=false;
+ run=null;plan=null;fog=null;combatFx=[];bloodFx=[];paused=true;save();overlay.hidden=false;
  overlay.innerHTML=`<article class="run-results"><h1>${success?'RUN COMPLETED':'RUN OVER'}</h1><p>${success?'Successfully extracted':'Squad lost'} · ${elapsed} total survival time · ${waveElapsed} in final wave</p>
  <div class="results-grid">
  <div><strong>${wave}</strong><span>Highest wave</span></div>
@@ -543,11 +553,12 @@ function squadUpdate(dt:number){if(!run||!plan)return;const r=run,p=r.player,ord
    for(const hit of trace.hits){
     const struck=hit.target;
     struck.hp-=damage;
+     zombieBlood(struck,dir,false,struck.hp<=0);
     if(a.role==='heavy')for(const other of aliveEnemies)if(other!==struck&&Math.hypot(other.x-struck.x,other.y-struck.y)<1.2)other.suppressed=2.4;
     if(a.role==='scout'){struck.scoutMarked=3.5;struck.aggro=5}
     if(struck.hp<=0)defeat(struck);
    }
-   combatFx.push(...makeAttackFx(a.weapon.model,a.x,a.y,dir.x,dir.y,classRange(a.role),[trace.distance]));
+   combatFx.push(...makeAttackFx(a.weapon.model,a.x,a.y,dir.x,dir.y,classRange(a.role),[trace.distance],weaponFlashAllowed(a.weapon)));
    if(combatFx.length>120)combatFx.splice(0,combatFx.length-120);
    a.cooldown=classFireDelay(a.role)*Math.max(.7,effectiveStats(a.weapon).rate/weaponDefs[CLASS_INFO[a.role].model].rate);
    a.magReserve--;
@@ -587,6 +598,7 @@ function explorationSources():Explorer[]{
 }
 function update(dt:number){if(!run||!plan||paused||run.stage!=='fight')return;
 combatFx=ageCombatFx(combatFx,dt);
+ bloodFx=ageBloodFx(bloodFx,dt);
 shotCooldown=Math.max(0,shotCooldown-dt);noiseClock=Math.max(0,noiseClock-dt);if((run.reloadTimer??0)>0){run.reloadTimer=Math.max(0,(run.reloadTimer??0)-dt);if(run.reloadTimer===0)finishReload()}
  // Also reload an already-empty equipped magazine after loading a save or swapping guns.
  const readyWeapon=activeWeapon(run);
@@ -690,6 +702,8 @@ function draw(){
   const iconIndex=gearIconModels.indexOf(popup.model as typeof gearIconModels[number]);
   drawLootPopup(ctx,v,popup.x,popup.y,iconIndex,popup.label,(now-popup.start)/2200);
  }
+ ctx.save();if(fog)clipToExplored(ctx,m,v,fog);
+ drawBloodFx(ctx,v,bloodFx,'ground');ctx.restore();
  for(const e of r.enemies){if(!e.alive||!isKnown(e.x,e.y))continue;const kind=(e.kind??(e.boss?'boss':'shambler')) as SpriteKind;
   const direction=Math.atan2(r.player.y-e.y,r.player.x-e.x);
   const motion=animatedPose(e,now,direction,e.boss?2.2:kind==='runner'?4:2.8);
@@ -710,6 +724,7 @@ function draw(){
  // A bullet effect cannot reveal enemies or objects through unexplored tiles.
  ctx.save();if(fog)clipToExplored(ctx,m,v,fog);
  drawCombatFx(ctx,v,combatFx);
+ drawBloodFx(ctx,v,bloodFx,'front');
  ctx.restore();
  if((r.playerDowned??0)>0){ctx.font='bold '+Math.max(13,v.tile*.48)+'px system-ui';ctx.textAlign='center';ctx.fillStyle='#ff9b83';ctx.fillText('DOWNED '+Math.ceil(r.playerDowned??0)+'s',v.ox+r.player.x*v.tile,v.oy+(r.player.y-1)*v.tile)}
 
