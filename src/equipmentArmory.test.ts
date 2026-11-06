@@ -1,5 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {weaponDefs,attachmentDefs,attachmentDescriptions,ammoPack,ammoTypes,newWeapon,newMod,canEquipMod,canClassEquip,effectiveStats,emptyAmmo,usedSlots,canAddItem,addAmmo,rarityForWave,rarityName,rarityClass,itemName,armoryOffers,rareLoot,upgradePrice,weaponPrice,salePrice,backpackUpgradePrice,ammoStack} from './equipmentArmory.ts';
+import {weaponDefs,attachmentDefs,attachmentDescriptions,ammoPack,ammoTypes,newWeapon,newMod,canEquipMod,canClassEquip,effectiveStats,emptyAmmo,usedSlots,canAddItem,addAmmo,crateLoot,rarityForWave,rarityName,rarityClass,itemName,armoryOffers,rareLoot,upgradePrice,weaponPrice,salePrice,backpackUpgradePrice,ammoStack} from './equipmentArmory.ts';
 test('six rarity tiers improve weapon stats without changing weapon category',()=>{
  const basic=newWeapon('assault',1,'base'),legendary=newWeapon('assault',5,'legend');
  assert.ok(effectiveStats(legendary).damage>effectiveStats(basic).damage);
@@ -134,4 +134,14 @@ test('six named rarities preserve old gear levels and offer a new Exotic level',
  legendary.tier=6;
  assert.equal(upgradePrice(legendary),Infinity);
  assert.ok(effectiveStats(legendary).damage>effectiveStats(newWeapon('assault',5,'previous')).damage);
+});
+
+test('weapon cases contain only guns, while standard military crates never contain guns',()=>{
+ for(let wave=1;wave<=35;wave+=3)for(let index=0;index<50;index++){
+  const gun=crateLoot(4739,wave,index,'weapon');
+  assert.ok(gun&&gun.kind==='weapon','weapon case must always have gun');
+  const supply=crateLoot(4739,wave,index,'supply');
+  assert.notEqual(supply?.kind,'weapon','ordinary crate must not contain a gun');
+ }
+ assert.deepEqual(crateLoot(123,9,4,'weapon'),crateLoot(123,9,4,'weapon'),'weapon loot deterministic');
 });
