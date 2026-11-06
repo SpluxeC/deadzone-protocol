@@ -218,7 +218,7 @@ export function drawLootPopup(ctx:CanvasRenderingContext2D,v:View,x:number,y:num
  const size=Math.max(23,t*.9),width=Math.max(size+16,Math.min(t*6,Math.max(t*2.5,label.length*t*.22)));
  ctx.save();ctx.globalAlpha=Math.max(0,alpha);
  ctx.fillStyle='rgba(11,25,24,.94)';ctx.strokeStyle='#b2c7a5';ctx.lineWidth=Math.max(1,t*.04);
- ctx.beginPath();ctx.roundRect(px-width/2,py-size*.55,width,size*1.38,Math.max(5,t*.15));ctx.fill();ctx.stroke();
+ ctx.beginPath();ctx.rect(px-width/2,py-size*.55,width,size*1.38);ctx.fill();ctx.stroke();
  if(lootAtlas&&lootIconsReady&&iconIndex>=0){
   ctx.drawImage(lootAtlas,iconIndex*64,0,64,64,px-size*.43,py-size*.5,size*.86,size*.86);
  }else{
