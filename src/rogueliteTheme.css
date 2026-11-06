@@ -565,3 +565,40 @@
 }
 #rogue #overlay .armory-reserves b{color:#f2e6bb;font-variant-numeric:tabular-nums}
 #rogue #overlay .armory-top{position:sticky;top:0}
+
+/* Six equipment rarities. Clear surface tints, readable contrast, and matching borders
+   are applied to the entire item button rather than only the text or icon. */
+#rogue #overlay .armory-item.rarity-basic,
+#rogue #overlay .equipment-row.rarity-basic{--item-color:#aeb5b9;--item-bg:#333a40;--item-edge:#838d95}
+#rogue #overlay .armory-item.rarity-common,
+#rogue #overlay .equipment-row.rarity-common{--item-color:#a6edaf;--item-bg:#204a32;--item-edge:#45ac67}
+#rogue #overlay .armory-item.rarity-uncommon,
+#rogue #overlay .equipment-row.rarity-uncommon{--item-color:#a5d3ff;--item-bg:#1b4165;--item-edge:#4e9ce8}
+#rogue #overlay .armory-item.rarity-rare,
+#rogue #overlay .equipment-row.rarity-rare{--item-color:#e1baff;--item-bg:#49245f;--item-edge:#ad66df}
+#rogue #overlay .armory-item.rarity-legendary,
+#rogue #overlay .equipment-row.rarity-legendary{--item-color:#ffdcaa;--item-bg:#683818;--item-edge:#f39535}
+#rogue #overlay .armory-item.rarity-exotic,
+#rogue #overlay .equipment-row.rarity-exotic{--item-color:#fff4a0;--item-bg:#62581c;--item-edge:#f2dd46}
+#rogue #overlay button.armory-item[class*="rarity-"]{
+ background:linear-gradient(155deg,var(--item-bg),#162626)!important;
+ border:1px solid var(--item-edge)!important;
+ color:#f1f4ed!important;
+ box-shadow:inset 3px 0 0 var(--item-edge),inset 0 1px #ffffff20;
+}
+#rogue #overlay button.armory-item[class*="rarity-"]:hover:not(:disabled){
+ background:linear-gradient(135deg,var(--item-bg),#39544c)!important;
+ filter:brightness(1.15);
+}
+#rogue #overlay button.armory-item[class*="rarity-"] .armory-item-copy b{color:var(--item-color)}
+#rogue #overlay button.armory-item[class*="rarity-"] .armory-item-description{color:#e0e9e2}
+#rogue #overlay button.armory-item[class*="rarity-"] .armory-item-copy small{color:#f3e5bf}
+#rogue #overlay .equipment-row[class*="rarity-"]{
+ background:linear-gradient(95deg,var(--item-bg),#152d2b);
+ border-left:4px solid var(--item-edge)!important;
+ border-radius:7px;
+ padding-left:10px!important;
+ margin:5px 0;
+}
+#rogue #overlay .equipment-row[class*="rarity-"] > b{color:var(--item-color)}
+#rogue #overlay .equipment-row[class*="rarity-"] .gear-mini{border-color:var(--item-edge)}
