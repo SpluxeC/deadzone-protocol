@@ -5,7 +5,7 @@ export type Slot='primary'|'secondary'|'melee';
 export type AttachmentSlot='optic'|'barrel'|'magazine'|'underbarrel';
 export type ClassId='rifleman'|'medic'|'heavy'|'scout'|'engineer';
 export type WeaponId='pistol'|'revolver'|'machinePistol'|'smg'|'compactSmg'|'suppressedSmg'|'carbine'|'assault'|'battleRifle'|'burstRifle'|'shotgun'|'autoShotgun'|'doubleBarrel'|'tacticalShotgun'|'lmg'|'squadAutomatic'|'heavyMachineGun'|'marksman'|'heavyMarksman'|'sniper'|'knife'|'axe'|'machete'|'bat'|'crowbar';
-export type AttachmentId='redDot'|'scope'|'suppressor'|'compensator'|'longBarrel'|'extended'|'quickMag'|'grip'|'bipod';
+export type AttachmentId='redDot'|'scope'|'holoSight'|'reflexSight'|'variableScope'|'suppressor'|'compensator'|'longBarrel'|'flashHider'|'portedBarrel'|'extended'|'quickMag'|'drumMag'|'lightMag'|'grip'|'bipod'|'angledGrip'|'laserSight';
 export type Mod={id:string;kind:'attachment';model:AttachmentId;tier:Tier};
 export type Weapon={id:string;kind:'weapon';model:WeaponId;tier:Tier;mag:number;mods:Partial<Record<AttachmentSlot,Mod>>};
 export type Gear=Weapon|Mod;
@@ -47,26 +47,44 @@ const allShotguns:WeaponId[]=['shotgun','autoShotgun','doubleBarrel','tacticalSh
 const allMarksman:WeaponId[]=['marksman','heavyMarksman','sniper'];
 export const attachmentDefs:Record<AttachmentId,{name:string;slot:AttachmentSlot;compatible:WeaponId[];stat:string}>={
  redDot:{name:'Red Dot Sight',slot:'optic',compatible:[...allPistols,...allSmgs,...allRifles,...allShotguns,'lmg','squadAutomatic','heavyMachineGun','marksman','heavyMarksman'],stat:'accuracy'},
+ holoSight:{name:'Holographic Sight',slot:'optic',compatible:[...allSmgs,...allRifles,...allShotguns,'lmg','squadAutomatic','heavyMachineGun'],stat:'accuracy'},
+ reflexSight:{name:'Reflex Sight',slot:'optic',compatible:[...allPistols,...allSmgs,...allRifles,...allShotguns],stat:'accuracy / firing speed'},
+ variableScope:{name:'Variable Zoom Scope',slot:'optic',compatible:[...allRifles,...allMarksman,'lmg','squadAutomatic'],stat:'range / accuracy'},
  scope:{name:'Precision Optic',slot:'optic',compatible:[...allRifles,'lmg','squadAutomatic','heavyMachineGun',...allMarksman],stat:'range'},
  suppressor:{name:'Suppressor',slot:'barrel',compatible:[...allPistols,...allSmgs,...allRifles,...allMarksman],stat:'noise'},
+ flashHider:{name:'Flash Hider',slot:'barrel',compatible:[...allPistols,...allSmgs,...allRifles,'lmg','squadAutomatic','heavyMachineGun',...allMarksman],stat:'noise / accuracy'},
+ portedBarrel:{name:'Ported Barrel',slot:'barrel',compatible:[...allPistols,...allSmgs,...allRifles,'lmg','squadAutomatic'],stat:'rate / accuracy'},
  compensator:{name:'Compensator',slot:'barrel',compatible:[...allPistols,...allSmgs,...allRifles,'lmg','squadAutomatic','heavyMachineGun',...allMarksman],stat:'accuracy'},
  longBarrel:{name:'Extended Barrel',slot:'barrel',compatible:[...allRifles,...allShotguns,'lmg','squadAutomatic','heavyMachineGun',...allMarksman],stat:'range'},
  extended:{name:'Extended Magazine',slot:'magazine',compatible:[...allPistols,...allSmgs,...allRifles,'autoShotgun','tacticalShotgun','lmg','squadAutomatic','heavyMachineGun',...allMarksman],stat:'capacity'},
+ drumMag:{name:'Drum Magazine',slot:'magazine',compatible:[...allSmgs,...allRifles,'autoShotgun','tacticalShotgun','lmg','squadAutomatic'],stat:'capacity / reload'},
+ lightMag:{name:'Lightweight Magazine',slot:'magazine',compatible:[...allPistols,...allSmgs,...allRifles,...allMarksman],stat:'reload speed'},
  quickMag:{name:'Quick-Reload Magazine',slot:'magazine',compatible:[...allPistols,...allSmgs,...allRifles,'autoShotgun','tacticalShotgun','lmg','squadAutomatic','heavyMachineGun',...allMarksman],stat:'reload'},
  grip:{name:'Foregrip',slot:'underbarrel',compatible:[...allSmgs,...allRifles,...allShotguns,'lmg','squadAutomatic','heavyMachineGun','marksman','heavyMarksman'],stat:'accuracy'},
+ angledGrip:{name:'Angled Foregrip',slot:'underbarrel',compatible:[...allSmgs,...allRifles,...allShotguns,'lmg','squadAutomatic'],stat:'rate / accuracy'},
+ laserSight:{name:'Laser Sight',slot:'underbarrel',compatible:[...allPistols,...allSmgs,...allRifles,...allShotguns],stat:'accuracy'},
  bipod:{name:'Bipod',slot:'underbarrel',compatible:['lmg','squadAutomatic','heavyMachineGun',...allMarksman],stat:'range'}
 };
 /** Plain-language player-facing effects, matching effectiveStats calculations. */
 export const attachmentDescriptions:Record<AttachmentId,string>={
  redDot:'Improves aiming accuracy.',
  scope:'Increases effective range and accuracy.',
+ holoSight:'Boosts accuracy, especially at higher tiers.',
+ reflexSight:'Improves accuracy and slightly increases firing speed.',
+ variableScope:'Greatly increases range and improves accuracy, but fires slower.',
  suppressor:'Reduces gunfire noise and enemy attraction.',
  compensator:'Improves shot accuracy and control.',
+ flashHider:'Reduces gunfire noise and improves accuracy.',
+ portedBarrel:'Fires slightly faster and improves accuracy.',
  longBarrel:'Increases range and slightly boosts damage.',
  extended:'Adds rounds to magazine capacity.',
  quickMag:'Shortens weapon reload time.',
+ drumMag:'Holds many extra rounds, but takes longer to reload.',
+ lightMag:'Speeds up reloading with a lightweight magazine.',
  grip:'Improves accuracy while firing.',
- bipod:'Increases range and accuracy.'
+ bipod:'Increases range and accuracy.',
+ angledGrip:'Improves accuracy and slightly increases firing speed.',
+ laserSight:'Greatly improves shot accuracy.'
 };
 export const ammoTypes:AmmoType[]=['light','rifle','shotgun','heavy','precision'];
 export const ammoLabels:Record<AmmoType,string>={light:'Pistol / SMG',rifle:'Rifle',shotgun:'Shotgun',heavy:'Heavy',precision:'Precision'};
@@ -91,13 +109,22 @@ export function effectiveStats(weapon:Weapon):{damage:number;capacity:number;rat
   switch(m.model){
    case 'redDot':accuracy+=.08+.035*t;break;
    case 'scope':range+=.35*t;accuracy+=.045*t;break;
+   case 'holoSight':accuracy+=.1+.055*t;break;
+   case 'reflexSight':accuracy+=.06+.03*t;rate*=Math.max(.84,1-.018*t);break;
+   case 'variableScope':range+=.65*t;accuracy+=.065*t;rate*=1+.025*t;break;
    case 'suppressor':noise=Math.max(.18,1-.14*t);break;
    case 'compensator':accuracy+=.05*t;break;
+   case 'flashHider':noise=Math.max(.24,noise*(1-.075*t));accuracy+=.02*t;break;
+   case 'portedBarrel':rate*=Math.max(.76,1-.03*t);accuracy+=.02*t;break;
    case 'longBarrel':range+=.4*t;damage*=1+.015*t;break;
    case 'extended':capacity+=Math.round(3+3*t+b.mag*.045*t);break;
    case 'quickMag':reload*=1-.075*t;break;
+   case 'drumMag':capacity+=Math.max(10,Math.round(b.mag*(.25+.1*t)));reload*=1+.08*t;break;
+   case 'lightMag':reload*=Math.max(.53,1-.095*t);break;
    case 'grip':accuracy+=.055*t;break;
    case 'bipod':range+=.22*t;accuracy+=.05*t;break;
+   case 'angledGrip':accuracy+=.035*t;rate*=Math.max(.8,1-.022*t);break;
+   case 'laserSight':accuracy+=.1+.06*t;break;
   }
  }
  return {damage,capacity,rate:Math.max(.07,rate),range,reload:Math.max(0,reload),accuracy,noise};
@@ -123,6 +150,12 @@ const primaryModels:WeaponId[]=['smg','compactSmg','suppressedSmg','carbine','as
 const secondaryModels:WeaponId[]=['pistol','revolver','machinePistol'];
 const meleeModels:WeaponId[]=['knife','axe','machete','bat','crowbar'];
 const modModels=Object.keys(attachmentDefs) as AttachmentId[];
+const modsBySlot:Record<AttachmentSlot,AttachmentId[]>={
+ optic:modModels.filter(m=>attachmentDefs[m].slot==='optic'),
+ barrel:modModels.filter(m=>attachmentDefs[m].slot==='barrel'),
+ magazine:modModels.filter(m=>attachmentDefs[m].slot==='magazine'),
+ underbarrel:modModels.filter(m=>attachmentDefs[m].slot==='underbarrel')
+};
 function seeded(seed:number):()=>number{let state=seed>>>0;return()=>((state=(Math.imul(state,1664525)+1013904223)>>>0)/4294967296)}
 export function armoryOffers(seed:number,wave:number,rerolls:number):ArmoryOffer[]{
  const random=seeded(seed^Math.imul(wave,0x9e3779b1)^Math.imul(rerolls+1,0x85ebca6b));
@@ -134,7 +167,7 @@ export function armoryOffers(seed:number,wave:number,rerolls:number):ArmoryOffer
   const model=choose(group),tier=rarityForWave(wave,random());
   offers.push({kind:'weapon',model,tier,price:weaponPrice(model as WeaponId,tier)});
  }
- for(let i=0;i<3;i++){const model=choose(modModels),tier=rarityForWave(wave,random());offers.push({kind:'attachment',model,tier,price:modPrice(model as AttachmentId,tier)})}
+ for(const slot of ['optic','barrel','magazine','underbarrel'] as AttachmentSlot[]){const model=choose(modsBySlot[slot]),tier=rarityForWave(wave,random());offers.push({kind:'attachment',model,tier,price:modPrice(model as AttachmentId,tier)})}
  const roles=['rifleman','medic','heavy','scout','engineer'];const recruit=roles[Math.floor(random()*roles.length)];const costs:Record<string,number>={rifleman:750,medic:900,heavy:1150,scout:950,engineer:1000};offers.push({kind:'recruit',model:recruit,tier:1,price:costs[recruit]});
  return offers;
 }
