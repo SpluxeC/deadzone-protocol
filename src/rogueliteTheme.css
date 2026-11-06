@@ -462,8 +462,8 @@
 /* Dynamic atlas indexing keeps every item centered at its actual display size. */
 #rogue .gear-mini{
  --gear-icon-size:34px;
- background-position:calc(var(--gear-index,0) * var(--gear-icon-size) * -1) 0!important;
- background-size:calc(var(--gear-icon-size) * 38) var(--gear-icon-size)!important;
+ background-position:var(--gear-position,0%) 0!important;
+ background-size:3800% 100%!important;
 }
 @media (pointer:coarse) and (orientation:landscape){
  #rogue #loadout-preview .gear-mini{--gear-icon-size:23px}
