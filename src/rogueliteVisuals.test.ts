@@ -39,7 +39,7 @@ import {gearIconModels,gearIcon} from './gearIcons.ts';
 test('all weapon, attachment and supply icons resolve to one atlas cell',()=>{
  const svg=readFileSync(new URL('./assets/deadzone-gear.svg',import.meta.url),'utf8');
  assert.equal(gearIconModels.length,36);
- assert.equal(new Set(gearIconModels).size,24);
+ assert.equal(new Set(gearIconModels).size,36);
  assert.match(svg,/viewBox="0 0 2304 64"/);
  assert.equal((svg.match(/<g transform="translate\(\d+ 0\)"/g)||[]).length,36);
  for(const id of gearIconModels)assert.match(gearIcon(id),/class="gear-mini"/);
