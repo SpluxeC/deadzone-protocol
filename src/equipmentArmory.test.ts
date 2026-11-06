@@ -39,8 +39,8 @@ test('backpack slots count loose gear, ammo stacks and medkits, without exceedin
 });
 test('rotating Armory offers are repeatable per seed/wave/reroll and cost scales with tier',()=>{
  const a=armoryOffers(441,12,0),b=armoryOffers(441,12,0),c=armoryOffers(441,12,1);
- assert.deepEqual(a,b);assert.notDeepEqual(a,c);assert.equal(a.length,7);
- assert.equal(a.filter(o=>o.kind==='weapon').length,3);assert.equal(a.filter(o=>o.kind==='attachment').length,3);
+ assert.deepEqual(a,b);assert.notDeepEqual(a,c);assert.equal(a.length,9);
+ assert.equal(a.filter(o=>o.kind==='weapon').length,5);assert.equal(a.filter(o=>o.kind==='attachment').length,3);
  assert.equal(a.filter(o=>o.kind==='recruit').length,1);
  assert.ok(weaponPrice('assault',5)>weaponPrice('assault',1));
  const x=newWeapon('assault',2,'a');assert.ok(upgradePrice(x)>weaponPrice('assault',3));assert.ok(salePrice(x)<weaponPrice('assault',2));
@@ -51,4 +51,23 @@ test('loot is seeded, bosses grant guaranteed equipment, later waves offer highe
  assert.equal(rarityForWave(1,.9),1);
  assert.equal(rarityForWave(21,.3),5);
  assert.ok(ammoPack.heavy.price>ammoPack.light.price);
+});
+
+test('expanded weapon categories remain compatible with the Armory, class permissions, and tier progression',()=>{
+ const expected=['revolver','machinePistol','compactSmg','suppressedSmg','battleRifle','burstRifle','doubleBarrel','tacticalShotgun','heavyMarksman','machete','bat','crowbar'] as const;
+ for(const model of expected){
+  const definition=weaponDefs[model],item=newWeapon(model,1,'expanded-'+model);
+  assert.equal(item.model,model);
+  assert.ok(definition.damage>0&&definition.allowed.length>0);
+  assert.ok(weaponPrice(model,2)>weaponPrice(model,1));
+  assert.ok(effectiveStats(item).range>0);
+ }
+ assert.equal(weaponDefs.revolver.slot,'secondary');
+ assert.equal(weaponDefs.machete.slot,'melee');
+ assert.equal(weaponDefs.battleRifle.slot,'primary');
+ assert.ok(canEquipMod(newWeapon('battleRifle',1,'battle'),newMod('scope',1,'scope')));
+ assert.ok(canClassEquip('scout','heavyMarksman')===false);
+ const offers=armoryOffers(311,4,0);
+ assert.equal(offers.filter(o=>o.kind==='weapon'&&weaponDefs[o.model as keyof typeof weaponDefs].slot==='secondary').length,1);
+ assert.equal(offers.filter(o=>o.kind==='weapon'&&weaponDefs[o.model as keyof typeof weaponDefs].slot==='melee').length,1);
 });
