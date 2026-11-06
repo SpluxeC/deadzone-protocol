@@ -595,17 +595,17 @@ function draw(){
   if(!isKnown(a.x,a.y))continue;
   const dir=allyDirection(a),direction=Math.atan2(dir.y,dir.x);
   const motion=animatedPose(a,now,direction,4);
-  drawSprite(ctx,a.role,v,a.x,a.y,{angle:motion.angle,stride:motion.phase,motionSpeed:motion.speed,scale:a.role==='heavy'?1.25:1.08,down:a.downed>0,alpha:a.dead?.3:1,glow:a.role==='medic'?'#69e8a1':undefined});
+  drawSprite(ctx,a.role,v,a.x,a.y,{angle:motion.angle,stride:motion.phase,motionSpeed:motion.speed,idleTime:now/1000,scale:a.role==='heavy'?1.25:1.08,down:a.downed>0,alpha:a.dead?.3:1,glow:a.role==='medic'?'#69e8a1':undefined});
   if(a.hp<a.maxHp||a.downed>0)drawBar(ctx,v,a.x,a.y,a.downed>0?a.downed/ALLY_BLEEDOUT:a.hp/a.maxHp,a.downed>0?'#f1c17e':hudColor(a.hp/a.maxHp));
  }
- const playerMotion=animatedPose(r.player,now,Math.atan2(aim.y,aim.x),5.5,true);
- drawSprite(ctx,'player',v,r.player.x,r.player.y,{angle:playerMotion.angle,stride:playerMotion.phase,motionSpeed:playerMotion.speed,scale:1.25,down:(r.playerDowned??0)>0,glow:'#b3d8b4'});
+ const playerMotion=animatedPose(r.player,now,Math.atan2(aim.y,aim.x),12,true);
+ drawSprite(ctx,'player',v,r.player.x,r.player.y,{angle:playerMotion.angle,stride:playerMotion.phase,motionSpeed:playerMotion.speed,idleTime:now/1000,showAim:true,scale:1.25,down:(r.playerDowned??0)>0,glow:'#b3d8b4'});
  // A bullet effect cannot reveal enemies or objects through unexplored tiles.
  ctx.save();if(fog)clipToExplored(ctx,m,v,fog);
  drawCombatFx(ctx,v,combatFx);
  ctx.restore();
  if((r.playerDowned??0)>0){ctx.font='bold '+Math.max(13,v.tile*.48)+'px system-ui';ctx.textAlign='center';ctx.fillStyle='#ff9b83';ctx.fillText('DOWNED '+Math.ceil(r.playerDowned??0)+'s',v.ox+r.player.x*v.tile,v.oy+(r.player.y-1)*v.tile)}
- else{ctx.strokeStyle='rgba(255,231,185,.76)';ctx.lineWidth=Math.max(1,v.tile*.04);ctx.beginPath();ctx.moveTo(v.ox+(r.player.x+aim.x*.5)*v.tile,v.oy+(r.player.y+aim.y*.5)*v.tile);ctx.lineTo(v.ox+(r.player.x+aim.x*1.5)*v.tile,v.oy+(r.player.y+aim.y*1.5)*v.tile);ctx.stroke()}
+
  const w=activeWeapon(r),ammoType=w?weaponDefs[w.model].ammo:null,eq=ensureEquipment(r);
  const ammo=w&&ammoType?w.mag+'/'+eq.ammo[ammoType]:'MELEE';
  // Mobile squad orders only exist when at least one living squadmate can receive them.
