@@ -76,11 +76,11 @@ const loot:LootCrate[]=[],enemies:{x:number;y:number}[]=[];
 const occupied=new Set<number>();
 const tileKey=(x:number,y:number)=>y*width+x;
 const shuffle=<T>(values:T[]):T[]=>{for(let i=values.length-1;i>0;i--){const j=Math.floor(rand()*(i+1));[values[i],values[j]]=[values[j],values[i]]}return values};
-const shuffled=shuffle([...candidates]);
+const shuffled=shuffle(candidates.filter(p=>layoutVersion!==3||Math.hypot(p.x-entrance.x,p.y-entrance.y)>7));
 // Modern floors have eight ordinary supply cases and two longer, rarer weapon cases.
 // Legacy maps keep their original single-cell crate coordinates/counts.
 if(layoutVersion===3){
- const available=new Set(candidates.map(p=>tileKey(p.x,p.y)));
+ const available=new Set(shuffled.map(p=>tileKey(p.x,p.y)));
  for(const p of shuffled){
   if(loot.filter(c=>c.kind==='weapon').length>=2)break;
   const axes=rand()<.5?(['horizontal','vertical'] as const):(['vertical','horizontal'] as const);
