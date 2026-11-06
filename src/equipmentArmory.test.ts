@@ -39,8 +39,8 @@ test('backpack slots count loose gear, ammo stacks and medkits, without exceedin
 });
 test('rotating Armory offers are repeatable per seed/wave/reroll and cost scales with tier',()=>{
  const a=armoryOffers(441,12,0),b=armoryOffers(441,12,0),c=armoryOffers(441,12,1);
- assert.deepEqual(a,b);assert.notDeepEqual(a,c);assert.equal(a.length,9);
- assert.equal(a.filter(o=>o.kind==='weapon').length,5);assert.equal(a.filter(o=>o.kind==='attachment').length,3);
+ assert.deepEqual(a,b);assert.notDeepEqual(a,c);assert.equal(a.length,10);
+ assert.equal(a.filter(o=>o.kind==='weapon').length,5);assert.equal(a.filter(o=>o.kind==='attachment').length,4);
  assert.equal(a.filter(o=>o.kind==='recruit').length,1);
  assert.ok(weaponPrice('assault',5)>weaponPrice('assault',1));
  const x=newWeapon('assault',2,'a');assert.ok(upgradePrice(x)>weaponPrice('assault',3));assert.ok(salePrice(x)<weaponPrice('assault',2));
@@ -79,5 +79,39 @@ test('all Armory attachments explain their effect in plain language',()=>{
   const description=attachmentDescriptions[key as keyof typeof attachmentDescriptions];
   assert.ok(description.length>=16&&description.length<=90);
   assert.ok(description.endsWith('.'));
+ }
+});
+
+test('new attachment effects scale with tiers and respect four exclusive mounting slots',()=>{
+ const models=['holoSight','reflexSight','variableScope','flashHider','portedBarrel','drumMag','lightMag','angledGrip','laserSight'] as const;
+ const rifle=newWeapon('assault',1,'gun');
+ const baseline=effectiveStats(rifle);
+ for(const model of models){
+  const mod=newMod(model,3,'new-'+model);
+  assert.ok(canEquipMod(rifle,mod),model);
+  const field=attachmentDefs[model].slot;
+  rifle.mods[field]=mod;
+  const modified=effectiveStats(rifle);
+  assert.notDeepEqual(modified,baseline,model);
+  rifle.mods[field]=undefined;
+ }
+ rifle.mods.magazine=newMod('drumMag',3,'drum');
+ const big=effectiveStats(rifle);
+ assert.ok(big.capacity>baseline.capacity);
+ assert.ok(big.reload>baseline.reload);
+ rifle.mods.magazine=newMod('lightMag',3,'light');
+ assert.ok(effectiveStats(rifle).reload<baseline.reload);
+ rifle.mods.magazine=undefined;
+ rifle.mods.optic=newMod('variableScope',3,'zoom');
+ assert.ok(effectiveStats(rifle).range>baseline.range);
+ assert.ok(effectiveStats(rifle).rate>baseline.rate);
+ assert.equal(canEquipMod(newWeapon('knife',1,'knife'),newMod('laserSight',1,'l')),false);
+});
+test('rotating Armory always offers one of each attachment mount type',()=>{
+ for(const seed of [1,2,33,511]){
+  const offers=armoryOffers(seed,7,0).filter(o=>o.kind==='attachment');
+  assert.deepEqual(offers.map(o=>attachmentDefs[o.model as keyof typeof attachmentDefs].slot),
+   ['optic','barrel','magazine','underbarrel']);
+  assert.equal(new Set(offers.map(o=>o.model)).size,4);
  }
 });
