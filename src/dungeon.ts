@@ -1,4 +1,4 @@
-export type DungeonLayout={width:number;height:number;seed:number;tiles:number[];entrance:{x:number;y:number};extraction:{x:number;y:number};loot:{x:number;y:number}[];enemies:{x:number;y:number}[]};
+export type DungeonLayout={width:number;height:number;seed:number;tiles:number[];entrance:{x:number;y:number};extraction:{x:number;y:number};extractionSize?:1|2;loot:{x:number;y:number}[];enemies:{x:number;y:number}[]};
 /** Seeded procedural connected dungeon: 0=floor, 1=wall. */
 export function generateDungeon(seed:number,width=42,height=30,layoutVersion:1|2|3=2):DungeonLayout{
 if(!Number.isInteger(seed)||width<22||height<18)throw Error('Invalid dungeon parameters');
@@ -19,10 +19,36 @@ if(rooms.length<2)throw Error('Unable to generate connected rooms');
 const entrance={x:rooms[0].cx,y:rooms[0].cy};
 const reachable=new Set([entrance.y*width+entrance.x]),queue=[entrance];
 for(let i=0;i<queue.length;i++){const p=queue[i];for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){const x=p.x+dx,y=p.y+dy,key=y*width+x;if(x>0&&y>0&&x<width&&y<height&&tiles[key]===0&&!reachable.has(key)){reachable.add(key);queue.push({x,y})}}}
-const extraction=queue[queue.length-1];
-const candidates=queue.filter(p=>Math.abs(p.x-entrance.x)+Math.abs(p.y-entrance.y)>7&&Math.abs(p.x-extraction.x)+Math.abs(p.y-extraction.y)>3);
+// A new-generation elevator occupies four walkable cells around a half-tile center.
+ // Pick the center of a real room instead of the farthest (often corner) corridor.
+ // Reachability comes from the entrance flood fill and still applies to old layouts.
+ const legacyExtraction=queue[queue.length-1];
+ const extractionSize:1|2=layoutVersion===3?2:1;
+ let extraction:{x:number;y:number}=legacyExtraction;
+ if(layoutVersion===3){
+  const choices=rooms.filter(room=>room.w>=6&&room.h>=6).map(room=>{
+   const left=room.x+Math.floor((room.w-2)/2);
+   const top=room.y+Math.floor((room.h-2)/2);
+   const center={x:left+.5,y:top+.5};
+   const distance=Math.hypot(center.x-entrance.x,center.y-entrance.y);
+   const cells=[[left,top],[left+1,top],[left,top+1],[left+1,top+1]];
+   const valid=cells.every(([x,y])=>reachable.has(y*width+x)&&
+    tiles[y*width+x]===0);
+   return {center,distance,valid};
+  }).filter(c=>c.valid);
+  // Prefer a distant room, not the starting room, while varying location by seed.
+  const distant=choices.filter(c=>c.distance>=12);
+  const pool=distant.length?distant:choices;
+  if(pool.length){
+   pool.sort((a,b)=>b.distance-a.distance);
+   const bestDistance=pool[0].distance;
+   const farCandidates=pool.filter(c=>c.distance>=bestDistance*.82);
+   extraction=farCandidates[Math.floor(rand()*farCandidates.length)].center;
+  }
+ }
+const candidates=queue.filter(p=>Math.abs(p.x-entrance.x)+Math.abs(p.y-entrance.y)>7&&Math.hypot(p.x-extraction.x,p.y-extraction.y)>3);
 const loot:{x:number;y:number}[]=[],enemies:{x:number;y:number}[]=[];
 for(let i=0;i<Math.min(10,candidates.length);i++){const p=candidates[Math.floor(rand()*candidates.length)];if(!loot.some(v=>v.x===p.x&&v.y===p.y))loot.push({...p})}
 for(let i=0;i<Math.min(18,candidates.length);i++){const p=candidates[Math.floor(rand()*candidates.length)];if(!enemies.some(v=>v.x===p.x&&v.y===p.y)&&!loot.some(v=>v.x===p.x&&v.y===p.y))enemies.push({...p})}
-return{width,height,seed,tiles,entrance,extraction,loot,enemies};
+return{width,height,seed,tiles,entrance,extraction,extractionSize,loot,enemies};
 }
