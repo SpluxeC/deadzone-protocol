@@ -36,9 +36,12 @@ export function extractionSpawnInterval(elapsedSeconds:number,wave:number):numbe
  const difficulty=Math.min(.18,(Math.max(1,wave)-1)*.011);
  return Math.max(.24,1.25-difficulty-elapsed*.015);
 }
-export function extractionActiveCap(elapsedSeconds:number,wave:number):number{
- const elapsed=Math.max(0,Number.isFinite(elapsedSeconds)?elapsedSeconds:0);
- return Math.min(65,Math.max(24,Math.floor(25+Math.max(1,wave)*.9+elapsed/12)));
+export const MAX_ACTIVE_ZOMBIES=65;
+/** The entire 65-zombie horde is active from the start of every wave.
+ * Eliminated zombies are replaced at the accelerating wave spawn interval.
+ */
+export function extractionActiveCap(_elapsedSeconds:number,_wave:number):number{
+ return MAX_ACTIVE_ZOMBIES;
 }
 export function formatRunTime(seconds:number):string{
  const whole=Math.max(0,Math.floor(Number.isFinite(seconds)?seconds:0));
