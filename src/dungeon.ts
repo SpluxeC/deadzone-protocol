@@ -1,4 +1,5 @@
-export type DungeonLayout={width:number;height:number;seed:number;tiles:number[];entrance:{x:number;y:number};extraction:{x:number;y:number};extractionSize?:1|2;loot:{x:number;y:number}[];enemies:{x:number;y:number}[]};
+export type LootCrate={x:number;y:number;kind?:'supply'|'weapon';orientation?:'horizontal'|'vertical'};
+export type DungeonLayout={width:number;height:number;seed:number;tiles:number[];entrance:{x:number;y:number};extraction:{x:number;y:number};extractionSize?:1|2;loot:LootCrate[];enemies:{x:number;y:number}[]};
 /** All four cells covered by a modern elevator; old save layouts use one cell. */
 export function elevatorCells(map:DungeonLayout):{x:number;y:number}[]{
  const {x,y}=map.extraction;
@@ -11,6 +12,17 @@ export function elevatorInRange(map:DungeonLayout,player:{x:number;y:number}):bo
  if(map.extractionSize!==2)return Math.hypot(player.x-x,player.y-y)<=1.5;
  const dx=Math.max(0,Math.abs(player.x-x)-.5),dy=Math.max(0,Math.abs(player.y-y)-.5);
  return Math.hypot(dx,dy)<=1.15;
+}
+/** Tile footprints stay separate even when crates spawn directly alongside each other. */
+export function crateCells(crate:LootCrate):{x:number;y:number}[]{
+ if(crate.kind!=='weapon')return [{x:crate.x,y:crate.y}];
+ return crate.orientation==='vertical'
+  ?[{x:crate.x,y:crate.y-.5},{x:crate.x,y:crate.y+.5}]
+  :[{x:crate.x-.5,y:crate.y},{x:crate.x+.5,y:crate.y}];
+}
+/** Check reachability from either end of a long weapon case. */
+export function crateInRange(crate:LootCrate,player:{x:number;y:number}):boolean{
+ return crateCells(crate).some(cell=>Math.hypot(cell.x-player.x,cell.y-player.y)<1.4);
 }
 /** Seeded procedural connected dungeon: 0=floor, 1=wall. */
 export function generateDungeon(seed:number,width=42,height=30,layoutVersion:1|2|3=2):DungeonLayout{
@@ -60,8 +72,39 @@ for(let i=0;i<queue.length;i++){const p=queue[i];for(const [dx,dy] of [[1,0],[-1
   }
  }
 const candidates=queue.filter(p=>Math.abs(p.x-entrance.x)+Math.abs(p.y-entrance.y)>7&&Math.hypot(p.x-extraction.x,p.y-extraction.y)>3);
-const loot:{x:number;y:number}[]=[],enemies:{x:number;y:number}[]=[];
-for(let i=0;i<Math.min(10,candidates.length);i++){const p=candidates[Math.floor(rand()*candidates.length)];if(!loot.some(v=>v.x===p.x&&v.y===p.y))loot.push({...p})}
-for(let i=0;i<Math.min(18,candidates.length);i++){const p=candidates[Math.floor(rand()*candidates.length)];if(!enemies.some(v=>v.x===p.x&&v.y===p.y)&&!loot.some(v=>v.x===p.x&&v.y===p.y))enemies.push({...p})}
+const loot:LootCrate[]=[],enemies:{x:number;y:number}[]=[];
+const occupied=new Set<number>();
+const tileKey=(x:number,y:number)=>y*width+x;
+const shuffle=<T>(values:T[]):T[]=>{for(let i=values.length-1;i>0;i--){const j=Math.floor(rand()*(i+1));[values[i],values[j]]=[values[j],values[i]]}return values};
+const shuffled=shuffle([...candidates]);
+// Modern floors have eight ordinary supply cases and two longer, rarer weapon cases.
+// Legacy maps keep their original single-cell crate coordinates/counts.
+if(layoutVersion===3){
+ const available=new Set(candidates.map(p=>tileKey(p.x,p.y)));
+ for(const p of shuffled){
+  if(loot.filter(c=>c.kind==='weapon').length>=2)break;
+  const axes=rand()<.5?(['horizontal','vertical'] as const):(['vertical','horizontal'] as const);
+  for(const orientation of axes){
+   const near=orientation==='horizontal'?{x:p.x+1,y:p.y}:{x:p.x,y:p.y+1};
+   const cells=[p,near],clear=cells.every(c=>available.has(tileKey(c.x,c.y))&&!occupied.has(tileKey(c.x,c.y)));
+   if(!clear)continue;
+   loot.push({x:(p.x+near.x)/2,y:(p.y+near.y)/2,kind:'weapon',orientation});
+   for(const c of cells)occupied.add(tileKey(c.x,c.y));
+   break;
+  }
+ }
+}
+const supplyCount=layoutVersion===3?8:10;
+for(const p of shuffled){
+ if(loot.filter(c=>c.kind!=='weapon').length>=supplyCount)break;
+ const key=tileKey(p.x,p.y);
+ if(occupied.has(key))continue;
+ occupied.add(key);loot.push({x:p.x,y:p.y,kind:'supply'});
+}
+for(const p of shuffle([...candidates])){
+ if(enemies.length>=18)break;
+ const key=tileKey(p.x,p.y);
+ if(!occupied.has(key)&&!enemies.some(v=>v.x===p.x&&v.y===p.y))enemies.push({...p});
+}
 return{width,height,seed,tiles,entrance,extraction,extractionSize,loot,enemies};
 }
