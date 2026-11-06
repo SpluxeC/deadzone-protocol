@@ -36,7 +36,7 @@ export function updateFog(map:DungeonLayout,fog:FogState,explorers:readonly Expl
 export function exploredIndices(fog:FogState):number[]{
  const out:number[]=[];for(let i=0;i<fog.explored.length;i++)if(fog.explored[i])out.push(i);return out;
 }
-export const UNKNOWN_TERRAIN_ALPHA=.78;
+export const UNKNOWN_TERRAIN_ALPHA=.58;
 export function fogAlpha(fog:FogState,index:number):number{return fog.explored[index]?0:UNKNOWN_TERRAIN_ALPHA}
 /** Whether game entities should be visible at this world-space tile. */
 export function discoveredAt(map:DungeonLayout,fog:FogState,x:number,y:number):boolean{
