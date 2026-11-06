@@ -385,7 +385,7 @@ function inventory(){if(!run)return;paused=true;overlay.hidden=false;
  for(const slot of ['primary','secondary','melee'] as Slot[]){
   const w=eq.loadout[slot];if(!w)continue;
   const remove=overlay.querySelector<HTMLButtonElement>('#remove-'+slot)!;remove.disabled=!canAddItem(eq.bag,eq.ammo,r.medkits,eq.capacity);
-  if(atShop&&w.tier<5){const upgrade=overlay.querySelector<HTMLButtonElement>('#upgrade-equipped-'+slot)!;const price=upgradePrice(w);upgrade.disabled=r.credits<price;upgrade.onclick=()=>{if(r.credits<price)return;r.credits-=price;w.tier=(w.tier+1) as Tier;refresh()}}
+  if(atShop&&w.tier<6){const upgrade=overlay.querySelector<HTMLButtonElement>('#upgrade-equipped-'+slot)!;const price=upgradePrice(w);upgrade.disabled=r.credits<price;upgrade.onclick=()=>{if(r.credits<price)return;r.credits-=price;w.tier=(w.tier+1) as Tier;refresh()}}
   remove.onclick=()=>{if(!canAddItem(eq.bag,eq.ammo,r.medkits,eq.capacity))return;eq.bag.push(w);eq.loadout[slot]=null;if(r.activeSlot===slot)r.activeSlot='primary';refresh()};
   for(const m of Object.values(w.mods)){if(!m)continue;const field=attachmentDefs[m.model].slot;const btn=overlay.querySelector<HTMLButtonElement>('#detach-'+slot+'-'+field)!;
    btn.disabled=!canAddItem(eq.bag,eq.ammo,r.medkits,eq.capacity);
