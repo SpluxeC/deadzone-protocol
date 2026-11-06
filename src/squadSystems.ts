@@ -58,4 +58,4 @@ export function classDamage(role:ClassId,tier:Tier):number{
  return base*(1+.2*(tier-1));
 }
 export function canHeal(role:ClassId):boolean{return role==='medic'}
-export function gearUpgradeCost(a:Squadmate):number{return a.gearTier>=5?Infinity:250+350*a.gearTier}
+export function gearUpgradeCost(a:Squadmate):number{return a.gearTier>=6?Infinity:250+350*a.gearTier}
