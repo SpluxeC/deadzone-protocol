@@ -4,7 +4,8 @@ import {zombieKind,zombieStats,weaponStats,reloadTransfer,distanceField,nextZomb
 import {weaponDefs,attachmentDefs,attachmentDescriptions,rarityName,rarityClass,canClassEquip,ammoTypes,ammoLabels,ammoPack,ammoStack,newWeapon,newMod,usedSlots,addAmmo,canAddItem,canEquipMod,itemName,salePrice,effectiveStats,armoryOffers,rareLoot,advanceOfferPrice,backpackUpgradePrice,upgradePrice,type Weapon,type Mod,type Gear,type AmmoBank,type Loadout,type AmmoType,type Tier,type WeaponId,type AttachmentId,type Slot} from './equipmentArmory';
 import {CLASS_INFO,classIds,makeSquadmate,migrateSquadmate,applyLethalDamage,bleed,revive,reviveDuration,shouldRevive,canRecruit,equipClassWeapon,classFireDelay,classRange,classDamage,canHeal,gearUpgradeCost,PLAYER_BLEEDOUT,ALLY_BLEEDOUT,type Squadmate,type SquadOrder} from './squadSystems';
 import {migrateProfile,unlocks,achievements,buyUnlock,allowedPrimary,allowedMelee,allowedTeammates,sanitizeChoice,startingKit,progressAchievements,performancePayout,eligibleRecruit,type ProfileV5,type UnlockId,type RunPerformance} from './metaprogression';
-import {camera,toWorld,renderDungeon,drawSprite,drawBar,drawHazard,hudColor,type View,type SpriteKind} from './rogueliteVisuals';
+import {camera,toWorld,renderDungeon,drawSprite,drawElevator,drawBar,drawHazard,hudColor,type View,type SpriteKind} from './rogueliteVisuals';
+import {elevatorInRange,elevatorCells} from './dungeon';
 import {nextCharacterMotion,type CharacterMotion} from './characterMotion';
 import {gearIcon} from './gearIcons';
 import {makeAttackFx,ageCombatFx,drawCombatFx,shotProfile,type CombatFx} from './combatFx';
@@ -285,7 +286,7 @@ function waveReport(){
 function elevator(){
  if(!run||!plan||run.stage!=='fight'||(run.playerDowned??0)>0)return;
  const p=plan.map.extraction;
- if(Math.hypot(run.player.x-p.x,run.player.y-p.y)>1.5){notice('Find the green elevator on the map');return}
+ if(!elevatorInRange(plan.map,run.player)){notice('Move closer to the elevator doors');return}
  run.credits+=clearPayout(run.wave);
  run.cleared++;
  if(!run.waveHit)run.flawlessWaves=(run.flawlessWaves??0)+1;
@@ -302,7 +303,7 @@ function nearbyInteraction():NearbyInteraction|null{
  const index=plan.map.loot.findIndex((item,i)=>!run!.looted.includes(i)&&Math.hypot(item.x-p.x,item.y-p.y)<1.4);
  if(index>=0)return {kind:'loot',index};
  const exit=plan.map.extraction;
- if(Math.hypot(exit.x-p.x,exit.y-p.y)<=1.5)return {kind:'elevator'};
+ if(elevatorInRange(plan.map,p))return {kind:'elevator'};
  return null;
 }
 function interact(){
@@ -646,7 +647,11 @@ function draw(){
  const now=performance.now(),bob=Math.sin(now/340)*v.tile*.025;
  for(const sp of plan.spawnPoints)if(isKnown(sp.x,sp.y))drawSprite(ctx,'spawn',v,sp.x,sp.y,{scale:.71,alpha:.72});
  for(const [i,l] of m.loot.entries())if(!r.looted.includes(i)&&isKnown(l.x,l.y))drawSprite(ctx,'crate',v,l.x,l.y,{scale:.94,glow:'#deae69'});
- if(isKnown(m.extraction.x,m.extraction.y))drawSprite(ctx,'elevator',v,m.extraction.x,m.extraction.y,{scale:1.18,alpha:cleared()?1:.5,glow:cleared()?'#3beaa6':undefined,bob:cleared()?bob:0});
+ // One elevator machine covers all four floor cells, visible after any part is discovered.
+ if(elevatorCells(m).some(cell=>isKnown(cell.x,cell.y))){
+  if(m.extractionSize===2)drawElevator(ctx,v,m.extraction.x,m.extraction.y,cleared(),now);
+  else drawSprite(ctx,'elevator',v,m.extraction.x,m.extraction.y,{scale:1.18,alpha:cleared()?1:.5,glow:cleared()?'#3beaa6':undefined,bob:cleared()?bob:0});
+ }
  for(const e of r.enemies){if(!e.alive||!isKnown(e.x,e.y))continue;const kind=(e.kind??(e.boss?'boss':'shambler')) as SpriteKind;
   const direction=Math.atan2(r.player.y-e.y,r.player.x-e.x);
   const motion=animatedPose(e,now,direction,e.boss?2.2:kind==='runner'?4:2.8);
