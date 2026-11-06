@@ -4,7 +4,7 @@ export type AmmoType='light'|'rifle'|'shotgun'|'heavy'|'precision';
 export type Slot='primary'|'secondary'|'melee';
 export type AttachmentSlot='optic'|'barrel'|'magazine'|'underbarrel';
 export type ClassId='rifleman'|'medic'|'heavy'|'scout'|'engineer';
-export type WeaponId='pistol'|'revolver'|'machinePistol'|'smg'|'compactSmg'|'suppressedSmg'|'carbine'|'assault'|'battleRifle'|'burstRifle'|'shotgun'|'autoShotgun'|'doubleBarrel'|'tacticalShotgun'|'lmg'|'marksman'|'heavyMarksman'|'sniper'|'knife'|'axe'|'machete'|'bat'|'crowbar';
+export type WeaponId='pistol'|'revolver'|'machinePistol'|'smg'|'compactSmg'|'suppressedSmg'|'carbine'|'assault'|'battleRifle'|'burstRifle'|'shotgun'|'autoShotgun'|'doubleBarrel'|'tacticalShotgun'|'lmg'|'squadAutomatic'|'heavyMachineGun'|'marksman'|'heavyMarksman'|'sniper'|'knife'|'axe'|'machete'|'bat'|'crowbar';
 export type AttachmentId='redDot'|'scope'|'suppressor'|'compensator'|'longBarrel'|'extended'|'quickMag'|'grip'|'bipod';
 export type Mod={id:string;kind:'attachment';model:AttachmentId;tier:Tier};
 export type Weapon={id:string;kind:'weapon';model:WeaponId;tier:Tier;mag:number;mods:Partial<Record<AttachmentSlot,Mod>>};
@@ -29,6 +29,8 @@ export const weaponDefs:Record<WeaponId,WeaponDef>={
  doubleBarrel:{name:'Double-Barrel Shotgun',slot:'primary',ammo:'shotgun',damage:7.0,mag:2,rate:1.03,range:4.3,reload:2.15,allowed:['heavy','engineer']},
  tacticalShotgun:{name:'Tactical Shotgun',slot:'primary',ammo:'shotgun',damage:5.6,mag:8,rate:.62,range:4.8,reload:2.35,allowed:['heavy','engineer']},
  lmg:{name:'Light Machine Gun',slot:'primary',ammo:'heavy',damage:2.2,mag:70,rate:.095,range:8,reload:3.7,allowed:['heavy']},
+ squadAutomatic:{name:'Squad Automatic Weapon',slot:'primary',ammo:'heavy',damage:2.05,mag:55,rate:.09,range:7.8,reload:3.1,allowed:['heavy']},
+ heavyMachineGun:{name:'Heavy Machine Gun',slot:'primary',ammo:'heavy',damage:3.0,mag:90,rate:.13,range:8.4,reload:4.2,allowed:['heavy']},
  marksman:{name:'Marksman Rifle',slot:'primary',ammo:'precision',damage:5.1,mag:15,rate:.47,range:11,reload:2,penetration:1,allowed:['scout']},
  heavyMarksman:{name:'Heavy Marksman Rifle',slot:'primary',ammo:'precision',damage:6.8,mag:10,rate:.68,range:12,reload:2.6,penetration:1,allowed:['scout','heavy']},
  sniper:{name:'Sniper Rifle',slot:'primary',ammo:'precision',damage:8.1,mag:5,rate:1.08,range:13,reload:2.6,penetration:2,allowed:['scout']},
@@ -44,15 +46,15 @@ const allRifles:WeaponId[]=['carbine','assault','battleRifle','burstRifle'];
 const allShotguns:WeaponId[]=['shotgun','autoShotgun','doubleBarrel','tacticalShotgun'];
 const allMarksman:WeaponId[]=['marksman','heavyMarksman','sniper'];
 export const attachmentDefs:Record<AttachmentId,{name:string;slot:AttachmentSlot;compatible:WeaponId[];stat:string}>={
- redDot:{name:'Red Dot Sight',slot:'optic',compatible:[...allPistols,...allSmgs,...allRifles,...allShotguns,'lmg','marksman','heavyMarksman'],stat:'accuracy'},
- scope:{name:'Precision Optic',slot:'optic',compatible:[...allRifles,'lmg',...allMarksman],stat:'range'},
+ redDot:{name:'Red Dot Sight',slot:'optic',compatible:[...allPistols,...allSmgs,...allRifles,...allShotguns,'lmg','squadAutomatic','heavyMachineGun','marksman','heavyMarksman'],stat:'accuracy'},
+ scope:{name:'Precision Optic',slot:'optic',compatible:[...allRifles,'lmg','squadAutomatic','heavyMachineGun',...allMarksman],stat:'range'},
  suppressor:{name:'Suppressor',slot:'barrel',compatible:[...allPistols,...allSmgs,...allRifles,...allMarksman],stat:'noise'},
- compensator:{name:'Compensator',slot:'barrel',compatible:[...allPistols,...allSmgs,...allRifles,'lmg',...allMarksman],stat:'accuracy'},
- longBarrel:{name:'Extended Barrel',slot:'barrel',compatible:[...allRifles,...allShotguns,'lmg',...allMarksman],stat:'range'},
- extended:{name:'Extended Magazine',slot:'magazine',compatible:[...allPistols,...allSmgs,...allRifles,'autoShotgun','tacticalShotgun','lmg',...allMarksman],stat:'capacity'},
- quickMag:{name:'Quick-Reload Magazine',slot:'magazine',compatible:[...allPistols,...allSmgs,...allRifles,'autoShotgun','tacticalShotgun','lmg',...allMarksman],stat:'reload'},
- grip:{name:'Foregrip',slot:'underbarrel',compatible:[...allSmgs,...allRifles,...allShotguns,'lmg','marksman','heavyMarksman'],stat:'accuracy'},
- bipod:{name:'Bipod',slot:'underbarrel',compatible:['lmg',...allMarksman],stat:'range'}
+ compensator:{name:'Compensator',slot:'barrel',compatible:[...allPistols,...allSmgs,...allRifles,'lmg','squadAutomatic','heavyMachineGun',...allMarksman],stat:'accuracy'},
+ longBarrel:{name:'Extended Barrel',slot:'barrel',compatible:[...allRifles,...allShotguns,'lmg','squadAutomatic','heavyMachineGun',...allMarksman],stat:'range'},
+ extended:{name:'Extended Magazine',slot:'magazine',compatible:[...allPistols,...allSmgs,...allRifles,'autoShotgun','tacticalShotgun','lmg','squadAutomatic','heavyMachineGun',...allMarksman],stat:'capacity'},
+ quickMag:{name:'Quick-Reload Magazine',slot:'magazine',compatible:[...allPistols,...allSmgs,...allRifles,'autoShotgun','tacticalShotgun','lmg','squadAutomatic','heavyMachineGun',...allMarksman],stat:'reload'},
+ grip:{name:'Foregrip',slot:'underbarrel',compatible:[...allSmgs,...allRifles,...allShotguns,'lmg','squadAutomatic','heavyMachineGun','marksman','heavyMarksman'],stat:'accuracy'},
+ bipod:{name:'Bipod',slot:'underbarrel',compatible:['lmg','squadAutomatic','heavyMachineGun',...allMarksman],stat:'range'}
 };
 export const ammoTypes:AmmoType[]=['light','rifle','shotgun','heavy','precision'];
 export const ammoLabels:Record<AmmoType,string>={light:'Pistol / SMG',rifle:'Rifle',shotgun:'Shotgun',heavy:'Heavy',precision:'Precision'};
@@ -105,7 +107,7 @@ export function rarityForWave(wave:number,roll:number):Tier{
  if(r<.43)return tier as Tier;
  return Math.max(1,tier-1) as Tier;
 }
-const primaryModels:WeaponId[]=['smg','compactSmg','suppressedSmg','carbine','assault','battleRifle','burstRifle','shotgun','autoShotgun','doubleBarrel','tacticalShotgun','lmg','marksman','heavyMarksman','sniper'];
+const primaryModels:WeaponId[]=['smg','compactSmg','suppressedSmg','carbine','assault','battleRifle','burstRifle','shotgun','autoShotgun','doubleBarrel','tacticalShotgun','lmg','squadAutomatic','heavyMachineGun','marksman','heavyMarksman','sniper'];
 const secondaryModels:WeaponId[]=['pistol','revolver','machinePistol'];
 const meleeModels:WeaponId[]=['knife','axe','machete','bat','crowbar'];
 const modModels=Object.keys(attachmentDefs) as AttachmentId[];
