@@ -24,7 +24,7 @@ const root=document.querySelector<HTMLDivElement>('#app')!;
 root.innerHTML=`<div id="rogue" style="height:100dvh;display:flex;flex-direction:column;background:#0c1416;color:#eaf0eb;font:14px system-ui;overflow:hidden">
 <header><strong class="game-title">DEADZONE <span style="color:#f18567">PROTOCOL</span></strong><div id="combat-hud" aria-label="Survivor status"><span id="stats" class="top-stat">WAVE 1</span><div class="hud-meter" aria-label="Health"><span>HP</span><div><i id="hud-hp"></i></div><b id="hud-hp-text">100</b></div><div class="hud-meter" aria-label="Armor"><span>ARM</span><div><i id="hud-armor"></i></div><b id="hud-armor-text">50</b></div><span class="top-stat" id="hud-weapon">CARBINE · 30/90</span><span class="top-stat" id="hud-team">SQUAD 0/4</span><span class="top-stat" id="hud-credits">₡0</span><span class="top-stat" id="hud-enemies">INFECTED 0</span></div><button id="menu" type="button">MENU</button></header>
 <div id="playarea" style="position:relative;min-height:0;flex:1;display:flex;justify-content:center;align-items:center;background:#0a1113"><canvas id="rogue-canvas" style="width:100%;height:100%;object-fit:contain;touch-action:none"></canvas><div id="mobile-sticks" aria-label="Touch analog controls"><div class="analog-group analog-left"><button id="mobile-inventory-team" type="button" aria-label="Tap inventory; hold for team">INVENTORY / TEAM</button><div class="analog-base" id="move-stick" role="group" aria-label="Move"><div class="analog-ring"></div><div class="analog-knob"></div></div><span class="analog-caption">MOVE</span></div><div id="mobile-squad" aria-label="Squad commands"><button type="button" data-squad-order="follow">FOLLOW</button><button type="button" data-squad-order="hold">HOLD</button><button type="button" data-squad-order="focus">FOCUS</button><button type="button" data-squad-order="regroup">REGROUP</button><button type="button" data-squad-order="defensive">DEFEND</button></div><button id="mobile-medkit-revive" type="button" aria-label="Tap to use medkit; hold to revive">MEDKIT / REVIVE</button><div id="mobile-actions"><button id="mobile-interact" type="button" disabled>INTERACT</button></div><div class="analog-group analog-right"><button id="mobile-weapon-swap" type="button" aria-label="Tap to swap primary and secondary; hold for melee">SWAP WEAPON</button><div class="analog-base" id="aim-stick" role="group" aria-label="Aim and fire"><div class="analog-ring"></div><div class="analog-knob"></div></div><span class="analog-caption">AIM · AUTO ATTACK</span></div></div><div id="rotate-phone" role="status" aria-live="polite"><div class="rotate-symbol" aria-hidden="true">↻</div><h2>Rotate Your Device</h2><p>Deadzone Protocol is played in landscape mode.</p></div><div id="overlay" style="position:absolute;inset:0;display:flex;align-items:flex-start;justify-content:center;background:#081112df;overflow:auto;padding:14px;box-sizing:border-box"></div></div>
-<footer style="display:flex;flex-wrap:wrap;justify-content:center;gap:6px;padding:8px;background:#152521"><button id="weapon-primary">1 PRIMARY</button><button id="weapon-secondary">2 SIDEARM</button><button id="weapon-melee">3 MELEE</button><button id="shoot">FIRE</button><button id="reload">RELOAD (R)</button><button id="heal">MEDKIT (H)</button><button id="inventory">INVENTORY (I)</button><button id="orders">SQUAD: FOLLOW (Q)</button><button id="squad-panel">TEAM</button><button id="revive">HOLD REVIVE (V)</button><button id="moveup">▲</button><button id="moveleft">◀</button><button id="movedown">▼</button><button id="moveright">▶</button><button id="interact" disabled>INTERACT (E)</button></footer>
+<footer style="display:flex;flex-wrap:wrap;justify-content:center;gap:6px;padding:8px;background:#152521"><button id="weapon-primary">1 PRIMARY</button><button id="weapon-secondary">2 SIDEARM</button><button id="weapon-melee">3 MELEE</button><button id="heal">MEDKIT (H)</button><button id="inventory">INVENTORY (I)</button><button id="orders">SQUAD: FOLLOW (Q)</button><button id="squad-panel">TEAM</button><button id="revive">HOLD REVIVE (V)</button><button id="moveup">▲</button><button id="moveleft">◀</button><button id="movedown">▼</button><button id="moveright">▶</button><button id="interact" disabled>INTERACT (E)</button></footer>
 <div id="toast" style="position:fixed;left:50%;bottom:78px;transform:translateX(-50%);pointer-events:none;background:#243c37e8;padding:6px 12px;border-radius:6px;color:white;z-index:5"></div></div>`;
 const style=document.createElement('style');style.textContent=`#overlay[hidden]{display:none!important}#overlay article{margin:auto 0}#rogue button{background:#304941;color:white;border:1px solid #879a80;border-radius:5px;padding:9px 12px;font:600 13px system-ui;cursor:pointer;touch-action:none}#rogue button:hover{background:#436354}#rogue button:disabled{opacity:.42;cursor:not-allowed}#overlay article{background:#1a2d2b;border:1px solid #8f9c82;border-radius:10px;padding:22px;max-width:560px;width:min(100%,560px);box-sizing:border-box;box-shadow:0 15px 60px #0009}#overlay h1{font-size:24px;margin:0 0 8px}#overlay h2{font-size:18px;margin:14px 0 8px}#overlay p{color:#c7d1c8;line-height:1.5}#overlay .shop{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px}#overlay .shop button{text-align:left;min-height:66px}#overlay .menurow{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}#overlay label{display:block;margin:8px 0}#overlay select{padding:8px;background:#1c3030;color:white;border:1px solid #7b9385}`;document.head.append(style);
 const canvas=document.querySelector<HTMLCanvasElement>('#rogue-canvas')!,ctx=canvas.getContext('2d')!,overlay=document.querySelector<HTMLDivElement>('#overlay')!,toastEl=document.querySelector<HTMLDivElement>('#toast')!;
@@ -57,10 +57,12 @@ new MutationObserver(syncMenuChrome).observe(overlay,{attributes:true,attributeF
 syncMenuChrome();
 const stats=document.querySelector<HTMLElement>('#stats')!,keys=new Set<string>(),touch=new Set<string>();
 let slot=1,profile:Profile=migrateProfile(null),run:Run|null=null,plan:WavePlan|null=null;
-let last=performance.now(),lastSave=0,spawnClock=0,shotCooldown=0,allyClock=0,noticeUntil=0,aim={x:1,y:0},paused=false,firePressed=false;
+let last=performance.now(),lastSave=0,spawnClock=0,shotCooldown=0,allyClock=0,noticeUntil=0,aim={x:1,y:0},paused=false;
 const zeroStick=():StickVector=>({x:0,y:0,magnitude:0});
 let combatFx:CombatFx[]=[],fog:FogState|null=null;
-let moveAnalog=zeroStick(),aimAnalog=zeroStick(),cameraZoom=1;let pathClock=0,pathField:Int32Array|null=null,bossPulse=0,noiseClock=0,squadClock=0;
+let moveAnalog=zeroStick(),aimAnalog=zeroStick(),cameraZoom=1;
+// Desktop mouse aiming is active only while the pointer is over the dungeon canvas.
+let mouseAimActive=false,mouseAimX=.5,mouseAimY=.5;let pathClock=0,pathField:Int32Array|null=null,bossPulse=0,noiseClock=0,squadClock=0;
 const store=(suffix:string)=>'deadzone-roguelite-v1-slot-'+slot+'-'+suffix;
 function loadProfile(){try{profile=migrateProfile(JSON.parse(localStorage.getItem(store('profile'))||'null'))}catch{profile=migrateProfile(null)}}
 function save(){try{localStorage.setItem(store('profile'),JSON.stringify(profile));if(run)localStorage.setItem(store('run'),JSON.stringify(run));else localStorage.removeItem(store('run'))}catch{notice('Browser storage unavailable — progress may not persist')}}
@@ -499,10 +501,18 @@ shotCooldown=Math.max(0,shotCooldown-dt);noiseClock=Math.max(0,noiseClock-dt);if
  const p=run.player;let dx=0,dy=0;if(keys.has('KeyW')||keys.has('ArrowUp')||touch.has('up'))dy--;if(keys.has('KeyS')||keys.has('ArrowDown')||touch.has('down'))dy++;if(keys.has('KeyA')||keys.has('ArrowLeft')||touch.has('left'))dx--;if(keys.has('KeyD')||keys.has('ArrowRight')||touch.has('right'))dx++;const len=Math.hypot(dx,dy);if((run.playerDowned??0)===0){if(len)moveUnit(p,dx/len,dy/len,dt*(keys.has('ShiftLeft')?4:3));else if(moveAnalog.magnitude>0)moveUnit(p,moveAnalog.x,moveAnalog.y,dt*3)}
 rescueAction(dt,keys.has('KeyV')||touch.has('revive'));
 if(aimAnalog.magnitude>0){aim={x:aimAnalog.x/aimAnalog.magnitude,y:aimAnalog.y/aimAnalog.magnitude}}
+else if(mouseAimActive&&canvas.width>0&&canvas.height>0){
+ // Recalculate against the current player position; a stationary cursor still aims
+ // at the same screen point while the character moves and the camera follows.
+ const view=camera(plan.map,p,canvas.width,canvas.height,cameraZoom);
+ const target=toWorld(view,mouseAimX*canvas.width,mouseAimY*canvas.height);
+ const ax=target.x-p.x,ay=target.y-p.y,d=Math.hypot(ax,ay);
+ if(d>.1)aim={x:ax/d,y:ay/d};
+}
 if((run.playerDowned??0)===0){
- const manualFire=keys.has('Space')||firePressed;
+ const manualFire=keys.has('Space');
  if(manualFire){const nearest=run.enemies.filter(e=>e.alive&&canSee(p.x,p.y,e.x,e.y)&&Math.hypot(e.x-p.x,e.y-p.y)<=(activeWeapon(run!)?effectiveStats(activeWeapon(run!)!).range:1.3)).sort((a,b)=>Math.hypot(a.x-p.x,a.y-p.y)-Math.hypot(b.x-p.x,b.y-p.y))[0];if(nearest&&keys.has('Space')){const length=Math.hypot(nearest.x-p.x,nearest.y-p.y)||1;aim={x:(nearest.x-p.x)/length,y:(nearest.y-p.y)/length}}shoot()}
- else if(aimAnalog.magnitude>0&&shotCooldown<=0){
+ else if((aimAnalog.magnitude>0||mouseAimActive)&&shotCooldown<=0){
   const w=activeWeapon(run);
   if(w&&(!weaponDefs[w.model].ammo||w.mag>0)&&aimHasTarget(plan.map,p,aim,effectiveStats(w).range,run.enemies.filter(e=>!fog||discoveredAt(plan!.map,fog,e.x,e.y)),w.model))shoot();
  }
@@ -633,7 +643,7 @@ function draw(){
  document.querySelector('#hud-team')!.textContent='SQUAD '+r.allies.length+'/4'+(r.playerDowned?' · DOWN '+Math.ceil(r.playerDowned)+'s':'');
 }
 function frame(now:number){const dt=Math.min(.05,(now-last)/1000);last=now;update(dt);draw();if(noticeUntil<now)toastEl.textContent='';requestAnimationFrame(frame)}
-window.addEventListener('keydown',e=>{if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code))e.preventDefault();keys.add(e.code);if(e.repeat)return;if(e.code==='Digit1')equip('primary');if(e.code==='Digit2')equip('secondary');if(e.code==='Digit3')equip('melee');if(e.code==='KeyR')reload();if(e.code==='KeyH')heal();if(e.code==='KeyI'&&run&&run.stage==='fight')inventory();if(e.code==='KeyQ')changeOrder();if(e.code==='KeyT')squadPanel();if(e.code==='KeyE')interact();if(e.code==='Escape')menu()});window.addEventListener('keyup',e=>keys.delete(e.code));window.addEventListener('blur',()=>{keys.clear();firePressed=false;touch.clear();resetAnalogs()});document.addEventListener('visibilitychange',()=>{if(document.hidden)resetAnalogs()});
+window.addEventListener('keydown',e=>{if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code))e.preventDefault();keys.add(e.code);if(e.repeat)return;if(e.code==='Digit1')equip('primary');if(e.code==='Digit2')equip('secondary');if(e.code==='Digit3')equip('melee');if(e.code==='KeyR')reload();if(e.code==='KeyH')heal();if(e.code==='KeyI'&&run&&run.stage==='fight')inventory();if(e.code==='KeyQ')changeOrder();if(e.code==='KeyT')squadPanel();if(e.code==='KeyE')interact();if(e.code==='Escape')menu()});window.addEventListener('keyup',e=>keys.delete(e.code));window.addEventListener('blur',()=>{keys.clear();mouseAimActive=false;touch.clear();resetAnalogs()});document.addEventListener('visibilitychange',()=>{if(document.hidden)resetAnalogs()});
 /** Independent pointer capture lets both thumbs move and aim at once. */
 function resetAnalogs(){moveAnalog=zeroStick();aimAnalog=zeroStick();document.querySelectorAll<HTMLElement>('.analog-knob').forEach(node=>{node.style.transform='translate(-50%,-50%)'})}
 function bindAnalog(id:string,update:(v:StickVector)=>void){
@@ -662,9 +672,17 @@ function bindAnalog(id:string,update:(v:StickVector)=>void){
 }
 bindAnalog('move-stick',v=>{moveAnalog=v});
 bindAnalog('aim-stick',v=>{aimAnalog=v});
-canvas.addEventListener('pointermove',e=>{if(e.pointerType==='touch'||!run||!plan||!lastView)return;const rect=canvas.getBoundingClientRect(),at=toWorld(lastView,(e.clientX-rect.left)*canvas.width/rect.width,(e.clientY-rect.top)*canvas.height/rect.height),dx=at.x-run.player.x,dy=at.y-run.player.y,d=Math.hypot(dx,dy);if(d>.1)aim={x:dx/d,y:dy/d}});
+canvas.addEventListener('pointermove',e=>{
+ if(e.pointerType==='touch')return;
+ const rect=canvas.getBoundingClientRect();
+ if(!rect.width||!rect.height)return;
+ mouseAimX=Math.max(0,Math.min(1,(e.clientX-rect.left)/rect.width));
+ mouseAimY=Math.max(0,Math.min(1,(e.clientY-rect.top)/rect.height));
+ mouseAimActive=true;
+});
+canvas.addEventListener('pointerleave',e=>{if(e.pointerType!=='touch')mouseAimActive=false});
 canvas.addEventListener('pointerdown',e=>{if(e.pointerType==='touch')return;e.preventDefault();if(run&&plan&&lastView&&run.squadOrder==='focus'){const rect=canvas.getBoundingClientRect(),at=toWorld(lastView,(e.clientX-rect.left)*canvas.width/rect.width,(e.clientY-rect.top)*canvas.height/rect.height);
- let best=-1,distance=1.5;run.enemies.forEach((enemy,i)=>{const d=Math.hypot(enemy.x-at.x,enemy.y-at.y);if(enemy.alive&&d<distance){best=i;distance=d}});if(best>=0){run.focusTarget=best;notice('SQUAD FOCUS: selected infected')}}firePressed=true});
+ let best=-1,distance=1.5;run.enemies.forEach((enemy,i)=>{const d=Math.hypot(enemy.x-at.x,enemy.y-at.y);if(enemy.alive&&d<distance){best=i;distance=d}});if(best>=0){run.focusTarget=best;notice('SQUAD FOCUS: selected infected')}}});
 // Canvas touch gestures allow pinching only; tapping map objects does not interact or pan.
 const canvasTouches=new Map<number,{x:number;y:number}>();
 let pinchDistance=0,pinchZoom=1;
@@ -691,9 +709,8 @@ function endCanvasTouch(e:PointerEvent){
  if(canvasTouches.size<2)pinchDistance=0;
 }
 canvas.addEventListener('pointerup',endCanvasTouch);canvas.addEventListener('pointercancel',endCanvasTouch);
-window.addEventListener('pointerup',()=>firePressed=false);
 function click(id:string,fn:()=>void){document.querySelector<HTMLButtonElement>('#'+id)!.onclick=fn}
-click('shoot',shoot);click('reload',reload);click('heal',heal);click('inventory',inventory);click('orders',changeOrder);click('squad-panel',squadPanel);click('interact',interact);click('menu',menu);click('weapon-primary',()=>equip('primary'));click('weapon-secondary',()=>equip('secondary'));click('weapon-melee',()=>equip('melee'));
+click('heal',heal);click('inventory',inventory);click('orders',changeOrder);click('squad-panel',squadPanel);click('interact',interact);click('menu',menu);click('weapon-primary',()=>equip('primary'));click('weapon-secondary',()=>equip('secondary'));click('weapon-melee',()=>equip('melee'));
 // Use independent pointerdown actions so a held movement/aim pointer never blocks buttons.
 function bindMobileAction(id:string,fn:()=>void){
  const button=document.querySelector<HTMLButtonElement>('#'+id)!;
