@@ -9,7 +9,7 @@ export const weaponVisualFamily:Record<WeaponId,WeaponVisualFamily>={
  smg:'smg',compactSmg:'smg',suppressedSmg:'smg',
  carbine:'rifle',assault:'rifle',battleRifle:'rifle',burstRifle:'rifle',
  shotgun:'shotgun',autoShotgun:'shotgun',doubleBarrel:'shotgun',tacticalShotgun:'shotgun',
- lmg:'lmg',marksman:'precision',heavyMarksman:'precision',sniper:'precision',
+ lmg:'lmg',squadAutomatic:'lmg',heavyMachineGun:'lmg',marksman:'precision',heavyMarksman:'precision',sniper:'precision',
  knife:'knife',machete:'knife',axe:'heavyMelee',bat:'heavyMelee',crowbar:'heavyMelee'
 };
 export const isMeleeWeapon=(model:WeaponId):boolean=>weaponVisualFamily[model]==='knife'||weaponVisualFamily[model]==='heavyMelee';
