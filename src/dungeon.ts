@@ -1,5 +1,7 @@
 export type LootCrate={x:number;y:number;kind?:'supply'|'weapon';orientation?:'horizontal'|'vertical'};
-export type DungeonLayout={width:number;height:number;seed:number;tiles:number[];entrance:{x:number;y:number};extraction:{x:number;y:number};extractionSize?:1|2;loot:LootCrate[];enemies:{x:number;y:number}[]};
+export type RoomTheme='medical'|'security'|'maintenance'|'storage'|'supply'|'contaminated';
+export type DungeonRoom={x:number;y:number;w:number;h:number;cx:number;cy:number;theme:RoomTheme};
+export type DungeonLayout={width:number;height:number;seed:number;tiles:number[];entrance:{x:number;y:number};extraction:{x:number;y:number};extractionSize?:1|2;loot:LootCrate[];enemies:{x:number;y:number}[];rooms?:DungeonRoom[]};
 /** All four cells covered by a modern elevator; old save layouts use one cell. */
 export function elevatorCells(map:DungeonLayout):{x:number;y:number}[]{
  const {x,y}=map.extraction;
@@ -106,5 +108,10 @@ for(const p of shuffle([...candidates])){
  const key=tileKey(p.x,p.y);
  if(!occupied.has(key)&&!enemies.some(v=>v.x===p.x&&v.y===p.y))enemies.push({...p});
 }
-return{width,height,seed,tiles,entrance,extraction,extractionSize,loot,enemies};
+const themes:RoomTheme[]=['medical','security','maintenance','storage','supply','contaminated'];
+// Room metadata is decorative only: tiles, pathfinding and gameplay remain unchanged.
+const atmosphereRooms: DungeonRoom[]=rooms.map((room,i)=>({
+ ...room,theme:themes[(Math.floor(rand()*themes.length)+i)%themes.length]
+}));
+return{width,height,seed,tiles,entrance,extraction,extractionSize,loot,enemies,rooms:atmosphereRooms};
 }
