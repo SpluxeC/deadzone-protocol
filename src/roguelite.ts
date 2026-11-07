@@ -5,6 +5,7 @@ import {weaponDefs,attachmentDefs,attachmentDescriptions,rarityName,rarityClass,
 import {CLASS_INFO,classIds,makeSquadmate,migrateSquadmate,applyLethalDamage,bleed,revive,reviveDuration,shouldRevive,canRecruit,equipClassWeapon,classFireDelay,classRange,classDamage,canHeal,gearUpgradeCost,PLAYER_BLEEDOUT,ALLY_BLEEDOUT,type Squadmate,type SquadOrder} from './squadSystems';
 import {migrateProfile,unlocks,achievements,buyUnlock,allowedPrimary,allowedMelee,allowedTeammates,sanitizeChoice,startingKit,progressAchievements,performancePayout,eligibleRecruit,type ProfileV5,type UnlockId,type RunPerformance} from './metaprogression';
 import {camera,toWorld,renderDungeon,drawSprite,drawElevator,drawMilitaryCrate,drawLootPopup,drawBar,drawHazard,hudColor,type View,type SpriteKind} from './rogueliteVisuals';
+import {renderFacility} from './facilityAtmosphere';
 import {elevatorInRange,elevatorCells,crateInRange} from './dungeon';
 import {nextCharacterMotion,type CharacterMotion} from './characterMotion';
 import {gearIcon,gearIconModels} from './gearIcons';
@@ -681,6 +682,7 @@ function draw(){
  if(!plan||!run){ctx.fillStyle='#081115';ctx.fillRect(0,0,cw,ch);stats.textContent='READY';lastView=null;return}
  const r=run,m=plan.map,v=camera(m,r.player,cw,ch,cameraZoom);lastView=v;
  renderDungeon(ctx,m,v,r.wave);
+ renderFacility(ctx,m,v,performance.now());
  // Unknown floor and wall tiles remain visible, darkened; entities do not.
  if(fog)renderFog(ctx,m,v,fog);
  const isKnown=(x:number,y:number)=>!fog||discoveredAt(m,fog,x,y);
