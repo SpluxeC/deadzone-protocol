@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#122025">
+<title>Deadzone Protocol</title>
+<style>
+html,body{margin:0;min-height:100%;background:#122025;color:#e5eee9;font-family:system-ui,sans-serif}
+#startup-status{box-sizing:border-box;min-height:100dvh;display:flex;align-items:center;justify-content:center;flex-direction:column;padding:24px;text-align:center;gap:10px}
+#startup-status h1{font-size:19px;letter-spacing:.08em;margin:0}
+#startup-status p{font-size:13px;color:#b4c8bc;max-width:340px;margin:0;line-height:1.5}
+#startup-status button{padding:10px 16px;background:#355b49;color:white;border:1px solid #8cb49e;border-radius:6px}
+</style>
+<script>
+// Startup guard: a stale mobile cache or script load error must never leave a silent blank page.
+(function(){
+  // Browser double-tap / double-click must not zoom the whole game UI.
+  document.addEventListener('dblclick',function(event){event.preventDefault();},{passive:false});
+  var detail='';
+  function failed(message){detail=message||'The game could not load.';show();}
+  function show(){
+    var app=document.getElementById('app');
+    if(!app||document.documentElement.dataset.deadzoneReady==='true')return;
+    if(!app.querySelector('#startup-status')){
+      var status=document.createElement('main');
+      status.id='startup-status';
+      status.style.cssText='position:fixed;inset:0;z-index:100;background:#122025';
+      status.innerHTML='<h1>DEADZONE PROTOCOL</h1><p id="startup-message"></p><button id="startup-retry" type="button">RETRY LOADING</button>';
+      app.appendChild(status);
+      status.querySelector('#startup-retry').addEventListener('click',function(){location.reload()});
+    }
+    var msg=app.querySelector('#startup-message');
+    if(msg)msg.textContent=detail||'The game is taking longer than expected to load.';
+    var retry=app.querySelector('#startup-retry');
+    if(retry)retry.hidden=false;
+  }
+  window.addEventListener('error',function(event){
+    if(document.documentElement.dataset.deadzoneReady==='true')return;
+    failed('The game failed to start. Reload to retry.');
+  },true);
+  window.addEventListener('unhandledrejection',function(){
+    if(document.getElementById('rogue'))return;
+    failed('The game encountered a startup error. Reload to retry.');
+  });
+  window.addEventListener('DOMContentLoaded',function(){
+    setTimeout(function(){if(document.documentElement.dataset.deadzoneReady!=='true')show()},5000);
+  });
+})();
+</script>
+  <script type="module" crossorigin src="/deadzone-protocol/assets/index-mTGr9-hB.js"></script>
+  <link rel="stylesheet" crossorigin href="/deadzone-protocol/assets/index-DJWo2oqn.css">
+</head>
+<body>
+<div id="app">
+  <main id="startup-status" role="status">
+    <h1>DEADZONE PROTOCOL</h1>
+    <p id="startup-message">Loading game…</p>
+    <button id="startup-retry" hidden type="button" onclick="location.reload()">RETRY LOADING</button>
+  </main>
+</div>
+</body>
+</html>
