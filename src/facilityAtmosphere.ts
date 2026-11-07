@@ -149,8 +149,8 @@ export function renderFacility(ctx:CanvasRenderingContext2D,map:DungeonLayout,v:
    }
    if(noise>.975){
     // Scattered spent brass and debris, deliberately small and non-blocking.
-    ctx.fillStyle='#99834e';rect(ctx,px+t*.27,py+t*.57,t*.11,t*.035);
-    rect(ctx,px+t*.43,py+t*.69,t*.10,t*.03);
+    ctx.fillStyle='#99834e';rect(ctx,px+t*.27,py+t*.57,t*.11,t*.035,'#99834e');
+    rect(ctx,px+t*.43,py+t*.69,t*.10,t*.03,'#99834e');
    }
   }else if(noise>.67){
    ctx.fillStyle='rgba(75,81,73,.26)';ctx.fillRect(px+t*.2,py+t*.65,t*.49,t*.09);
