@@ -74,3 +74,17 @@ export function bossImpact(attack:BossAttack,distance:number):number {
  if(attack==='shockwave')return distance<3.2?14:0;
  return distance<2.4?19:0;
 }
+
+/** Named boss variants remain stable across saves and repeat every 15 waves. */
+export function bossIdentity(wave:number):{name:string;subtitle:string;color:string;ability:BossAttack}{
+ const ability=bossAttack(wave);
+ if(ability==='charge')return {name:'THE BREAKER',subtitle:'Armored breach mutant',color:'#f6a866',ability};
+ if(ability==='shockwave')return {name:'THE REVENANT',subtitle:'Resonant infected',color:'#c58cff',ability};
+ return {name:'THE BUTCHER',subtitle:'Massive close-range brute',color:'#fa6666',ability};
+}
+/** Charge damage checks against the committed dash segment, not the player's later position. */
+export function distanceToSegment(p:{x:number;y:number},a:{x:number;y:number},b:{x:number;y:number}):number{
+ const dx=b.x-a.x,dy=b.y-a.y,length=dx*dx+dy*dy;
+ const t=length?Math.max(0,Math.min(1,((p.x-a.x)*dx+(p.y-a.y)*dy)/length)):0;
+ return Math.hypot(p.x-(a.x+t*dx),p.y-(a.y+t*dy));
+}
