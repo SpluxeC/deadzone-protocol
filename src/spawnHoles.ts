@@ -33,6 +33,27 @@ export function sealHole(credits:number,sealed:readonly number[],index:number,co
  if(!canSealHole(credits,sealed,index,count))return null;
  return {credits:credits-SEAL_COST,sealed:[...sealed,index]};
 }
+
+export const BREACH_DURATION=25;
+export const REQUIRED_SEALS=3;
+export const BREACH_WAVE_TIMES=[3,7,11,15,20] as const;
+/** A single loud sealing operation may run at once; no second charge is possible mid-event. */
+export type BreachEvent={index:number;remaining:number;waveSpawned:number};
+export function startBreachEvent(credits:number,sealed:readonly number[],index:number,count:number,active:BreachEvent|null):{credits:number;event:BreachEvent}|null{
+ if(active||!canSealHole(credits,sealed,index,count))return null;
+ return {credits:credits-SEAL_COST,event:{index,remaining:BREACH_DURATION,waveSpawned:0}};
+}
+export function advanceBreachEvent(event:BreachEvent,dt:number):{event:BreachEvent|null;completed:boolean;spawnCount:number}{
+ const previous=BREACH_DURATION-Math.max(0,Math.min(BREACH_DURATION,event.remaining));
+ const remaining=Math.max(0,event.remaining-Math.max(0,dt));
+ const elapsed=BREACH_DURATION-remaining;
+ const triggered=BREACH_WAVE_TIMES.filter(time=>time<=elapsed).length;
+ const spawnCount=Math.max(0,triggered-event.waveSpawned);
+ return {event:remaining>0?{index:event.index,remaining,waveSpawned:triggered}:null,completed:remaining===0,spawnCount};
+}
+export function canExtract(sealed:readonly number[],active:BreachEvent|null):boolean{
+ return new Set(sealed).size>=REQUIRED_SEALS&&!active;
+}
 export function drawSpawnHole(ctx:CanvasRenderingContext2D,v:{ox:number;oy:number;tile:number},p:SpawnHole,sealed:boolean,time:number):void{
  const x=v.ox+p.x*v.tile,y=v.oy+p.y*v.tile,t=v.tile;
  ctx.save();ctx.translate(x,y);
