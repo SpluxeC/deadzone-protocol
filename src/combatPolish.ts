@@ -4,7 +4,7 @@ export const MAX_CASINGS=90;
 export function ejectCasing(x:number,y:number,dx:number,dy:number,seed:number,kind:'casing'|'spark'='casing'):Casing{
  const side=seed%2?1:-1;
  const speed=kind==='spark'?2.4:1.15;
- return {x:x-dy*.20,y:y+dx*.20,vx:(-dy*side+dx*.2)*speed,vy:(dx*side+dy*.2)*speed,rotation:(seed%31)/31*Math.PI,spin:side*8,age:0,life:kind==='spark'?.28:2.5};
+ return {x:x-dy*.20,y:y+dx*.20,vx:(-dy*side+dx*.2)*speed,vy:(dx*side+dy*.2)*speed,rotation:(seed%31)/31*Math.PI,spin:side*8,age:0,life:kind==='spark'?.28:2.5,kind};
 }
 export function ageCasings(list:Casing[],dt:number):Casing[]{
  for(const c of list){c.age+=dt;c.x+=c.vx*dt;c.y+=c.vy*dt;c.rotation+=c.spin*dt;c.vx*=Math.max(0,1-dt*4);c.vy*=Math.max(0,1-dt*4);}
