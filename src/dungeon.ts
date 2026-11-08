@@ -148,7 +148,7 @@ if(layoutVersion===3&&rand()<.13){
    for(const p of blank)carve(p.x,p.y);
    // Keep the doorway solid until deliberately opened.
    const rewardIndex=loot.length;
-   loot.push({x:center.x,y:center.y,kind:'weapon',orientation:'horizontal'});
+   loot.push({x:center.x+.5,y:center.y,kind:'weapon',orientation:'horizontal'});
    secret={door,center,rewardIndex};
    break outer;
   }
