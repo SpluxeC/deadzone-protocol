@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {makeWave,waveDimensions,waveEnemyCount,canExit,clearPayout,permanentPayout,extractionSpawnInterval,extractionActiveCap,MAX_ACTIVE_ZOMBIES,formatRunTime} from './rogueliteRules.ts';
+import {makeWave,waveDimensions,waveEnemyCount,canExit,killPayout,clearPayout,permanentPayout,extractionSpawnInterval,extractionActiveCap,MAX_ACTIVE_ZOMBIES,formatRunTime} from './rogueliteRules.ts';
 
 test('new levels double each axis; old save dimensions are unchanged',()=>{
  assert.deepEqual(waveDimensions(1),{width:64,height:48});
@@ -54,4 +54,9 @@ test('endless zombie pressure accelerates the longer the player remains on a wav
  assert.equal(formatRunTime(0),'0:00');
  assert.equal(formatRunTime(65.8),'1:05');
  assert.equal(formatRunTime(3610),'60:10');
+});
+
+test('standard zombie kills always award exactly ten credits regardless of wave',()=>{
+ for(const wave of [1,2,5,10,25,50,100])assert.equal(killPayout(wave,false),10);
+ assert.equal(killPayout(5,true),240,'boss reward remains unchanged');
 });
