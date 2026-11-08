@@ -19,16 +19,17 @@ import {createFog,updateFog,renderFog,exploredIndices,discoveredAt,clipToExplore
 import {normalizeStick,stickKnob,type StickVector} from './mobileControls';
 import {walkableTile,canOccupy,nearestWalkable} from './tileCollision';
 import {squadMove,spacedSquadPosition} from './squadMovement';
+import {spawnHoles,openHoleIndices,sealHole,SEAL_COST,drawSpawnHole,type SpawnHole} from './spawnHoles';
 import './rogueliteTheme.css';
 import './style.css';
 
-type Unit={x:number;y:number;hp:number;maxHp:number;speed:number;attack:number;boss?:boolean;alive:boolean;kind?:ZombieKind;windup?:number;phase?:number;aggro?:number;suppressed?:number;scoutMarked?:number;bossTarget?:{x:number;y:number};bossOrigin?:{x:number;y:number};summoned?:boolean;bossRecover?:number;lastKnown?:{x:number;y:number}|null;searchClock?:number;alertMode?:ThreatKind;stagger?:number;hitFlash?:number;hitVx?:number;hitVy?:number};
+type Unit={x:number;y:number;hp:number;maxHp:number;speed:number;attack:number;boss?:boolean;alive:boolean;kind?:ZombieKind;windup?:number;phase?:number;aggro?:number;suppressed?:number;scoutMarked?:number;bossTarget?:{x:number;y:number};bossOrigin?:{x:number;y:number};summoned?:boolean;bossRecover?:number;lastKnown?:{x:number;y:number}|null;searchClock?:number;alertMode?:ThreatKind;stagger?:number;hitFlash?:number;hitVx?:number;hitVy?:number;emerging?:number};
 type Ally=Squadmate;
-type Run={wave:number;credits:number;hp:number;armor:number;mag:number;reserve:number;medkits:number;weaponTier:number;damage:number;maxMag:number;player:{x:number;y:number};enemies:Unit[];allies:Ally[];spawned:number;kills:number;bosses:number;cleared:number;seed:number;stage:'fight'|'shop';looted:number[];squadAmmo:number;activeSlot?:WeaponSlot;sideMag?:number;sideReserve?:number;reloadTimer?:number;reloadSlot?:WeaponSlot|null;playerDowned?:number;playerDead?:boolean;squadOrder?:SquadOrder;focusTarget?:number|null;reviveProgress?:number;equipment?:{loadout:Loadout;bag:Gear[];ammo:AmmoBank;capacity:number;rerolls:number;};killsTotal?:number;lootedTotal?:number;flawlessWaves?:number;bestSquad?:number;waveStartHp?:number;waveStartArmor?:number;waveHit?:boolean;explored?:number[];layoutVersion?:1|2|3;waveSeconds?:number;runSeconds?:number;waveStartKills?:number;waveStartLooted?:number;peakThreat?:number;triggeredEvents?:number[];secretOpened?:boolean;noiseEvent?:{x:number;y:number;radius:number;ttl:number}|null;}
+type Run={wave:number;credits:number;hp:number;armor:number;mag:number;reserve:number;medkits:number;weaponTier:number;damage:number;maxMag:number;player:{x:number;y:number};enemies:Unit[];allies:Ally[];spawned:number;kills:number;bosses:number;cleared:number;seed:number;stage:'fight'|'shop';looted:number[];squadAmmo:number;activeSlot?:WeaponSlot;sideMag?:number;sideReserve?:number;reloadTimer?:number;reloadSlot?:WeaponSlot|null;playerDowned?:number;playerDead?:boolean;squadOrder?:SquadOrder;focusTarget?:number|null;reviveProgress?:number;equipment?:{loadout:Loadout;bag:Gear[];ammo:AmmoBank;capacity:number;rerolls:number;};killsTotal?:number;lootedTotal?:number;flawlessWaves?:number;bestSquad?:number;waveStartHp?:number;waveStartArmor?:number;waveHit?:boolean;explored?:number[];layoutVersion?:1|2|3;waveSeconds?:number;runSeconds?:number;waveStartKills?:number;waveStartLooted?:number;peakThreat?:number;triggeredEvents?:number[];secretOpened?:boolean;noiseEvent?:{x:number;y:number;radius:number;ttl:number}|null;sealedHoles?:number[];}
 type Profile=ProfileV5;
 const root=document.querySelector<HTMLDivElement>('#app')!;
 root.innerHTML=`<div id="rogue" style="height:100dvh;display:flex;flex-direction:column;background:#0c1416;color:#eaf0eb;font:14px system-ui;overflow:hidden">
-<header><strong class="game-title">DEADZONE <span style="color:#f18567">PROTOCOL</span><span id="game-build-tag" aria-label="Game version" style="display:block;font-size:10px;font-weight:700;color:#aaf0bd;letter-spacing:.04em">NOV 8 UPDATE · 10 CREDITS/KILL</span></strong><div id="combat-hud" aria-label="Survivor status"><span id="stats" class="top-stat">WAVE 1</span><div class="hud-meter" aria-label="Health"><span>HP</span><div><i id="hud-hp"></i></div><b id="hud-hp-text">100</b></div><div class="hud-meter" aria-label="Armor"><span>ARM</span><div><i id="hud-armor"></i></div><b id="hud-armor-text">50</b></div><span class="top-stat" id="hud-weapon">CARBINE · 30/90</span><span class="top-stat" id="hud-team">SQUAD 0/4</span><span class="top-stat" id="hud-credits">₡0</span></div><button id="menu" type="button">MENU</button></header>
+<header><strong class="game-title">DEADZONE <span style="color:#f18567">PROTOCOL</span></strong><div id="combat-hud" aria-label="Survivor status"><span id="stats" class="top-stat">WAVE 1</span><div class="hud-meter" aria-label="Health"><span>HP</span><div><i id="hud-hp"></i></div><b id="hud-hp-text">100</b></div><div class="hud-meter" aria-label="Armor"><span>ARM</span><div><i id="hud-armor"></i></div><b id="hud-armor-text">50</b></div><span class="top-stat" id="hud-weapon">CARBINE · 30/90</span><span class="top-stat" id="hud-team">SQUAD 0/4</span><span class="top-stat" id="hud-credits">₡0</span></div><button id="menu" type="button">MENU</button></header>
 <div id="playarea" style="position:relative;min-height:0;flex:1;display:flex;justify-content:center;align-items:center;background:#0a1113"><canvas id="rogue-canvas" style="width:100%;height:100%;object-fit:contain;touch-action:none"></canvas><div id="mobile-sticks" aria-label="Touch analog controls"><div class="analog-group analog-left"><button id="mobile-inventory-team" type="button" aria-label="Tap inventory; hold for team">INVENTORY / TEAM</button><div class="analog-base" id="move-stick" role="group" aria-label="Move"><div class="analog-ring"></div><div class="analog-knob"></div></div><span class="analog-caption">MOVE</span></div><div id="mobile-squad" aria-label="Squad commands"><button type="button" data-squad-order="follow">FOLLOW</button><button type="button" data-squad-order="hold">HOLD</button><button type="button" data-squad-order="focus">FOCUS</button><button type="button" data-squad-order="regroup">REGROUP</button><button type="button" data-squad-order="defensive">DEFEND</button></div><button id="mobile-medkit-revive" type="button" aria-label="Tap to use medkit; hold to revive">MEDKIT / REVIVE</button><div id="mobile-actions"><button id="mobile-interact" type="button" disabled>INTERACT</button></div><div class="analog-group analog-right"><button id="mobile-weapon-swap" type="button" aria-label="Tap to swap primary and secondary; hold for melee">SWAP WEAPON</button><div class="analog-base" id="aim-stick" role="group" aria-label="Aim and fire"><div class="analog-ring"></div><div class="analog-knob"></div></div><span class="analog-caption">AIM · AUTO ATTACK</span></div></div><div id="rotate-phone" role="status" aria-live="polite"><div class="rotate-symbol" aria-hidden="true">↻</div><h2>Rotate Your Device</h2><p>Deadzone Protocol is played in landscape mode.</p></div><div id="overlay" style="position:absolute;inset:0;display:flex;align-items:flex-start;justify-content:center;background:#081112df;overflow:auto;padding:14px;box-sizing:border-box"></div></div>
 <footer style="display:flex;flex-wrap:wrap;justify-content:center;gap:6px;padding:8px;background:#152521"><button id="weapon-primary">1 PRIMARY</button><button id="weapon-secondary">2 SIDEARM</button><button id="weapon-melee">3 MELEE</button><button id="heal">MEDKIT (H)</button><button id="inventory">INVENTORY (I)</button><button id="orders">SQUAD: FOLLOW (Q)</button><button id="squad-panel">TEAM</button><button id="revive">HOLD REVIVE (V)</button><button id="moveup">▲</button><button id="moveleft">◀</button><button id="movedown">▼</button><button id="moveright">▶</button><button id="interact" disabled>INTERACT (E)</button></footer>
 <div id="toast" style="position:fixed;left:50%;bottom:78px;transform:translateX(-50%);pointer-events:none;background:#243c37e8;padding:6px 12px;border-radius:6px;color:white;z-index:5"></div></div>`;
@@ -98,7 +99,7 @@ function activeWeapon(r:Run):Weapon|null{return ensureEquipment(r).loadout[r.act
 function inventorySummary(r:Run){const eq=ensureEquipment(r);return usedSlots(eq.bag,eq.ammo,r.medkits)+'/'+eq.capacity}
 function gearId(r:Run):string{return 'gear-'+r.wave+'-'+r.kills+'-'+Math.floor(Math.random()*1e9)}
 
-function loadRun(){try{const r=JSON.parse(localStorage.getItem(store('run'))||'null') as Run|null;if(!r||!Number.isFinite(r.wave)||!['fight','shop'].includes(r.stage))return false;run=r;run.layoutVersion??=1;plan=makeWave(run.seed,run.wave,run.layoutVersion);run.triggeredEvents??=[];run.noiseEvent??=null;if(run.secretOpened&&plan.map.secret){const d=plan.map.secret.door;plan.map.tiles[d.y*plan.map.width+d.x]=0}run.looted??=[];run.squadAmmo??=run.allies.length*8;run.maxMag??=12;run.weaponTier??=1;run.damage??=1;run.activeSlot??='primary';run.sideMag??=12;run.sideReserve??=48;run.reloadTimer??=0;run.reloadSlot??=null;run.killsTotal??=0;run.lootedTotal??=0;run.flawlessWaves??=0;run.bestSquad??=run.allies.length;run.waveHit??=false;run.playerDowned??=0;run.playerDead??=false;run.squadOrder??='follow';run.focusTarget??=null;run.reviveProgress??=0;run.waveSeconds??=0;run.runSeconds??=0;run.waveStartKills??=run.killsTotal??0;run.waveStartLooted??=run.lootedTotal??0;run.peakThreat??=0;run.allies=(run.allies||[]).map((a,i)=>migrateSquadmate(a,i));
+function loadRun(){try{const r=JSON.parse(localStorage.getItem(store('run'))||'null') as Run|null;if(!r||!Number.isFinite(r.wave)||!['fight','shop'].includes(r.stage))return false;run=r;run.layoutVersion??=1;plan=makeWave(run.seed,run.wave,run.layoutVersion);run.triggeredEvents??=[];run.noiseEvent??=null;run.sealedHoles??=[];if(run.secretOpened&&plan.map.secret){const d=plan.map.secret.door;plan.map.tiles[d.y*plan.map.width+d.x]=0}run.looted??=[];run.squadAmmo??=run.allies.length*8;run.maxMag??=12;run.weaponTier??=1;run.damage??=1;run.activeSlot??='primary';run.sideMag??=12;run.sideReserve??=48;run.reloadTimer??=0;run.reloadSlot??=null;run.killsTotal??=0;run.lootedTotal??=0;run.flawlessWaves??=0;run.bestSquad??=run.allies.length;run.waveHit??=false;run.playerDowned??=0;run.playerDead??=false;run.squadOrder??='follow';run.focusTarget??=null;run.reviveProgress??=0;run.waveSeconds??=0;run.runSeconds??=0;run.waveStartKills??=run.killsTotal??0;run.waveStartLooted??=run.lootedTotal??0;run.peakThreat??=0;run.allies=(run.allies||[]).map((a,i)=>migrateSquadmate(a,i));
  run.player=nearestWalkable(plan.map,run.player);
  const occupied=[run.player];
  for(const a of run.allies){const p=nearestWalkable(plan.map,a);const placed=spacedSquadPosition(plan.map,p,occupied);a.x=placed.x;a.y=placed.y;occupied.push(a);}
@@ -158,7 +159,7 @@ function preRun(){loadProfile();paused=true;overlay.hidden=false;const p=profile
  overlay.querySelector<HTMLButtonElement>('#launch-run')!.onclick=()=>{read();newRun()};
  overlay.querySelector<HTMLButtonElement>('#prep-back')!.onclick=menu;
 }
-function buildFloor(seed:number,wave:number){combatFx=[];bloodFx=[];shellEffects=[];shotKick=0;bossEffects=[];lootPopups=[];poseCache=new WeakMap<object,CharacterMotion>();if(run)run.layoutVersion=3;plan=makeWave(seed,wave,3);if(!run)return;run.explored=[];run.triggeredEvents=[];run.secretOpened=false;run.noiseEvent=null;fog=createFog(plan.map);const p=plan.map.entrance;run.player={x:p.x,y:p.y};run.enemies=[];run.spawned=0;run.kills=0;run.looted=[];run.stage='fight';run.reloadTimer=0;run.reloadSlot=null;ensureEquipment(run).rerolls=0;run.focusTarget=null;run.waveHit=false;run.waveSeconds=0;run.waveStartKills=run.killsTotal??0;run.waveStartLooted=run.lootedTotal??0;run.peakThreat=0;run.waveStartHp=run.hp;run.waveStartArmor=run.armor;pathClock=0;pathField=null;searchFields.clear();bossPulse=0;noiseClock=0;const occupied=[run.player];for(let i=0;i<run.allies.length;i++){const ally=run.allies[i];const wanted={x:p.x-1-i*.45,y:p.y+1+i*.45};const placed=spacedSquadPosition(plan.map,wanted,occupied);ally.x=placed.x;ally.y=placed.y;occupied.push(ally);ally.anchor={x:ally.x,y:ally.y};ally.reviveProgress=0}spawnClock=0;allyClock=0;spawnInitial();save()}
+function buildFloor(seed:number,wave:number){combatFx=[];bloodFx=[];shellEffects=[];shotKick=0;bossEffects=[];lootPopups=[];poseCache=new WeakMap<object,CharacterMotion>();if(run)run.layoutVersion=3;plan=makeWave(seed,wave,3);if(!run)return;run.explored=[];run.triggeredEvents=[];run.secretOpened=false;run.noiseEvent=null;run.sealedHoles=[];fog=createFog(plan.map);const p=plan.map.entrance;run.player={x:p.x,y:p.y};run.enemies=[];run.spawned=0;run.kills=0;run.looted=[];run.stage='fight';run.reloadTimer=0;run.reloadSlot=null;ensureEquipment(run).rerolls=0;run.focusTarget=null;run.waveHit=false;run.waveSeconds=0;run.waveStartKills=run.killsTotal??0;run.waveStartLooted=run.lootedTotal??0;run.peakThreat=0;run.waveStartHp=run.hp;run.waveStartArmor=run.armor;pathClock=0;pathField=null;searchFields.clear();bossPulse=0;noiseClock=0;const occupied=[run.player];for(let i=0;i<run.allies.length;i++){const ally=run.allies[i];const wanted={x:p.x-1-i*.45,y:p.y+1+i*.45};const placed=spacedSquadPosition(plan.map,wanted,occupied);ally.x=placed.x;ally.y=placed.y;occupied.push(ally);ally.anchor={x:ally.x,y:ally.y};ally.reviveProgress=0}spawnClock=0;allyClock=0;spawnInitial();save()}
 function newRun(){loadProfile();const kit=startingKit(profile);run={wave:1,credits:kit.credits,hp:100,armor:kit.armor,mag:kit.loadout.primary?.mag??0,reserve:kit.ammo.rifle,medkits:kit.medkits,weaponTier:1,damage:1,maxMag:kit.loadout.primary?.mag??0,player:{x:0,y:0},enemies:[],allies:kit.teammate==='none'?[]:[makeSquadmate(kit.teammate,'starter-01',0,0)],spawned:0,kills:0,bosses:0,cleared:0,seed:Math.floor(Math.random()*2000000000),stage:'fight',looted:[],squadAmmo:kit.teammate==='none'?0:8,activeSlot:'primary',sideMag:kit.loadout.secondary?.mag??12,sideReserve:kit.ammo.light,reloadTimer:0,reloadSlot:null,playerDowned:0,playerDead:false,squadOrder:'follow',focusTarget:null,reviveProgress:0,killsTotal:0,lootedTotal:0,flawlessWaves:0,bestSquad:kit.teammate==='none'?0:1,waveHit:false,equipment:{loadout:kit.loadout,bag:[],ammo:kit.ammo,capacity:kit.capacity,rerolls:0}};buildFloor(run.seed,1);overlay.hidden=true;paused=false;notice('WAVE 1 · Reach the elevator before the horde overwhelms you')}
 function isFloor(x:number,y:number){return !!plan&&walkableTile(plan.map,x,y)}
 function canSee(ax:number,ay:number,bx:number,by:number){const dist=Math.hypot(ax-bx,ay-by),count=Math.ceil(dist*4);for(let i=1;i<count;i++){const a=i/count;if(!isFloor(ax+(bx-ax)*a,ay+(by-ay)*a))return false}return true}
@@ -168,32 +169,31 @@ function canSee(ax:number,ay:number,bx:number,by:number){const dist=Math.hypot(a
  */
 function spawnOne(boss=false,initial=false){
  if(!run||!plan)return false;
- const map=plan.map,n=run.spawned,player=run.player;
- const possible:{x:number;y:number;score:number}[]=[];
- const minDistance=initial?4.7:3.4;
- const preferred=initial?10.5:6.8;
- const maxPreferred=initial?17:12;
- const occupied=(x:number,y:number)=>run!.enemies.some(e=>e.alive&&Math.hypot(e.x-x,e.y-y)<.78)
-  ||run!.allies.some(a=>!a.dead&&Math.hypot(a.x-x,a.y-y)<1.05);
- const collect=(radius:number,limit:number)=>{
-  const lowX=Math.max(1,Math.floor(player.x-radius)),highX=Math.min(map.width-2,Math.ceil(player.x+radius));
-  const lowY=Math.max(1,Math.floor(player.y-radius)),highY=Math.min(map.height-2,Math.ceil(player.y+radius));
-  for(let y=lowY;y<=highY;y++)for(let x=lowX;x<=highX;x++){
-   const d=Math.hypot(x-player.x,y-player.y);
-   if(d<minDistance||d>limit||!canOccupy(map,x,y,.24)||occupied(x,y))continue;
-   const noise=((Math.imul(x+11,73856093)^Math.imul(y+17,19349663)^Math.imul(n+1,83492791))>>>0)/4294967296;
-   // Reinforcements prefer near approach routes, but still vary their angles.
-   const score=Math.abs(d-preferred)*.54+noise*3.1;
-   possible.push({x,y,score});
+ const holes=spawnHoles(plan);
+ const open=openHoleIndices(holes,run.sealedHoles??[]);
+ if(!open.length)return false; // A sealed floor cannot produce new zombies.
+ const player=run.player,n=run.spawned;
+ const candidates:{x:number;y:number;hole:number;score:number}[]=[];
+ const clearance=(x:number,y:number)=>run!.enemies.every(e=>!e.alive||Math.hypot(e.x-x,e.y-y)>.39)
+  &&run!.allies.every(a=>a.dead||Math.hypot(a.x-x,a.y-y)>.85)&&Math.hypot(player.x-x,player.y-y)>1.8;
+ for(const index of open){
+  const hole=holes[index];
+  const dist=Math.hypot(player.x-hole.x,player.y-hole.y);
+  // All new enemies emerge through a visibly drawn hole, never empty floor.
+  for(let j=0;j<12;j++){
+   const angle=(n*2.399963229728653+j*2.399963229728653+index*.42);
+   const radius=j===0?0:.23+.12*Math.floor((j-1)/4);
+   const x=hole.x+Math.cos(angle)*radius,y=hole.y+Math.sin(angle)*radius;
+   if(!canOccupy(plan.map,x,y,.19)||!clearance(x,y))continue;
+   const score=(initial?Math.abs(dist-10):Math.abs(dist-7))*.18+
+    Math.abs(radius)*.36+((Math.imul(index+1,73856093)^Math.imul(n+1,19349663))>>>0)/4294967296*.65;
+   candidates.push({x,y,hole:index,score});
   }
- };
- collect(maxPreferred,maxPreferred);
- if(!possible.length)collect(30,30);
- if(!possible.length)collect(Math.max(map.width,map.height),Math.max(map.width,map.height));
- if(!possible.length)return false;
- possible.sort((a,b)=>a.score-b.score);
- const p=possible[0],kind=zombieKind(run.wave,n,boss),stats=zombieStats(kind);
- run.enemies.push({x:p.x,y:p.y,hp:stats.hp,maxHp:stats.hp,speed:stats.speed,attack:0,boss,alive:true,kind,windup:0,phase:0,aggro:0,suppressed:0,scoutMarked:0,alertMode:'idle',searchClock:0,lastKnown:null,stagger:0,hitFlash:0});
+ }
+ if(!candidates.length)return false;
+ candidates.sort((a,b)=>a.score-b.score);
+ const chosen=candidates[0],kind=zombieKind(run.wave,n,boss),stats=zombieStats(kind);
+ run.enemies.push({x:chosen.x,y:chosen.y,hp:stats.hp,maxHp:stats.hp,speed:stats.speed,attack:0,boss,alive:true,kind,windup:0,phase:0,aggro:0,suppressed:0,scoutMarked:0,alertMode:'idle',searchClock:0,lastKnown:null,stagger:0,hitFlash:0,emerging:.55});
  run.spawned++;
  return true;
 }
@@ -387,10 +387,12 @@ function elevator(){
  save();
  waveReport();
 }
-type NearbyInteraction={kind:'loot';index:number}|{kind:'elevator'}|{kind:'secret'};
+type NearbyInteraction={kind:'loot';index:number}|{kind:'elevator'}|{kind:'secret'}|{kind:'hole';index:number};
 function nearbyInteraction():NearbyInteraction|null{
  if(!run||!plan||paused||run.stage!=='fight'||(run.playerDowned??0)>0)return null;
  const p=run.player;
+ const holeIndex=spawnHoles(plan).findIndex((hole,i)=>!(run!.sealedHoles??[]).includes(i)&&Math.hypot(p.x-hole.x,p.y-hole.y)<=1.7);
+ if(holeIndex>=0)return {kind:'hole',index:holeIndex};
  const secret=plan.map.secret;
  if(secret&&!run.secretOpened&&Math.hypot(p.x-secret.door.x,p.y-secret.door.y)<=1.65)return {kind:'secret'};
  const index=plan.map.loot.findIndex((item,i)=>!run!.looted.includes(i)&&crateInRange(item,p));
@@ -399,11 +401,20 @@ function nearbyInteraction():NearbyInteraction|null{
  if(elevatorInRange(plan.map,p))return {kind:'elevator'};
  return null;
 }
+function closeSpawnHole(index:number){
+ if(!run||!plan||paused||run.stage!=='fight'||(run.playerDowned??0)>0)return;
+ const hole=spawnHoles(plan)[index];if(!hole||Math.hypot(hole.x-run.player.x,hole.y-run.player.y)>1.7)return;
+ const result=sealHole(run.credits,run.sealedHoles??[],index,spawnHoles(plan).length);
+ if(!result){notice('NEED '+SEAL_COST+' CREDITS TO SEAL HOLE');return}
+ run.credits=result.credits;run.sealedHoles=result.sealed;
+ notice('GROUND HOLE SEALED · -'+SEAL_COST+' CREDITS');save();
+}
 function interact(){
  const target=nearbyInteraction();
  if(!target)return;
  if(target.kind==='loot')search(target.index);
  else if(target.kind==='secret')openSecret();
+ else if(target.kind==='hole')closeSpawnHole(target.index);
  else elevator();
 }
 function buySupply(cost:number,action:()=>boolean){if(!run||run.credits<cost){notice('Insufficient credits');return}if(!action())return;run.credits-=cost;save();shop()}
@@ -698,6 +709,7 @@ squadUpdate(dt);
 if(fog&&updateFog(plan.map,fog,explorationSources()))run.explored=exploredIndices(fog);
 pathClock-=dt;if(pathClock<=0||!pathField){pathField=distanceField(plan.map,run.player);searchFields.clear();pathClock=.32}
 for(const e of run.enemies){if(!e.alive)continue;
+ e.emerging=Math.max(0,(e.emerging??0)-dt);
  e.bossRecover=Math.max(0,(e.bossRecover??0)-dt);
  e.stagger=Math.max(0,(e.stagger??0)-dt);e.hitFlash=Math.max(0,(e.hitFlash??0)-dt);
  e.suppressed=Math.max(0,(e.suppressed??0)-dt);e.scoutMarked=Math.max(0,(e.scoutMarked??0)-dt);const stats=zombieStats(e.kind??(e.boss?'boss':'shambler'));if(e.boss&&e.hp<e.maxHp*.5&&e.phase!==2){e.phase=2;notice(bossIdentity(run.wave).name+' · SECOND PHASE!');if(!e.summoned){e.summoned=true;for(let k=0;k<3;k++)spawnOne(false,false)}}
@@ -706,6 +718,7 @@ for(const e of run.enemies){if(!e.alive)continue;
  const senses=senseZombie({kind:e.kind??'shambler',position:e,player:p,canSeePlayer:vision,noise:run.noiseEvent,lastKnown:e.lastKnown,memory:e.aggro??0,searchClock:e.searchClock??0,spawnIndex:run.enemies.indexOf(e)},dt);
  e.aggro=senses.memory;e.lastKnown=senses.lastKnown;e.searchClock=senses.searchClock;e.alertMode=senses.mode;
  e.attack=Math.max(0,e.attack-dt);
+ if((e.emerging??0)>0)continue;
  if((e.windup??0)>0){e.windup=Math.max(0,(e.windup??0)-dt);if(e.windup===0){
  const ability=bossAttack(run.wave);
  const origin=e.bossOrigin??{x:e.x,y:e.y},locked=e.bossTarget??{x:p.x,y:p.y};
@@ -810,7 +823,7 @@ function draw(){
  if(fog)renderFog(ctx,m,v,fog);
  const isKnown=(x:number,y:number)=>!fog||discoveredAt(m,fog,x,y);
  const now=performance.now(),bob=Math.sin(now/340)*v.tile*.025;
- for(const sp of plan.spawnPoints)if(isKnown(sp.x,sp.y))drawSprite(ctx,'spawn',v,sp.x,sp.y,{scale:.71,alpha:.72});
+ for(const [i,hole] of spawnHoles(plan).entries())if(isKnown(hole.x,hole.y))drawSpawnHole(ctx,v,hole,(r.sealedHoles??[]).includes(i),now/1000);
  for(const [i,l] of m.loot.entries()){
   const known=l.kind==='weapon'?crateInRange(l,{x:r.player.x,y:r.player.y})||isKnown(l.x,l.y):isKnown(l.x,l.y);
   // Both cells of a long weapon crate must be discoverable before the case appears.
@@ -837,9 +850,11 @@ function draw(){
   const motion=animatedPose(e,now,direction,e.boss?2.2:kind==='runner'?4:2.8);
   const boss=e.boss?bossIdentity(r.wave):null;
   if(e.boss){ctx.save();ctx.strokeStyle=boss!.color;ctx.lineWidth=Math.max(2,v.tile*.095);ctx.globalAlpha=.5+.2*Math.sin(now/240);ctx.beginPath();ctx.arc(v.ox+e.x*v.tile,v.oy+e.y*v.tile,v.tile*.85,0,Math.PI*2);ctx.stroke();ctx.restore()}
+  if((e.emerging??0)>0){ctx.save();ctx.beginPath();ctx.ellipse(v.ox+e.x*v.tile,v.oy+e.y*v.tile,v.tile*.57,v.tile*.38,0,0,Math.PI*2);ctx.clip();ctx.globalAlpha=Math.max(.28,1-(e.emerging??0)*.85)}
   if(boss)drawBossArt(ctx,v,boss.ability,{x:e.x,y:e.y,heading:motion.angle,stride:motion.phase,speed:motion.speed,time:now/1000,windup:e.windup?Math.max(0,1-(e.windup??0)/(boss.ability==='charge'?1.25:boss.ability==='shockwave'?1.45:1.05)):0,recover:Math.min(1,(e.bossRecover??0)/.55),enraged:e.phase===2});
   else drawSprite(ctx,kind,v,e.x,e.y,{angle:motion.angle+(e.hitFlash??0)*Math.sin(now/23)*.7,stride:motion.phase,motionSpeed:motion.speed,idleTime:now/1000,scale:kind==='bruiser'?1.32:kind==='runner'?.93:1.12,glow:(e.hitFlash??0)>0?'#ef7e65':undefined});
 
+  if((e.emerging??0)>0)ctx.restore();
   if(boss){ctx.save();ctx.textAlign='center';ctx.font='bold '+Math.max(11,v.tile*.4)+'px system-ui';ctx.fillStyle=boss.color;ctx.shadowColor='#000';ctx.shadowBlur=5;ctx.fillText(boss.name,v.ox+e.x*v.tile,v.oy+(e.y-1.42)*v.tile);ctx.restore()}
   if(e.maxHp>2)drawBar(ctx,v,e.x,e.y,e.hp/e.maxHp,boss?.color??'#dc9b83',e.boss?1.3:.78);
   if((e.scoutMarked??0)>0){ctx.strokeStyle='#a4ecfc';ctx.lineWidth=Math.max(2,v.tile*.05);ctx.strokeRect(v.ox+(e.x-.51)*v.tile,v.oy+(e.y-.53)*v.tile,1.02*v.tile,1.02*v.tile)}
@@ -906,7 +921,9 @@ function draw(){
   const button=document.querySelector<HTMLButtonElement>('#'+id)!;
   button.disabled=!action;
   button.classList.toggle('in-range',!!action);
-  button.title=action?(action.kind==='loot'?(plan?.map.loot[action.index]?.kind==='weapon'?'Search weapon case':'Search supply container') :action.kind==='secret'?'Open concealed panel':'Use elevator'):'Move closer to an object';
+  button.title=action?(action.kind==='loot'?(plan?.map.loot[action.index]?.kind==='weapon'?'Search weapon case':'Search supply container') :action.kind==='secret'?'Open concealed panel':action.kind==='hole'?'Seal ground hole for 200 credits':'Use elevator'):'Move closer to an object';
+  if(action?.kind==='hole')button.textContent=id==='interact'?'SEAL HOLE · 200 (E)':'SEAL · 200';
+  else button.textContent=id==='interact'?'INTERACT (E)':'INTERACT';
  }
  const hpRatio=Math.max(0,r.hp/100),armorRatio=Math.max(0,r.armor/100);
  const hpBar=document.querySelector<HTMLElement>('#hud-hp')!,armorBar=document.querySelector<HTMLElement>('#hud-armor')!;
