@@ -683,7 +683,7 @@ for(const e of run.enemies){if(!e.alive)continue;
  const origin=e.bossOrigin??{x:e.x,y:e.y},locked=e.bossTarget??{x:p.x,y:p.y};
  if(ability==='charge'){
   const d=Math.hypot(locked.x-origin.x,locked.y-origin.y)||1;
-  for(let j=0;j<12;j++)moveUnit(e,(locked.x-origin.x)/d,(locked.y-origin.y)/d,.2);
+  for(let j=0;j<12;j++)moveUnit(e,(locked.x-origin.x)/d,(locked.y-origin.y)/d,Math.min(d,4.8)/12);
  }
  const strike=(target:{x:number;y:number})=>ability==='charge'
   ?(distanceToSegment(target,origin,{x:e.x,y:e.y})<.9?bossImpact('charge',0):0)
