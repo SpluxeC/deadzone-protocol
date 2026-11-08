@@ -15,8 +15,9 @@ export function spawnHoles(plan:WavePlan):SpawnHole[]{
  for(const p of plan.spawnPoints){
   if(safe(p)&&result.every(q=>Math.hypot(q.x-p.x,q.y-p.y)>=2.5))result.push({x:p.x,y:p.y});
  }
- // Very small or older maps still need at least one safe entrance to the horde.
- if(!result.length){
+ // Older layouts may have fewer eligible spawn markers; ensure three sealable holes
+ // so every wave, including a migrated save, can satisfy the elevator objective.
+ if(result.length<3){
   for(let y=2;y<map.height-2;y++)for(let x=2;x<map.width-2;x++){
    const p={x,y};if(safe(p)&&result.every(q=>Math.hypot(q.x-x,q.y-y)>=2.5))result.push(p);
    if(result.length>=8)return result;
