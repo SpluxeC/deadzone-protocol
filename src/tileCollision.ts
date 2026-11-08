@@ -1,12 +1,13 @@
 import type {DungeonLayout} from './dungeon.ts';
 import type {Point} from './rogueliteVisuals.ts';
+import {solidAt} from './propCollision.ts';
 
 /** Actor centers coincide with map tile centers (integer x/y).
  * A small footprint avoids clipping sprites through neighbouring wall tiles.
  */
 export function walkableTile(map:DungeonLayout,x:number,y:number):boolean{
  const tx=Math.floor(x+.5),ty=Math.floor(y+.5);
- return tx>=0&&ty>=0&&tx<map.width&&ty<map.height&&map.tiles[ty*map.width+tx]===0;
+ return !solidAt(map,tx,ty);
 }
 export function canOccupy(map:DungeonLayout,x:number,y:number,radius=.24):boolean{
  return walkableTile(map,x-radius,y-radius)&&walkableTile(map,x+radius,y-radius)
