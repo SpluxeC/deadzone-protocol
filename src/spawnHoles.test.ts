@@ -62,3 +62,13 @@ test('elevator requires three distinct completed holes with no active seal',()=>
  assert.equal(canExtract([0,1,2],null),true);
  assert.equal(canExtract([0,1,2],{index:3,remaining:2,waveSpawned:4}),false);
 });
+
+test('legacy saved layouts also provide three reachable breach objectives',()=>{
+ for(const version of [1,2] as const){
+  for(let seed=1;seed<=30;seed++){
+   const plan=makeWave(seed,1,version),holes=spawnHoles(plan);
+   assert.ok(holes.length>=REQUIRED_SEALS,'legacy v'+version+' seed '+seed+' must support extraction');
+   assert.deepEqual(holes,spawnHoles(makeWave(seed,1,version)));
+  }
+ }
+});
