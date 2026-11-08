@@ -1,12 +1,13 @@
 import type {DungeonLayout} from './dungeon.ts';
 import type {WavePlan} from './rogueliteRules.ts';
+import {canOccupy} from './tileCollision.ts';
 export type SpawnHole={x:number;y:number};
 export const SEAL_COST=200;
 /** Stable per-floor locations: holes never move, and closures persist in the run save. */
 export function spawnHoles(plan:WavePlan):SpawnHole[]{
  const map=plan.map;
  const safe=(p:SpawnHole)=>p.x>1&&p.y>1&&p.x<map.width-2&&p.y<map.height-2
-  &&map.tiles[Math.round(p.y)*map.width+Math.round(p.x)]===0
+  &&canOccupy(map,p.x,p.y)
   &&Math.hypot(p.x-map.entrance.x,p.y-map.entrance.y)>7
   &&Math.hypot(p.x-map.extraction.x,p.y-map.extraction.y)>3
   &&map.loot.every(c=>Math.hypot(p.x-c.x,p.y-c.y)>1.5)
@@ -27,7 +28,7 @@ export function spawnHoles(plan:WavePlan):SpawnHole[]{
  // walkable breach, separation, and distance from player spawn and elevator.
  if(result.length<3){
   for(let y=1;y<map.height-1&&result.length<3;y++)for(let x=1;x<map.width-1&&result.length<3;x++){
-   const p={x,y},floor=map.tiles[y*map.width+x]===0;
+   const p={x,y},floor=canOccupy(map,x,y);
    if(!floor||Math.hypot(x-map.entrance.x,y-map.entrance.y)<4||
       Math.hypot(x-map.extraction.x,y-map.extraction.y)<1.8)continue;
    if(map.loot.some(c=>Math.hypot(x-c.x,y-c.y)<.85))continue;
