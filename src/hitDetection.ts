@@ -2,6 +2,7 @@
 import type {DungeonLayout} from './dungeon.ts';
 import type {WeaponId} from './equipmentArmory.ts';
 import {weaponDefs} from './equipmentArmory.ts';
+import {solidAt} from './propCollision.ts';
 
 export type TargetCircle={x:number;y:number;alive:boolean;boss?:boolean;kind?:string};
 export type Hit<T extends TargetCircle>={target:T;distance:number;x:number;y:number};
@@ -11,7 +12,7 @@ export const unit=(x:number,y:number):Point=>{const d=Math.hypot(x,y);return d>0
 export const zombieRadius=(t:TargetCircle):number=>t.boss?.51:t.kind==='bruiser'?.46:t.kind==='runner'?.32:.38;
 const blocked=(map:DungeonLayout,x:number,y:number):boolean=>{
  const tx=Math.floor(x+.5),ty=Math.floor(y+.5);
- return tx<0||ty<0||tx>=map.width||ty>=map.height||map.tiles[ty*map.width+tx]!==0;
+ return solidAt(map,tx,ty);
 };
 export function distanceToWall(map:DungeonLayout,from:Point,dir:Point,range:number):number{
  const step=.065;
