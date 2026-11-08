@@ -602,3 +602,73 @@
 }
 #rogue #overlay .equipment-row[class*="rarity-"] > b{color:var(--item-color)}
 #rogue #overlay .equipment-row[class*="rarity-"] .gear-mini{border-color:var(--item-edge)}
+
+
+/* Management buttons live in sticky top toolbars instead of offscreen bottom rows. */
+#rogue #overlay .management-toolbar{
+ display:flex;flex-wrap:nowrap;align-items:center;gap:6px;
+ width:100%;overflow-x:auto;overflow-y:hidden;min-width:0;
+ padding:5px 0;scrollbar-width:thin;overscroll-behavior-x:contain;
+ touch-action:pan-x;flex:none;
+}
+#rogue #overlay .management-toolbar button{
+ flex:0 0 auto;white-space:nowrap;min-height:31px!important;
+ padding:6px 9px!important;font-size:11px!important;
+}
+#rogue #overlay .management-toolbar #descend{
+ background:linear-gradient(#39765a,#24553f)!important;
+ border-color:#88b996!important;
+}
+#rogue #overlay .armory-screen .armory-top,
+#rogue #overlay .inventory-screen .armory-top,
+#rogue #overlay .squad-management .armory-top{
+ position:sticky;top:0;z-index:9;
+ background:#162a29;border-bottom:1px solid #537468;
+ padding:5px 8px;display:flex;flex-direction:column;gap:3px;
+}
+#rogue #overlay .armory-top h1{margin:0!important;font-size:clamp(15px,2.3vw,20px)!important}
+#rogue #overlay .squad-management{
+ width:min(900px,100%);max-width:900px;
+ max-height:calc(100dvh - 20px);overflow-y:auto;
+ overscroll-behavior:contain;
+}
+#rogue #overlay .squad-management .squad-weapons{
+ font-size:11px;line-height:1.4;color:#d2ddcf;
+ padding:5px 8px;border:1px solid #456459;border-radius:7px;
+ background:#122c29;
+}
+#rogue #overlay .squad-weapons .menurow{margin:5px 0 0;gap:5px}
+#rogue #overlay .squad-weapons button.selected{
+ background:#416e51!important;border-color:#b2d79c!important;
+}
+@media (pointer:coarse), (max-width:780px){
+ #rogue>header{
+  min-height:30px!important;max-height:40px!important;
+  padding:2px 5px!important;gap:4px!important;
+  flex-wrap:nowrap!important;overflow:hidden!important;
+ }
+ #rogue>header .game-title{font-size:11px!important;letter-spacing:0!important;flex:0 0 auto}
+ #rogue>header #combat-hud{
+  display:flex!important;flex:1 1 auto!important;min-width:0!important;
+  gap:3px!important;flex-wrap:nowrap!important;overflow-x:auto!important;
+  scrollbar-width:none;align-items:center!important;
+ }
+ #rogue>header #combat-hud>*{flex:0 0 auto!important;white-space:nowrap!important}
+ #rogue>header .hud-meter{min-width:44px!important;height:22px!important;padding:1px 2px!important;gap:2px!important}
+ #rogue>header .hud-meter span,#rogue>header .hud-meter b{font-size:9px!important}
+ #rogue>header #stats{font-size:9px!important;max-width:none!important}
+ #rogue>header .top-stat{font-size:9px!important;padding:2px 3px!important}
+ #rogue>header #menu{font-size:9px!important;padding:4px 5px!important;min-height:24px!important}
+ #rogue #overlay .management-toolbar{gap:4px;padding:3px 0}
+ #rogue #overlay .management-toolbar button{min-height:26px!important;padding:4px 6px!important;font-size:10px!important}
+ #rogue #overlay .armory-screen .armory-top,
+ #rogue #overlay .inventory-screen .armory-top,
+ #rogue #overlay .squad-management .armory-top{padding:4px 6px;gap:2px}
+ #rogue #overlay .armory-top h1{font-size:14px!important}
+ #rogue #overlay .armory-status{display:none!important}
+ #rogue #overlay .armory-reserves{display:none!important}
+ #rogue #overlay .squad-management p{margin:4px 0;font-size:11px}
+ #rogue #overlay .squad-management section{padding:5px 0!important}
+ #rogue #overlay .squad-management .menurow{gap:4px}
+ #rogue #overlay .squad-management .menurow button{padding:5px 6px!important;font-size:10px!important}
+}
