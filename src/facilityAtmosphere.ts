@@ -4,8 +4,8 @@
 import type {DungeonLayout,DungeonRoom,RoomTheme} from './dungeon.ts';
 import type {View} from './rogueliteVisuals.ts';
 
-export type FacilityDecal={x:number;y:number;kind:'help'|'hand'|'warning'|'quarantine'|'exit'|'drag';orientation:0|1};
-export type FacilityProp={x:number;y:number;kind:'bed'|'cabinet'|'terminal'|'locker'|'shelf'|'cart'|'barrel'|'barricade'|'generator'|'stretcher'|'crate'|'chair';angle:number};
+export type FacilityDecal={x:number;y:number;kind:'help'|'hand'|'warning'|'quarantine'|'exit'|'drag'|'lastStand'|'evac'|'doNotOpen'|'countdown'|'impact'|'arrow'|'biohazard';orientation:0|1};
+export type FacilityProp={x:number;y:number;kind:'bed'|'cabinet'|'terminal'|'locker'|'shelf'|'cart'|'barrel'|'barricade'|'generator'|'stretcher'|'crate'|'chair'|'gurney'|'wheelchair'|'oxygen'|'serverRack'|'radio'|'monitor'|'sandbags'|'ammoPile'|'brokenDrone'|'toolbox'|'pallet'|'bodyBag'|'fallenLight'|'brokenGlass'|'spool'|'hazmat';angle:number};
 export type FacilityLight={x:number;y:number;kind:'red'|'cold'|'amber'|'dark';phase:number};
 export type FacilityAtmosphere={themes:Uint8Array;decals:FacilityDecal[];props:FacilityProp[];lights:FacilityLight[];rooms:readonly DungeonRoom[]};
 export const ROOM_THEMES:readonly RoomTheme[]=['medical','security','maintenance','storage','supply','contaminated'];
@@ -26,6 +26,13 @@ export function facilityAtmosphere(map:DungeonLayout):FacilityAtmosphere{
    if(floors(map,x,y))themes[y*map.width+x]=index+1;
   const n=environmentNoise(room.cx,room.cy,map.seed);
   lights.push({x:room.cx,y:room.cy,kind:room.theme==='contaminated'||n<.13?'red':room.theme==='maintenance'?'amber':n>.86?'dark':'cold',phase:n*6.283});
+  // A second damaged fixture on larger rooms creates pooled light and deep pockets
+  // of shadow without ever affecting collision or player visibility.
+  if(room.w*room.h>=96){
+   const q=environmentNoise(room.cx+29,room.cy+17,map.seed);
+   lights.push({x:room.x+Math.floor(room.w*.25),y:room.y+Math.floor(room.h*.72),
+    kind:q<.2?'red':q>.72?'dark':room.theme==='security'?'cold':'amber',phase:q*6.283});
+  }
   const wallX=room.x+Math.min(3,Math.floor(room.w*.4)),wallY=room.y-1;
   // Choose occasional emergency messages, with guaranteed blood-written HELP
   // signs every few rooms. Only ever draw on solid walls bordering room floors.
@@ -34,16 +41,26 @@ export function facilityAtmosphere(map:DungeonLayout):FacilityAtmosphere{
    decals.push({x:wallX,y:wallY,kind,orientation:0});
   }
   if(ri%3===1)decals.push({x:room.x,y:room.y+Math.floor(room.h*.55),kind:'drag',orientation:1});
+  // Survivor-written notes and military hazard markings remain on solid surfaces.
+  const wall2={x:room.x+Math.max(1,room.w-2),y:room.y-1};
+  if(!floors(map,wall2.x,wall2.y)&&floors(map,wall2.x,wall2.y+1)){
+   const labels:FacilityDecal['kind'][]=['lastStand','evac','doNotOpen','countdown','biohazard','arrow','impact'];
+   decals.push({...wall2,kind:labels[(ri+Math.floor(n*7))%labels.length],orientation:0});
+  }
   if(ri%5===2){
    const wx=room.x-1,wy=room.y+2;
    if(!floors(map,wx,wy)&&floors(map,wx+1,wy))decals.push({x:wx,y:wy,kind:'help',orientation:1});
   }
-  const family:Record<RoomTheme,FacilityProp['kind'][]>={medical:['bed','cabinet','stretcher','cart'],
-   security:['terminal','locker','chair','barricade'],maintenance:['generator','barrel','cart','cabinet'],
-   storage:['shelf','crate','barrel','cabinet'],supply:['shelf','crate','locker','cart'],
-   contaminated:['stretcher','barrel','barricade','cabinet']};
+  const family:Record<RoomTheme,FacilityProp['kind'][]>={
+   medical:['bed','cabinet','stretcher','cart','gurney','wheelchair','oxygen','monitor','bodyBag'],
+   security:['terminal','locker','chair','barricade','serverRack','radio','sandbags','brokenDrone'],
+   maintenance:['generator','barrel','cart','cabinet','toolbox','spool','fallenLight','brokenGlass'],
+   storage:['shelf','crate','barrel','cabinet','pallet','spool','toolbox','brokenGlass'],
+   supply:['shelf','crate','locker','cart','pallet','ammoPile','sandbags','radio'],
+   contaminated:['stretcher','barrel','barricade','cabinet','hazmat','bodyBag','oxygen','brokenGlass']
+  };
   // Props are floor-level scenery near room perimeters; center lanes remain clear.
-  const count=Math.min(7,Math.max(3,Math.floor(room.w*room.h/24)));
+  const count=Math.min(10,Math.max(4,Math.floor(room.w*room.h/17)));
   for(let i=0;i<count;i++){
    const q=environmentNoise(room.cx+i*7,room.cy+i*11,map.seed);
    const along=1+Math.floor(q*Math.max(1,room.w-2));
