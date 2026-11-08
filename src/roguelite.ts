@@ -791,7 +791,7 @@ function draw(){
   const motion=animatedPose(e,now,direction,e.boss?2.2:kind==='runner'?4:2.8);
   const boss=e.boss?bossIdentity(r.wave):null;
   if(e.boss){ctx.save();ctx.strokeStyle=boss!.color;ctx.lineWidth=Math.max(2,v.tile*.095);ctx.globalAlpha=.5+.2*Math.sin(now/240);ctx.beginPath();ctx.arc(v.ox+e.x*v.tile,v.oy+e.y*v.tile,v.tile*.85,0,Math.PI*2);ctx.stroke();ctx.restore()}
-  if(boss)drawBossArt(ctx,v,boss.ability,{x:e.x,y:e.y,heading:motion.angle,stride:motion.phase,speed:motion.speed,time:now/1000,windup:e.windup?Math.min(1,(e.windup??0)/1.1):0,recover:Math.min(1,(e.bossRecover??0)/.55),enraged:e.phase===2});
+  if(boss)drawBossArt(ctx,v,boss.ability,{x:e.x,y:e.y,heading:motion.angle,stride:motion.phase,speed:motion.speed,time:now/1000,windup:e.windup?Math.max(0,1-(e.windup??0)/(boss.ability==='charge'?1.25:boss.ability==='shockwave'?1.45:1.05)):0,recover:Math.min(1,(e.bossRecover??0)/.55),enraged:e.phase===2});
   else drawSprite(ctx,kind,v,e.x,e.y,{angle:motion.angle,stride:motion.phase,motionSpeed:motion.speed,idleTime:now/1000,scale:kind==='bruiser'?1.32:kind==='runner'?.93:1.12});
 
   if(boss){ctx.save();ctx.textAlign='center';ctx.font='bold '+Math.max(11,v.tile*.4)+'px system-ui';ctx.fillStyle=boss.color;ctx.shadowColor='#000';ctx.shadowBlur=5;ctx.fillText(boss.name,v.ox+e.x*v.tile,v.oy+(e.y-1.42)*v.tile);ctx.restore()}
