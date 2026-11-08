@@ -823,7 +823,18 @@ function draw(){
  if(fog)renderFog(ctx,m,v,fog);
  const isKnown=(x:number,y:number)=>!fog||discoveredAt(m,fog,x,y);
  const now=performance.now(),bob=Math.sin(now/340)*v.tile*.025;
- for(const [i,hole] of spawnHoles(plan).entries())if(isKnown(hole.x,hole.y))drawSpawnHole(ctx,v,hole,(r.sealedHoles??[]).includes(i),now/1000);
+ for(const [i,hole] of spawnHoles(plan).entries()){
+  if(!isKnown(hole.x,hole.y))continue;
+  const sealed=(r.sealedHoles??[]).includes(i);
+  drawSpawnHole(ctx,v,hole,sealed,now/1000);
+  if(!sealed&&Math.hypot(r.player.x-hole.x,r.player.y-hole.y)<2.65){
+   const px=v.ox+hole.x*v.tile,py=v.oy+(hole.y-.74)*v.tile;
+   ctx.save();ctx.textAlign='center';ctx.font='bold '+Math.max(11,v.tile*.29)+'px system-ui';
+   ctx.strokeStyle='#06100c';ctx.lineWidth=4;const label=r.credits>=SEAL_COST?'SEAL HOLE · 200':'NEED 200 CREDITS';
+   ctx.strokeText(label,px,py);ctx.fillStyle=r.credits>=SEAL_COST?'#bdf6c0':'#f3c28e';ctx.fillText(label,px,py);
+   ctx.restore();
+  }
+ }
  for(const [i,l] of m.loot.entries()){
   const known=l.kind==='weapon'?crateInRange(l,{x:r.player.x,y:r.player.y})||isKnown(l.x,l.y):isKnown(l.x,l.y);
   // Both cells of a long weapon crate must be discoverable before the case appears.
