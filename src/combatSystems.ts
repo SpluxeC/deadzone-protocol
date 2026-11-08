@@ -19,7 +19,7 @@ export function zombieStats(kind:ZombieKind):ZombieStats {
   case 'runner':return {hp:2,speed:1.36,damage:5,reach:.7,attackInterval:.8,color:'#db8551'};
   case 'armored':return {hp:5,speed:.59,damage:9,reach:.8,attackInterval:1.3,color:'#899ba5'};
   case 'bruiser':return {hp:9,speed:.48,damage:13,reach:1,attackInterval:1.6,color:'#b57391'};
-  case 'boss':return {hp:28,speed:.72,damage:16,reach:1.1,attackInterval:1.5,color:'#f2a24d'};
+  case 'boss':return {hp:90,speed:.72,damage:16,reach:1.1,attackInterval:1.5,color:'#f2a24d'};
   default:return {hp:2,speed:.83,damage:7,reach:.75,attackInterval:1.25,color:'#ba6159'};
  }
 }
