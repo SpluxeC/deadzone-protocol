@@ -1,4 +1,5 @@
 import type {DungeonLayout} from './dungeon.ts';
+import {solidAt} from './propCollision.ts';
 
 export type ZombieKind='shambler'|'runner'|'armored'|'bruiser'|'boss';
 export type WeaponSlot='primary'|'secondary'|'melee';
@@ -36,12 +37,12 @@ export function reloadTransfer(mag:number,reserve:number,capacity:number):{mag:n
 export function distanceField(map:DungeonLayout,target:Cell):Int32Array {
  const {width:w,height:h,tiles}=map,out=new Int32Array(w*h).fill(-1);
  const sx=Math.floor(target.x+.5),sy=Math.floor(target.y+.5);
- if(sx<0||sy<0||sx>=w||sy>=h||tiles[sy*w+sx]!==0)return out;
+ if(sx<0||sy<0||sx>=w||sy>=h||solidAt(map,sx,sy))return out;
  const queue=new Int32Array(w*h);let head=0,tail=1;const origin=sy*w+sx;out[origin]=0;queue[0]=origin;
  while(head<tail){const at=queue[head++],x=at%w,y=Math.floor(at/w),d=out[at]+1;
   for(const [dx,dy] of [[0,-1],[1,0],[0,1],[-1,0]]){
    const nx=x+dx,ny=y+dy;if(nx<0||ny<0||nx>=w||ny>=h)continue;
-   const index=ny*w+nx;if(tiles[index]!==0||out[index]!==-1)continue;
+   const index=ny*w+nx;if(solidAt(map,nx,ny)||out[index]!==-1)continue;
    out[index]=d;queue[tail++]=index;
   }
  }
