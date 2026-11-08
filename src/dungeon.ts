@@ -135,7 +135,7 @@ if(layoutVersion===3&&rand()<.13){
  const shuffledRooms=shuffle([...rooms]);
  outer:for(const room of shuffledRooms){
   if(Math.hypot(room.cx-entrance.x,room.cy-entrance.y)<9)continue;
-  for(const side of shuffle([...(['right','left','down','up'] as const)])){
+  for(const side of shuffle(['right','left','down','up']){
    const dx=side==='right'?1:side==='left'?-1:0;
    const dy=side==='down'?1:side==='up'?-1:0;
    const door={x:dx?dx>0?room.x+room.w:room.x-1:room.cx,
