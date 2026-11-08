@@ -1,8 +1,14 @@
-import {canClassEquip,weaponDefs,newWeapon,type ClassId,type Weapon,type Tier,type WeaponId} from './equipmentArmory.ts';
+import {canClassEquip,weaponDefs,newWeapon,type ClassId,type Weapon,type Tier,type WeaponId,type Slot} from './equipmentArmory.ts';
 export type SquadOrder='follow'|'hold'|'focus'|'regroup'|'defensive';
-export type Squadmate={id:string;name:string;role:ClassId;hp:number;maxHp:number;x:number;y:number;cooldown:number;abilityCooldown:number;reviveProgress:number;downed:number;dead:boolean;anchor:{x:number;y:number};weapon:Weapon;armor:number;armorTier:Tier;gearTier:Tier;magReserve:number};
+export type Squadmate={id:string;name:string;role:ClassId;hp:number;maxHp:number;x:number;y:number;cooldown:number;abilityCooldown:number;reviveProgress:number;downed:number;dead:boolean;anchor:{x:number;y:number};weapon:Weapon;secondaryWeapon:Weapon;meleeWeapon:Weapon;activeSlot:Slot;armor:number;armorTier:Tier;gearTier:Tier;magReserve:number};
 export type Downable={hp:number;downed:number;dead:boolean};
 export const SQUAD_LIMIT=4;
+export const SQUAD_MAX_AMMO=400;
+export const SQUAD_AMMO_REFILL_COST=300;
+export function squadAmmoNeeded(allies:readonly Squadmate[]):number{return allies.filter(a=>!a.dead).reduce((n,a)=>n+Math.max(0,SQUAD_MAX_AMMO-a.magReserve),0)}
+export function refillSquadAmmo(allies:Squadmate[]):number{let filled=0;for(const ally of allies){if(ally.dead)continue;const needed=Math.max(0,SQUAD_MAX_AMMO-ally.magReserve);ally.magReserve+=needed;filled+=needed;}return filled}
+export function squadWeapon(ally:Squadmate):Weapon{return ally.activeSlot==='secondary'?ally.secondaryWeapon:ally.activeSlot==='melee'?ally.meleeWeapon:ally.weapon}
+export function setSquadWeaponSlot(ally:Squadmate,slot:Slot):boolean{if(slot==='secondary'&&!ally.secondaryWeapon||slot==='melee'&&!ally.meleeWeapon)return false;ally.activeSlot=slot;return true}
 export const PLAYER_BLEEDOUT=30;
 export const ALLY_BLEEDOUT=25;
 export const CLASS_INFO:Record<ClassId,{label:string;cost:number;model:WeaponId;armor:number;special:string}>={
@@ -15,14 +21,14 @@ export const CLASS_INFO:Record<ClassId,{label:string;cost:number;model:WeaponId;
 export const classIds=Object.keys(CLASS_INFO) as ClassId[];
 export function makeSquadmate(role:ClassId,id:string,x:number,y:number,tier:Tier=1):Squadmate{
  const info=CLASS_INFO[role];if(!canClassEquip(role,info.model))throw Error('Invalid class loadout');
- return{id,name:info.label+' '+id.slice(-2),role,hp:100,maxHp:100,x,y,cooldown:0,abilityCooldown:0,reviveProgress:0,downed:0,dead:false,anchor:{x,y},weapon:newWeapon(info.model,tier,id+'-weapon'),armor:info.armor,armorTier:1,gearTier:1,magReserve:100};
+ return{id,name:info.label+' '+id.slice(-2),role,hp:100,maxHp:100,x,y,cooldown:0,abilityCooldown:0,reviveProgress:0,downed:0,dead:false,anchor:{x,y},weapon:newWeapon(info.model,tier,id+'-weapon'),secondaryWeapon:newWeapon('pistol',tier,id+'-sidearm'),meleeWeapon:newWeapon('knife',tier,id+'-melee'),activeSlot:'primary',armor:info.armor,armorTier:1,gearTier:1,magReserve:240};
 }
 export function migrateSquadmate(v:Partial<Squadmate>&{x:number;y:number;hp:number;name?:string},index:number):Squadmate{
  const role:ClassId=v.role&&classIds.includes(v.role)?v.role:'rifleman';
  const a=makeSquadmate(role,v.id||'legacy-'+index,v.x,v.y,v.weapon?.tier??1);
- return {...a,...v,role,id:a.id,name:v.name||a.name,weapon:v.weapon&&canClassEquip(role,v.weapon.model)?v.weapon:a.weapon,anchor:v.anchor||{x:v.x,y:v.y},
+ return {...a,...v,role,id:a.id,name:v.name||a.name,weapon:v.weapon&&canClassEquip(role,v.weapon.model)?v.weapon:a.weapon,secondaryWeapon:v.secondaryWeapon&&weaponDefs[v.secondaryWeapon.model]?.slot==='secondary'&&canClassEquip(role,v.secondaryWeapon.model)?v.secondaryWeapon:a.secondaryWeapon,meleeWeapon:v.meleeWeapon&&weaponDefs[v.meleeWeapon.model]?.slot==='melee'&&canClassEquip(role,v.meleeWeapon.model)?v.meleeWeapon:a.meleeWeapon,activeSlot:v.activeSlot??'primary',anchor:v.anchor||{x:v.x,y:v.y},
   cooldown:v.cooldown??0,abilityCooldown:v.abilityCooldown??0,reviveProgress:v.reviveProgress??0,downed:v.downed??0,dead:!!v.dead,
-  armor:v.armor??a.armor,armorTier:v.armorTier??1,gearTier:v.gearTier??1,magReserve:v.magReserve??100};
+  armor:v.armor??a.armor,armorTier:v.armorTier??1,gearTier:v.gearTier??1,magReserve:Math.min(SQUAD_MAX_AMMO,Math.max(0,v.magReserve??240))};
 }
 export function applyLethalDamage(v:Downable,damage:number,seconds:number):void{
  if(v.dead||v.downed>0)return;
@@ -44,8 +50,12 @@ export function reviveDuration(role:ClassId):number{return role==='medic'?1.8:4.
 export function shouldRevive(order:SquadOrder,role:ClassId):boolean{return role==='medic'||order==='defensive'||order==='regroup'||order==='follow'}
 export function canRecruit(existing:number):boolean{return existing<SQUAD_LIMIT}
 export function equipClassWeapon(ally:Squadmate,weapon:Weapon):boolean{
- if(!canClassEquip(ally.role,weapon.model)||weaponDefs[weapon.model].slot==='melee')return false;
- ally.weapon=weapon;return true;
+ if(!canClassEquip(ally.role,weapon.model))return false;
+ const slot=weaponDefs[weapon.model].slot;
+ if(slot==='primary')ally.weapon=weapon;
+ else if(slot==='secondary')ally.secondaryWeapon=weapon;
+ else ally.meleeWeapon=weapon;
+ return true;
 }
 export function classFireDelay(role:ClassId):number{
  return ({rifleman:.72,medic:.85,heavy:.42,scout:1.35,engineer:1.05} as Record<ClassId,number>)[role];
