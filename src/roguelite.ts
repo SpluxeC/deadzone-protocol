@@ -229,6 +229,7 @@ function strikeZombie(enemy:Unit,damage:number,direction:{x:number;y:number},mel
  enemy.hitVx=direction.x;enemy.hitVy=direction.y;
  if(reaction.knockback>0)moveUnit(enemy,direction.x,direction.y,reaction.knockback);
  zombieBlood(enemy,direction,melee,enemy.hp<=0);
+ if(enemy.kind==='armored'&&!melee&&shellEffects.length<90)shellEffects.push(ejectCasing(enemy.x,enemy.y,direction.x,direction.y,Math.floor(enemy.hp*19), 'spark'));
  if(enemy.hp<=0)defeat(enemy);
 }
 function zombieBlood(enemy:Unit,direction:{x:number;y:number},melee=false,lethal=false){
@@ -261,6 +262,7 @@ function shoot(){
    const angle=Math.atan2(facing.y,facing.x)+offset,dir={x:Math.cos(angle),y:Math.sin(angle)};
    const trace=traceBullet(plan.map,p,dir,handling.range,targets,penetrationFor(w.model));
    distances.push(trace.distance);
+   if(!trace.hits.length&&trace.distance<handling.range-.12&&shellEffects.length<90)shellEffects.push(ejectCasing(p.x+dir.x*trace.distance,p.y+dir.y*trace.distance,dir.x,dir.y,i+run.kills, 'spark'));
    // A shotgun shell shares damage across its pellets; every pellet uses its own hit ray.
    const damage=handling.damage/profile.count;
    for(const hit of trace.hits)strikeZombie(hit.target,damage,dir)
