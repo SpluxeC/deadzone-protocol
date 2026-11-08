@@ -1,6 +1,6 @@
 import {generateDungeon,type DungeonLayout} from './dungeon';
 import {makeWave,killPayout,clearPayout,permanentPayout,extractionSpawnInterval,extractionActiveCap,formatRunTime,type WavePlan} from './rogueliteRules';
-import {zombieKind,zombieStats,weaponStats,reloadTransfer,distanceField,nextZombieWaypoint,incomingDamage,bossAttack,bossImpact,type ZombieKind,type WeaponSlot} from './combatSystems';
+import {zombieKind,zombieStats,weaponStats,reloadTransfer,distanceField,nextZombieWaypoint,incomingDamage,bossAttack,bossImpact,bossIdentity,distanceToSegment,type ZombieKind,type WeaponSlot} from './combatSystems';
 import {weaponDefs,attachmentDefs,attachmentDescriptions,rarityName,rarityClass,canClassEquip,ammoTypes,ammoLabels,ammoPack,ammoStack,newWeapon,newMod,usedSlots,addAmmo,canAddItem,canEquipMod,itemName,salePrice,effectiveStats,armoryOffers,rareLoot,crateLoot,advanceOfferPrice,backpackUpgradePrice,upgradePrice,type Weapon,type Mod,type Gear,type AmmoBank,type Loadout,type AmmoType,type Tier,type WeaponId,type AttachmentId,type Slot} from './equipmentArmory';
 import {CLASS_INFO,classIds,makeSquadmate,migrateSquadmate,applyLethalDamage,bleed,revive,reviveDuration,shouldRevive,canRecruit,equipClassWeapon,classFireDelay,classRange,classDamage,canHeal,gearUpgradeCost,PLAYER_BLEEDOUT,ALLY_BLEEDOUT,type Squadmate,type SquadOrder} from './squadSystems';
 import {migrateProfile,unlocks,achievements,buyUnlock,allowedPrimary,allowedMelee,allowedTeammates,sanitizeChoice,startingKit,progressAchievements,performancePayout,eligibleRecruit,type ProfileV5,type UnlockId,type RunPerformance} from './metaprogression';
@@ -19,7 +19,7 @@ import {squadMove,spacedSquadPosition} from './squadMovement';
 import './rogueliteTheme.css';
 import './style.css';
 
-type Unit={x:number;y:number;hp:number;maxHp:number;speed:number;attack:number;boss?:boolean;alive:boolean;kind?:ZombieKind;windup?:number;phase?:number;aggro?:number;suppressed?:number;scoutMarked?:number};
+type Unit={x:number;y:number;hp:number;maxHp:number;speed:number;attack:number;boss?:boolean;alive:boolean;kind?:ZombieKind;windup?:number;phase?:number;aggro?:number;suppressed?:number;scoutMarked?:number;bossTarget?:{x:number;y:number};bossOrigin?:{x:number;y:number};summoned?:boolean};
 type Ally=Squadmate;
 type Run={wave:number;credits:number;hp:number;armor:number;mag:number;reserve:number;medkits:number;weaponTier:number;damage:number;maxMag:number;player:{x:number;y:number};enemies:Unit[];allies:Ally[];spawned:number;kills:number;bosses:number;cleared:number;seed:number;stage:'fight'|'shop';looted:number[];squadAmmo:number;activeSlot?:WeaponSlot;sideMag?:number;sideReserve?:number;reloadTimer?:number;reloadSlot?:WeaponSlot|null;playerDowned?:number;playerDead?:boolean;squadOrder?:SquadOrder;focusTarget?:number|null;reviveProgress?:number;equipment?:{loadout:Loadout;bag:Gear[];ammo:AmmoBank;capacity:number;rerolls:number;};killsTotal?:number;lootedTotal?:number;flawlessWaves?:number;bestSquad?:number;waveStartHp?:number;waveStartArmor?:number;waveHit?:boolean;explored?:number[];layoutVersion?:1|2|3;waveSeconds?:number;runSeconds?:number;waveStartKills?:number;waveStartLooted?:number;peakThreat?:number;triggeredEvents?:number[];secretOpened?:boolean;}
 type Profile=ProfileV5;
@@ -199,7 +199,7 @@ function spawnInitial(){
  for(let attempt=0;run.enemies.length<ordinary&&attempt<ordinary+8;attempt++){
   if(!spawnOne(false,true))break;
  }
- if(plan.boss)spawnOne(true,true);
+ if(plan.boss&&spawnOne(true,true))notice('WARNING · '+bossIdentity(run.wave).name+' DETECTED');
  run.peakThreat=Math.max(run.peakThreat??0,run.enemies.filter(e=>e.alive).length);
 }
 function remaining(){return run?run.enemies.filter(e=>e.alive).length:0}
@@ -255,7 +255,7 @@ function shoot(){
  if(def.ammo&&w.mag===0)reload();
  save();
 }
-function defeat(e:Unit){if(!run||!e.alive)return;e.alive=false;run.kills++;run.killsTotal=(run.killsTotal??0)+1;run.credits+=killPayout(run.wave,!!e.boss);if(e.boss){run.bosses++;const eq=ensureEquipment(run),reward=rareLoot(run.seed,run.wave,999,true);if(reward&&canAddItem(eq.bag,eq.ammo,run.medkits,eq.capacity)){eq.bag.push(reward);notice('BOSS REWARD: '+itemName(reward))}else{run.credits+=250;notice('BOSS REWARD: +250 credits (backpack full)')}}}
+function defeat(e:Unit){if(!run||!e.alive)return;e.alive=false;run.kills++;run.killsTotal=(run.killsTotal??0)+1;run.credits+=killPayout(run.wave,!!e.boss);if(e.boss){run.bosses++;notice(bossIdentity(run.wave).name+' ELIMINATED');const eq=ensureEquipment(run),reward=rareLoot(run.seed,run.wave,999,true);if(reward&&canAddItem(eq.bag,eq.ammo,run.medkits,eq.capacity)){eq.bag.push(reward);notice('BOSS REWARD: '+itemName(reward))}else{run.credits+=250;notice('BOSS REWARD: +250 credits (backpack full)')}}}
 function reload(){if(!run||run.stage!=='fight'||run.reloadTimer||(run.playerDowned??0)>0)return;const w=activeWeapon(run);if(!w)return;const def=weaponDefs[w.model];if(!def.ammo)return;
  const eq=ensureEquipment(run),cap=effectiveStats(w).capacity,available=eq.ammo[def.ammo];
  if(w.mag>=cap||available<=0)return;run.reloadTimer=effectiveStats(w).reload;run.reloadSlot=run.activeSlot??'primary';notice('Reloading '+def.name+'...');save()}
@@ -675,21 +675,37 @@ squadUpdate(dt);
 if(fog&&updateFog(plan.map,fog,explorationSources()))run.explored=exploredIndices(fog);
 pathClock-=dt;if(pathClock<=0||!pathField){pathField=distanceField(plan.map,run.player);pathClock=.32}
 for(const e of run.enemies){if(!e.alive)continue;
- e.suppressed=Math.max(0,(e.suppressed??0)-dt);e.scoutMarked=Math.max(0,(e.scoutMarked??0)-dt);const stats=zombieStats(e.kind??(e.boss?'boss':'shambler'));if(e.boss&&e.hp<e.maxHp*.5&&e.phase!==2){e.phase=2;notice('BOSS ENRAGED — ATTACKS FASTER!')}
+ e.suppressed=Math.max(0,(e.suppressed??0)-dt);e.scoutMarked=Math.max(0,(e.scoutMarked??0)-dt);const stats=zombieStats(e.kind??(e.boss?'boss':'shambler'));if(e.boss&&e.hp<e.maxHp*.5&&e.phase!==2){e.phase=2;notice(bossIdentity(run.wave).name+' · SECOND PHASE!');if(!e.summoned){e.summoned=true;for(let k=0;k<3;k++)spawnOne(false,false)}}
  const sight=Math.hypot(e.x-p.x,e.y-p.y),canDetect=sight<1.5||(sight<8&&canSee(e.x,e.y,p.x,p.y))||(noiseClock>0&&sight<12)||e.boss&&sight<18;if(canDetect)e.aggro=5;else e.aggro=Math.max(0,(e.aggro??0)-dt);
  e.attack=Math.max(0,e.attack-dt);
  if((e.windup??0)>0){e.windup=Math.max(0,(e.windup??0)-dt);if(e.windup===0){
  const ability=bossAttack(run.wave);
- if(ability==='charge'){const d=Math.hypot(p.x-e.x,p.y-e.y)||1;for(let j=0;j<8;j++)moveUnit(e,(p.x-e.x)/d,(p.y-e.y)/d,.25)}
- const distance=Math.hypot(e.x-p.x,e.y-p.y),impact=bossImpact(ability,distance);
- if(impact){hurtPlayer(impact)}
- for(const a of run.allies){const allyImpact=bossImpact(ability,Math.hypot(a.x-e.x,a.y-e.y));if(allyImpact)hurtAlly(a,allyImpact)}
+ const origin=e.bossOrigin??{x:e.x,y:e.y},locked=e.bossTarget??{x:p.x,y:p.y};
+ if(ability==='charge'){
+  const d=Math.hypot(locked.x-origin.x,locked.y-origin.y)||1;
+  for(let j=0;j<12;j++)moveUnit(e,(locked.x-origin.x)/d,(locked.y-origin.y)/d,.2);
+ }
+ const strike=(target:{x:number;y:number})=>ability==='charge'
+  ?(distanceToSegment(target,origin,{x:e.x,y:e.y})<.9?bossImpact('charge',0):0)
+  :ability==='slam'?bossImpact('slam',Math.hypot(target.x-locked.x,target.y-locked.y))
+  :bossImpact('shockwave',Math.hypot(target.x-e.x,target.y-e.y));
+ const impact=strike(p);
+ if(impact)hurtPlayer(impact);
+ for(const a of run.allies){const allyImpact=strike(a);if(allyImpact)hurtAlly(a,allyImpact)}
+ e.bossTarget=undefined;e.bossOrigin=undefined;
  bossPulse=.28}continue}
  const nearestAlly=run.allies.filter(a=>a.hp>0&&!a.dead&&a.downed<=0).sort((a,b)=>Math.hypot(a.x-e.x,a.y-e.y)-Math.hypot(b.x-e.x,b.y-e.y))[0];
  const playerDist=Math.hypot(p.x-e.x,p.y-e.y);
  const allyDist=nearestAlly?Math.hypot(nearestAlly.x-e.x,nearestAlly.y-e.y):Infinity;
  const target=nearestAlly&&(allyDist+.35<playerDist||(run.playerDowned??0)>0)?nearestAlly:p,dist=Math.hypot(target.x-e.x,target.y-e.y);
- if(e.boss&&e.attack===0&&(run.playerDowned??0)===0&&playerDist<(bossAttack(run.wave)==='shockwave'?3.4:2.6)){const ability=bossAttack(run.wave);e.windup=ability==='charge'?1.1:.95;e.attack=e.hp<e.maxHp*.5?2.7:4.2;notice('BOSS '+ability.toUpperCase()+' — DODGE!');continue}
+ if(e.boss&&e.attack===0&&(run.playerDowned??0)===0&&playerDist<(bossAttack(run.wave)==='shockwave'?4.5:bossAttack(run.wave)==='charge'?6:3.7)){
+ const identity=bossIdentity(run.wave);
+ e.bossOrigin={x:e.x,y:e.y};e.bossTarget={x:p.x,y:p.y};
+ e.windup=identity.ability==='charge'?1.25:identity.ability==='shockwave'?1.45:1.05;
+ e.attack=e.hp<e.maxHp*.5?2.8:4.5;
+ notice(identity.name+' · '+identity.ability.toUpperCase()+' INCOMING!');
+ continue
+}
  if(dist<=stats.reach&&e.attack===0&&((target!==p)||(run.playerDowned??0)===0)){e.attack=stats.attackInterval;if(target===p){hurtPlayer(stats.damage)}else{const ally=target as Ally;hurtAlly(ally,stats.damage)}continue}
  if((e.aggro??0)>0&&dist>stats.reach*.8){const direct=canSee(e.x,e.y,target.x,target.y);const waypoint=direct?target:nextZombieWaypoint(plan.map,pathField!,e);
   const vx=waypoint.x-e.x,vy=waypoint.y-e.y,len=Math.hypot(vx,vy);if(len>.03){
@@ -765,10 +781,25 @@ function draw(){
  for(const e of r.enemies){if(!e.alive||!isKnown(e.x,e.y))continue;const kind=(e.kind??(e.boss?'boss':'shambler')) as SpriteKind;
   const direction=Math.atan2(r.player.y-e.y,r.player.x-e.x);
   const motion=animatedPose(e,now,direction,e.boss?2.2:kind==='runner'?4:2.8);
-  drawSprite(ctx,kind,v,e.x,e.y,{angle:motion.angle,stride:motion.phase,motionSpeed:motion.speed,idleTime:now/1000,scale:e.boss?1.67:kind==='bruiser'?1.32:kind==='runner'?.93:1.12,glow:e.boss?'#e77b44':undefined});
+  const boss=e.boss?bossIdentity(r.wave):null;
+  if(e.boss){ctx.save();ctx.strokeStyle=boss!.color;ctx.lineWidth=Math.max(2,v.tile*.095);ctx.globalAlpha=.5+.2*Math.sin(now/240);ctx.beginPath();ctx.arc(v.ox+e.x*v.tile,v.oy+e.y*v.tile,v.tile*.85,0,Math.PI*2);ctx.stroke();ctx.restore()}
+  drawSprite(ctx,kind,v,e.x,e.y,{angle:motion.angle,stride:motion.phase,motionSpeed:motion.speed,idleTime:now/1000,scale:e.boss?(boss?.ability==='slam'?1.95:boss?.ability==='shockwave'?1.6:1.78):kind==='bruiser'?1.32:kind==='runner'?.93:1.12,glow:boss?.color});
+  if(boss){ctx.save();ctx.textAlign='center';ctx.font='bold '+Math.max(11,v.tile*.4)+'px system-ui';ctx.fillStyle=boss.color;ctx.shadowColor='#000';ctx.shadowBlur=5;ctx.fillText(boss.name,v.ox+e.x*v.tile,v.oy+(e.y-1.42)*v.tile);ctx.restore()}
   if(e.maxHp>2)drawBar(ctx,v,e.x,e.y,e.hp/e.maxHp,e.boss?'#ff9c73':'#dc9b83',e.boss?1.3:.78);
   if((e.scoutMarked??0)>0){ctx.strokeStyle='#a4ecfc';ctx.lineWidth=Math.max(2,v.tile*.05);ctx.strokeRect(v.ox+(e.x-.51)*v.tile,v.oy+(e.y-.53)*v.tile,1.02*v.tile,1.02*v.tile)}
-  if(e.boss&&(e.windup??0)>0)drawHazard(ctx,v,e.x,e.y,bossAttack(r.wave)==='shockwave'?3.2:bossAttack(r.wave)==='charge'?1.25:2.4);
+  if(e.boss&&(e.windup??0)>0){
+   const ability= boss!.ability,px=v.ox+e.x*v.tile,py=v.oy+e.y*v.tile;
+   const origin=e.bossOrigin??e,target=e.bossTarget??r.player;
+   ctx.save();ctx.strokeStyle=boss!.color;ctx.fillStyle=boss!.color;ctx.lineWidth=Math.max(2,v.tile*.075);
+   ctx.globalAlpha=.32+.22*Math.sin(now/95);
+   if(ability==='charge'){
+    ctx.beginPath();ctx.moveTo(v.ox+origin.x*v.tile,v.oy+origin.y*v.tile);
+    ctx.lineTo(v.ox+target.x*v.tile,v.oy+target.y*v.tile);ctx.lineWidth=v.tile*1.6;ctx.stroke();
+   }else if(ability==='slam'){
+    ctx.beginPath();ctx.arc(v.ox+target.x*v.tile,v.oy+target.y*v.tile,2.4*v.tile,0,Math.PI*2);ctx.fill();
+   }else drawHazard(ctx,v,e.x,e.y,3.2);
+   ctx.restore();
+  }
  }
  for(const a of r.allies){
   if(!isKnown(a.x,a.y))continue;
@@ -786,6 +817,16 @@ function draw(){
  ctx.restore();
  if((r.playerDowned??0)>0){ctx.font='bold '+Math.max(13,v.tile*.48)+'px system-ui';ctx.textAlign='center';ctx.fillStyle='#ff9b83';ctx.fillText('DOWNED '+Math.ceil(r.playerDowned??0)+'s',v.ox+r.player.x*v.tile,v.oy+(r.player.y-1)*v.tile)}
 
+ const livingBoss=r.enemies.find(e=>e.alive&&e.boss);
+ if(livingBoss){
+  const identity=bossIdentity(r.wave),bw=Math.min(cw*.68,500*ratio),bx=(cw-bw)/2,by=14*ratio,bh=7*ratio;
+  ctx.save();ctx.fillStyle='rgba(8,12,16,.84)';ctx.fillRect(bx-9*ratio,by-5*ratio,bw+18*ratio,36*ratio);
+  ctx.fillStyle=identity.color;ctx.font='bold '+(12*ratio)+'px system-ui';ctx.textAlign='center';
+  ctx.fillText(identity.name+(livingBoss.phase===2?' · ENRAGED':''),cw/2,by+7*ratio);
+  ctx.fillStyle='#293136';ctx.fillRect(bx,by+12*ratio,bw,bh);
+  ctx.fillStyle=identity.color;ctx.fillRect(bx,by+12*ratio,bw*Math.max(0,livingBoss.hp/livingBoss.maxHp),bh);
+  ctx.restore();
+ }
  const w=activeWeapon(r),ammoType=w?weaponDefs[w.model].ammo:null,eq=ensureEquipment(r);
  const ammo=w&&ammoType?w.mag+'/'+eq.ammo[ammoType]:'MELEE';
  // Mobile squad orders only exist when at least one living squadmate can receive them.
