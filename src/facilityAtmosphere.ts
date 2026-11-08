@@ -214,6 +214,30 @@ function renderWallMark(ctx:CanvasRenderingContext2D,d:FacilityDecal,v:View):voi
  }else if(d.kind==='drag'){
   ctx.strokeStyle='rgba(101,28,27,.54)';ctx.lineWidth=t*.11;
   ctx.beginPath();ctx.moveTo(-t*.42,t*.31);ctx.quadraticCurveTo(0,t*.13,t*.47,-t*.27);ctx.stroke();
+ }else if(d.kind==='lastStand'||d.kind==='evac'||d.kind==='doNotOpen'||d.kind==='countdown'||d.kind==='arrow'){
+  // Hand-painted survivor messages: deliberate irregular angle and red smears.
+  const messages:Record<'lastStand'|'evac'|'doNotOpen'|'countdown'|'arrow',string>={
+   lastStand:'LAST STAND',evac:'EVAC FAILED',doNotOpen:'DO NOT OPEN',countdown:'DAY 17',arrow:'EXIT →'
+  };
+  ctx.rotate(-.055);ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.font='900 '+Math.max(6,t*(d.kind==='doNotOpen'?.18:.21))+'px monospace';
+  ctx.fillStyle=d.kind==='lastStand'||d.kind==='doNotOpen'?'#a34d40':'#b5ad83';
+  ctx.fillText(messages[d.kind],0,0,t*.94);
+  ctx.strokeStyle='#793530';ctx.lineWidth=Math.max(1,t*.025);
+  ctx.beginPath();ctx.moveTo(-t*.32,t*.13);ctx.lineTo(t*.24,t*.15);ctx.stroke();
+ }else if(d.kind==='impact'){
+  ctx.fillStyle='#1a2729';ctx.beginPath();ctx.arc(0,0,t*.10,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='#7e8580';ctx.lineWidth=Math.max(1,t*.025);
+  for(let i=0;i<8;i++){
+   const a=i*Math.PI/4,length=t*(.16+(i%3)*.07);
+   ctx.beginPath();ctx.moveTo(Math.cos(a)*t*.10,Math.sin(a)*t*.10);
+   ctx.lineTo(Math.cos(a)*length,Math.sin(a)*length);ctx.stroke();
+  }
+ }else if(d.kind==='biohazard'){
+  rect(ctx,-t*.43,-t*.24,t*.86,t*.48,'#b3984d');
+  ctx.font='bold '+Math.max(8,t*.32)+'px system-ui';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillStyle='#22271f';ctx.fillText('☣',0,-t*.02);
+  ctx.font='bold '+Math.max(6,t*.10)+'px monospace';ctx.fillText('BIOHAZARD',0,t*.16);
  }else{
   const text=d.kind==='quarantine'?'QUARANTINE':'DANGER';
   rect(ctx,-t*.45,-t*.20,t*.90,t*.39,d.kind==='quarantine'?'#91764b':'#ad9445');
@@ -245,12 +269,44 @@ export function renderFacility(ctx:CanvasRenderingContext2D,map:DungeonLayout,v:
     rect(ctx,px+t*.22,py+t*.28,t*.22,t*.06,'rgba(134,131,111,.35)');
     rect(ctx,px+t*.62,py+t*.65,t*.13,t*.1,'rgba(81,88,81,.46)');
    }
+   const distress=environmentNoise(x+31,y-17,map.seed),scorch=environmentNoise(x-53,y+23,map.seed);
+   // Impact damage and leaks are painted into the terrain; never solid obstacles.
+   if(distress>.925){
+    ctx.strokeStyle='rgba(12,16,19,.74)';ctx.lineWidth=Math.max(1,t*.065);
+    ctx.beginPath();ctx.moveTo(px+t*.13,py+t*.1);ctx.lineTo(px+t*.35,py+t*.32);
+    ctx.lineTo(px+t*.72,py+t*.24);ctx.lineTo(px+t*.84,py+t*.7);ctx.stroke();
+    ctx.strokeStyle='rgba(133,138,129,.26)';ctx.lineWidth=Math.max(.7,t*.022);
+    ctx.beginPath();ctx.moveTo(px+t*.17,py+t*.07);ctx.lineTo(px+t*.39,py+t*.30);ctx.stroke();
+   }
+   if(scorch<.064){
+    ctx.fillStyle='rgba(11,18,16,.35)';ctx.beginPath();
+    ctx.ellipse(px+t*.52,py+t*.50,t*.37,t*.24,.4,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='rgba(105,47,32,.18)';ctx.beginPath();
+    ctx.ellipse(px+t*.54,py+t*.5,t*.18,t*.1,.4,0,Math.PI*2);ctx.fill();
+   }
+   if(distress<.046){
+    ctx.fillStyle='rgba(73,105,84,.39)';ctx.beginPath();
+    ctx.ellipse(px+t*.52,py+t*.57,t*.32,t*.16,-.25,0,Math.PI*2);ctx.fill();
+    ctx.strokeStyle='rgba(143,161,139,.25)';ctx.lineWidth=Math.max(.7,t*.02);
+    ctx.beginPath();ctx.arc(px+t*.52,py+t*.57,t*.17,.2,2.4);ctx.stroke();
+   }
    if(noise>.975){
     // Scattered spent brass and debris, deliberately small and non-blocking.
     ctx.fillStyle='#99834e';rect(ctx,px+t*.27,py+t*.57,t*.11,t*.035,'#99834e');
     rect(ctx,px+t*.43,py+t*.69,t*.10,t*.03,'#99834e');
    }
   }else if(noise>.67){
+   const damage=environmentNoise(x+71,y+29,map.seed);
+   if(damage>.90){
+    ctx.fillStyle='rgba(5,11,13,.58)';ctx.fillRect(px+t*.15,py+t*.12,t*.22,t*.22);
+    ctx.strokeStyle='rgba(135,143,135,.27)';ctx.lineWidth=Math.max(.7,t*.026);
+    ctx.strokeRect(px+t*.12,py+t*.10,t*.27,t*.26);
+   }
+   if(damage<.11){
+    ctx.strokeStyle='rgba(115,35,30,.46)';ctx.lineWidth=Math.max(1,t*.065);
+    ctx.beginPath();ctx.moveTo(px+t*.27,py+t*.33);ctx.lineTo(px+t*.39,py+t*.61);
+    ctx.lineTo(px+t*.43,py+t*.78);ctx.stroke();
+   }
    ctx.fillStyle='rgba(75,81,73,.26)';ctx.fillRect(px+t*.2,py+t*.65,t*.49,t*.09);
    if(noise>.89){
     ctx.strokeStyle='rgba(160,153,127,.3)';ctx.lineWidth=t*.035;
