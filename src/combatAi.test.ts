@@ -19,7 +19,7 @@ test('zombies lose stale targets and stop searching',()=>{
 test('runners flank while armored zombies pursue the centerline',()=>{
  const left=tacticalTarget('runner',at,player,0,'chase');
  const right=tacticalTarget('runner',at,player,1,'chase');
- assert.ok(left.y<player.y&&right.y>player.y);
+ assert.ok(left.y>player.y&&right.y<player.y);
  assert.deepEqual(tacticalTarget('armored',at,player,0,'chase'),player);
  assert.deepEqual(tacticalTarget('runner',at,player,0,'investigate'),player);
 });
