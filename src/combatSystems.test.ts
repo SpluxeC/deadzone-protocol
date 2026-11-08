@@ -36,3 +36,15 @@ test('armor absorbs hits, overflow damages health',()=>{
 
 import {bossAttack,bossImpact} from './combatSystems.ts';
 test('boss patterns rotate every five waves and give distinct dodge zones',()=>{assert.equal(bossAttack(5),'slam');assert.equal(bossAttack(10),'charge');assert.equal(bossAttack(15),'shockwave');assert.equal(bossAttack(20),'slam');assert.equal(bossImpact('slam',2),19);assert.equal(bossImpact('slam',3),0);assert.equal(bossImpact('charge',2),0);assert.equal(bossImpact('shockwave',3),14)});
+
+import {bossIdentity,distanceToSegment} from './combatSystems.ts';
+test('boss identities rotate reliably and a charge only hits its locked path',()=>{
+ assert.equal(bossIdentity(5).name,'THE BUTCHER');
+ assert.equal(bossIdentity(10).name,'THE BREAKER');
+ assert.equal(bossIdentity(15).name,'THE REVENANT');
+ assert.equal(bossIdentity(20).name,'THE BUTCHER');
+ const start={x:1,y:1},end={x:5,y:1};
+ assert.equal(distanceToSegment({x:3,y:1},start,end),0);
+ assert.equal(distanceToSegment({x:3,y:3},start,end),2);
+ assert.equal(distanceToSegment({x:7,y:1},start,end),2);
+});
