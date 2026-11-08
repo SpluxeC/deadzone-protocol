@@ -1,7 +1,9 @@
 export type LootCrate={x:number;y:number;kind?:'supply'|'weapon';orientation?:'horizontal'|'vertical'};
 export type RoomTheme='medical'|'security'|'maintenance'|'storage'|'supply'|'contaminated';
 export type DungeonRoom={x:number;y:number;w:number;h:number;cx:number;cy:number;theme:RoomTheme};
-export type DungeonLayout={width:number;height:number;seed:number;tiles:number[];entrance:{x:number;y:number};extraction:{x:number;y:number};extractionSize?:1|2;loot:LootCrate[];enemies:{x:number;y:number}[];rooms?:DungeonRoom[]};
+export type FloorEvent={x:number;y:number;kind:'supplyDrop'|'infectedNest'|'fieldHospital'|'powerSurge'};
+export type SecretRoom={door:{x:number;y:number};center:{x:number;y:number};rewardIndex:number};
+export type DungeonLayout={width:number;height:number;seed:number;tiles:number[];entrance:{x:number;y:number};extraction:{x:number;y:number};extractionSize?:1|2;loot:LootCrate[];enemies:{x:number;y:number}[];rooms?:DungeonRoom[];events?:FloorEvent[];secret?:SecretRoom};
 /** All four cells covered by a modern elevator; old save layouts use one cell. */
 export function elevatorCells(map:DungeonLayout):{x:number;y:number}[]{
  const {x,y}=map.extraction;
@@ -113,5 +115,44 @@ const themes:RoomTheme[]=['medical','security','maintenance','storage','supply',
 const atmosphereRooms: DungeonRoom[]=rooms.map((room,i)=>({
  ...room,theme:themes[(Math.floor(rand()*themes.length)+i)%themes.length]
 }));
-return{width,height,seed,tiles,entrance,extraction,extractionSize,loot,enemies,rooms:atmosphereRooms};
+// One deterministic event per modern floor (sometimes two on deeper waves).
+const events:FloorEvent[]=[];
+if(layoutVersion===3){
+ const eventKinds:FloorEvent['kind'][]=['supplyDrop','infectedNest','fieldHospital','powerSurge'];
+ const candidatesRooms=shuffle(rooms.filter(room=>Math.hypot(room.cx-entrance.x,room.cy-entrance.y)>8&&Math.hypot(room.cx-extraction.x,room.cy-extraction.y)>3));
+ for(const room of candidatesRooms.slice(0,2)){
+  const kind=eventKinds[Math.floor(rand()*eventKinds.length)];
+  const x=room.cx,y=room.cy;
+  if(!loot.some(c=>Math.hypot(c.x-x,c.y-y)<2)&&!enemies.some(e=>Math.hypot(e.x-x,e.y-y)<2)){
+   events.push({x,y,kind});break;
+  }
+ }
+}
+// A rare 3x3 annex is carved out of solid rock, with one disguised sealed doorway.
+// Existing normal routes stay intact until the player interacts with the door.
+let secret:SecretRoom|undefined;
+if(layoutVersion===3&&rand()<.13){
+ const shuffledRooms=shuffle([...rooms]);
+ outer:for(const room of shuffledRooms){
+  if(Math.hypot(room.cx-entrance.x,room.cy-entrance.y)<9)continue;
+  for(const side of shuffle(['right','left','down','up'] as const)){
+   const dx=side==='right'?1:side==='left'?-1:0;
+   const dy=side==='down'?1:side==='up'?-1:0;
+   const door={x:dx?dx>0?room.x+room.w:room.x-1:room.cx,
+               y:dy?dy>0?room.y+room.h:room.y-1:room.cy};
+   const center={x:door.x+dx*2,y:door.y+dy*2};
+   const blank:{x:number;y:number}[]=[];
+   for(let yy=center.y-1;yy<=center.y+1;yy++)for(let xx=center.x-1;xx<=center.x+1;xx++)blank.push({x:xx,y:yy});
+   if(blank.some(p=>p.x<2||p.y<2||p.x>=width-2||p.y>=height-2||tiles[tileKey(p.x,p.y)]!==1))continue;
+   if(tiles[tileKey(door.x,door.y)]!==1)continue;
+   for(const p of blank)carve(p.x,p.y);
+   // Keep the doorway solid until deliberately opened.
+   const rewardIndex=loot.length;
+   loot.push({x:center.x,y:center.y,kind:'weapon',orientation:'horizontal'});
+   secret={door,center,rewardIndex};
+   break outer;
+  }
+ }
+}
+return{width,height,seed,tiles,entrance,extraction,extractionSize,loot,enemies,rooms:atmosphereRooms,events,secret};
 }
