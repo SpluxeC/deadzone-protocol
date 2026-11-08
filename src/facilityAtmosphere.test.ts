@@ -36,3 +36,20 @@ test('atmosphere is deterministic and works on migrated legacy floor layouts',()
  }
  for(let i=0;i<100;i++)assert.equal(environmentNoise(i,27,110),environmentNoise(i,27,110));
 });
+
+test('ruined facilities include expanded abandoned equipment and survivor messages',()=>{
+ const seenProps=new Set<string>(),seenStories=new Set<string>(),lighting=new Set<string>();
+ for(let seed=1;seed<=180;seed++){
+  const a=facilityAtmosphere(generateDungeon(seed,64,48,3));
+  for(const p of a.props)seenProps.add(p.kind);
+  for(const d of a.decals)seenStories.add(d.kind);
+  for(const l of a.lights)lighting.add(l.kind);
+  assert.ok(a.props.length<=a.rooms.length*10,'scenery count is bounded per room');
+  assert.ok(a.lights.length<=a.rooms.length*2,'light count is bounded per room');
+ }
+ for(const kind of ['gurney','wheelchair','oxygen','serverRack','radio','sandbags','brokenDrone','toolbox','pallet','bodyBag','fallenLight','hazmat'])
+  assert.ok(seenProps.has(kind),'missing facility prop '+kind);
+ for(const kind of ['help','hand','lastStand','evac','doNotOpen','countdown','impact','biohazard'])
+  assert.ok(seenStories.has(kind),'missing environmental story '+kind);
+ for(const kind of ['red','cold','amber','dark'])assert.ok(lighting.has(kind),'missing lighting type '+kind);
+});
