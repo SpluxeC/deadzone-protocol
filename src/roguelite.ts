@@ -6,7 +6,7 @@ import {CLASS_INFO,classIds,makeSquadmate,migrateSquadmate,applyLethalDamage,ble
 import {migrateProfile,unlocks,achievements,buyUnlock,allowedPrimary,allowedMelee,allowedTeammates,sanitizeChoice,startingKit,progressAchievements,performancePayout,eligibleRecruit,type ProfileV5,type UnlockId,type RunPerformance} from './metaprogression';
 import {camera,toWorld,renderDungeon,drawSprite,drawElevator,drawMilitaryCrate,drawLootPopup,drawBar,drawHazard,hudColor,type View,type SpriteKind} from './rogueliteVisuals';
 import {renderFacility} from './facilityAtmosphere';
-import {drawBossArt,drawBossImpact} from './bossArt';
+import {drawBossArt,drawBossImpact,drawBossDeath} from './bossArt';
 import {elevatorInRange,elevatorCells,crateInRange} from './dungeon';
 import {nextCharacterMotion,type CharacterMotion} from './characterMotion';
 import {gearIcon,gearIconModels} from './gearIcons';
@@ -20,7 +20,7 @@ import {squadMove,spacedSquadPosition} from './squadMovement';
 import './rogueliteTheme.css';
 import './style.css';
 
-type Unit={x:number;y:number;hp:number;maxHp:number;speed:number;attack:number;boss?:boolean;alive:boolean;kind?:ZombieKind;windup?:number;phase?:number;aggro?:number;suppressed?:number;scoutMarked?:number;bossTarget?:{x:number;y:number};bossOrigin?:{x:number;y:number};summoned?:boolean};
+type Unit={x:number;y:number;hp:number;maxHp:number;speed:number;attack:number;boss?:boolean;alive:boolean;kind?:ZombieKind;windup?:number;phase?:number;aggro?:number;suppressed?:number;scoutMarked?:number;bossTarget?:{x:number;y:number};bossOrigin?:{x:number;y:number};summoned?:boolean;bossRecover?:number};
 type Ally=Squadmate;
 type Run={wave:number;credits:number;hp:number;armor:number;mag:number;reserve:number;medkits:number;weaponTier:number;damage:number;maxMag:number;player:{x:number;y:number};enemies:Unit[];allies:Ally[];spawned:number;kills:number;bosses:number;cleared:number;seed:number;stage:'fight'|'shop';looted:number[];squadAmmo:number;activeSlot?:WeaponSlot;sideMag?:number;sideReserve?:number;reloadTimer?:number;reloadSlot?:WeaponSlot|null;playerDowned?:number;playerDead?:boolean;squadOrder?:SquadOrder;focusTarget?:number|null;reviveProgress?:number;equipment?:{loadout:Loadout;bag:Gear[];ammo:AmmoBank;capacity:number;rerolls:number;};killsTotal?:number;lootedTotal?:number;flawlessWaves?:number;bestSquad?:number;waveStartHp?:number;waveStartArmor?:number;waveHit?:boolean;explored?:number[];layoutVersion?:1|2|3;waveSeconds?:number;runSeconds?:number;waveStartKills?:number;waveStartLooted?:number;peakThreat?:number;triggeredEvents?:number[];secretOpened?:boolean;}
 type Profile=ProfileV5;
@@ -68,7 +68,7 @@ let lootPopups:LootPopup[]=[];
 let combatFx:CombatFx[]=[],bloodFx:BloodFx[]=[],fog:FogState|null=null;
 let moveAnalog=zeroStick(),aimAnalog=zeroStick(),cameraZoom=1;
 // Desktop mouse aiming is active only while the pointer is over the dungeon canvas.
-let bossEffects:{kind:ReturnType<typeof bossAttack>;x:number;y:number;age:number}[]=[];
+let bossEffects:{kind:ReturnType<typeof bossAttack>;x:number;y:number;age:number;death?:boolean;heading?:number}[]=[];
 let mouseAimActive=false,mouseAimX=.5,mouseAimY=.5;let pathClock=0,pathField:Int32Array|null=null,bossPulse=0,noiseClock=0,squadClock=0;
 const store=(suffix:string)=>'deadzone-roguelite-v1-slot-'+slot+'-'+suffix;
 function loadProfile(){try{profile=migrateProfile(JSON.parse(localStorage.getItem(store('profile'))||'null'))}catch{profile=migrateProfile(null)}}
@@ -257,7 +257,7 @@ function shoot(){
  if(def.ammo&&w.mag===0)reload();
  save();
 }
-function defeat(e:Unit){if(!run||!e.alive)return;if(e.boss)bossEffects.push({kind:bossAttack(run.wave),x:e.x,y:e.y,age:0});e.alive=false;run.kills++;run.killsTotal=(run.killsTotal??0)+1;run.credits+=killPayout(run.wave,!!e.boss);if(e.boss){run.bosses++;notice(bossIdentity(run.wave).name+' ELIMINATED');const eq=ensureEquipment(run),reward=rareLoot(run.seed,run.wave,999,true);if(reward&&canAddItem(eq.bag,eq.ammo,run.medkits,eq.capacity)){eq.bag.push(reward);notice('BOSS REWARD: '+itemName(reward))}else{run.credits+=250;notice('BOSS REWARD: +250 credits (backpack full)')}}}
+function defeat(e:Unit){if(!run||!e.alive)return;if(e.boss)bossEffects.push({kind:bossAttack(run.wave),x:e.x,y:e.y,age:0,death:true,heading:Math.atan2(run.player.y-e.y,run.player.x-e.x)});e.alive=false;run.kills++;run.killsTotal=(run.killsTotal??0)+1;run.credits+=killPayout(run.wave,!!e.boss);if(e.boss){run.bosses++;notice(bossIdentity(run.wave).name+' ELIMINATED');const eq=ensureEquipment(run),reward=rareLoot(run.seed,run.wave,999,true);if(reward&&canAddItem(eq.bag,eq.ammo,run.medkits,eq.capacity)){eq.bag.push(reward);notice('BOSS REWARD: '+itemName(reward))}else{run.credits+=250;notice('BOSS REWARD: +250 credits (backpack full)')}}}
 function reload(){if(!run||run.stage!=='fight'||run.reloadTimer||(run.playerDowned??0)>0)return;const w=activeWeapon(run);if(!w)return;const def=weaponDefs[w.model];if(!def.ammo)return;
  const eq=ensureEquipment(run),cap=effectiveStats(w).capacity,available=eq.ammo[def.ammo];
  if(w.mag>=cap||available<=0)return;run.reloadTimer=effectiveStats(w).reload;run.reloadSlot=run.activeSlot??'primary';notice('Reloading '+def.name+'...');save()}
@@ -637,7 +637,7 @@ function explorationSources():Explorer[]{
 }
 function update(dt:number){if(!run||!plan||paused||run.stage!=='fight')return;
 combatFx=ageCombatFx(combatFx,dt);
- bossEffects=bossEffects.filter(fx=>(fx.age+=dt)<.55);
+ bossEffects=bossEffects.filter(fx=>(fx.age+=dt)<(fx.death?1.15:.55));
  bloodFx=ageBloodFx(bloodFx,dt);
 shotCooldown=Math.max(0,shotCooldown-dt);noiseClock=Math.max(0,noiseClock-dt);if((run.reloadTimer??0)>0){run.reloadTimer=Math.max(0,(run.reloadTimer??0)-dt);if(run.reloadTimer===0)finishReload()}
  // Also reload an already-empty equipped magazine after loading a save or swapping guns.
@@ -678,6 +678,7 @@ squadUpdate(dt);
 if(fog&&updateFog(plan.map,fog,explorationSources()))run.explored=exploredIndices(fog);
 pathClock-=dt;if(pathClock<=0||!pathField){pathField=distanceField(plan.map,run.player);pathClock=.32}
 for(const e of run.enemies){if(!e.alive)continue;
+ e.bossRecover=Math.max(0,(e.bossRecover??0)-dt);
  e.suppressed=Math.max(0,(e.suppressed??0)-dt);e.scoutMarked=Math.max(0,(e.scoutMarked??0)-dt);const stats=zombieStats(e.kind??(e.boss?'boss':'shambler'));if(e.boss&&e.hp<e.maxHp*.5&&e.phase!==2){e.phase=2;notice(bossIdentity(run.wave).name+' · SECOND PHASE!');if(!e.summoned){e.summoned=true;for(let k=0;k<3;k++)spawnOne(false,false)}}
  const sight=Math.hypot(e.x-p.x,e.y-p.y),canDetect=sight<1.5||(sight<8&&canSee(e.x,e.y,p.x,p.y))||(noiseClock>0&&sight<12)||e.boss&&sight<18;if(canDetect)e.aggro=5;else e.aggro=Math.max(0,(e.aggro??0)-dt);
  e.attack=Math.max(0,e.attack-dt);
@@ -696,6 +697,7 @@ for(const e of run.enemies){if(!e.alive)continue;
  if(impact)hurtPlayer(impact);
  for(const a of run.allies){const allyImpact=strike(a);if(allyImpact)hurtAlly(a,allyImpact)}
  bossEffects.push({kind:ability,x:ability==='slam'?locked.x:e.x,y:ability==='slam'?locked.y:e.y,age:0});
+ e.bossRecover=.55;
  e.bossTarget=undefined;e.bossOrigin=undefined;
  bossPulse=.28}continue}
  const nearestAlly=run.allies.filter(a=>a.hp>0&&!a.dead&&a.downed<=0).sort((a,b)=>Math.hypot(a.x-e.x,a.y-e.y)-Math.hypot(b.x-e.x,b.y-e.y))[0];
@@ -782,14 +784,14 @@ function draw(){
  }
  ctx.save();if(fog)clipToExplored(ctx,m,v,fog);
  drawBloodFx(ctx,v,bloodFx,'ground');
- for(const fx of bossEffects)drawBossImpact(ctx,v,fx.kind,fx.x,fx.y,fx.age);
+ for(const fx of bossEffects){if(fx.death)drawBossDeath(ctx,v,fx.kind,fx.x,fx.y,fx.heading??0,fx.age);else drawBossImpact(ctx,v,fx.kind,fx.x,fx.y,fx.age)}
  ctx.restore();
  for(const e of r.enemies){if(!e.alive||!isKnown(e.x,e.y))continue;const kind=(e.kind??(e.boss?'boss':'shambler')) as SpriteKind;
   const direction=Math.atan2(r.player.y-e.y,r.player.x-e.x);
   const motion=animatedPose(e,now,direction,e.boss?2.2:kind==='runner'?4:2.8);
   const boss=e.boss?bossIdentity(r.wave):null;
   if(e.boss){ctx.save();ctx.strokeStyle=boss!.color;ctx.lineWidth=Math.max(2,v.tile*.095);ctx.globalAlpha=.5+.2*Math.sin(now/240);ctx.beginPath();ctx.arc(v.ox+e.x*v.tile,v.oy+e.y*v.tile,v.tile*.85,0,Math.PI*2);ctx.stroke();ctx.restore()}
-  if(boss)drawBossArt(ctx,v,boss.ability,{x:e.x,y:e.y,heading:motion.angle,stride:motion.phase,speed:motion.speed,time:now/1000,windup:e.windup?Math.min(1,(e.windup??0)/1.1):0,recover:e.attack>0&&e.attack<.42?1-e.attack/.42:0,enraged:e.phase===2});
+  if(boss)drawBossArt(ctx,v,boss.ability,{x:e.x,y:e.y,heading:motion.angle,stride:motion.phase,speed:motion.speed,time:now/1000,windup:e.windup?Math.min(1,(e.windup??0)/1.1):0,recover:Math.min(1,(e.bossRecover??0)/.55),enraged:e.phase===2});
   else drawSprite(ctx,kind,v,e.x,e.y,{angle:motion.angle,stride:motion.phase,motionSpeed:motion.speed,idleTime:now/1000,scale:kind==='bruiser'?1.32:kind==='runner'?.93:1.12});
 
   if(boss){ctx.save();ctx.textAlign='center';ctx.font='bold '+Math.max(11,v.tile*.4)+'px system-ui';ctx.fillStyle=boss.color;ctx.shadowColor='#000';ctx.shadowBlur=5;ctx.fillText(boss.name,v.ox+e.x*v.tile,v.oy+(e.y-1.42)*v.tile);ctx.restore()}
