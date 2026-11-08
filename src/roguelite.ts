@@ -21,7 +21,7 @@ import './style.css';
 
 type Unit={x:number;y:number;hp:number;maxHp:number;speed:number;attack:number;boss?:boolean;alive:boolean;kind?:ZombieKind;windup?:number;phase?:number;aggro?:number;suppressed?:number;scoutMarked?:number};
 type Ally=Squadmate;
-type Run={wave:number;credits:number;hp:number;armor:number;mag:number;reserve:number;medkits:number;weaponTier:number;damage:number;maxMag:number;player:{x:number;y:number};enemies:Unit[];allies:Ally[];spawned:number;kills:number;bosses:number;cleared:number;seed:number;stage:'fight'|'shop';looted:number[];squadAmmo:number;activeSlot?:WeaponSlot;sideMag?:number;sideReserve?:number;reloadTimer?:number;reloadSlot?:WeaponSlot|null;playerDowned?:number;playerDead?:boolean;squadOrder?:SquadOrder;focusTarget?:number|null;reviveProgress?:number;equipment?:{loadout:Loadout;bag:Gear[];ammo:AmmoBank;capacity:number;rerolls:number;};killsTotal?:number;lootedTotal?:number;flawlessWaves?:number;bestSquad?:number;waveStartHp?:number;waveStartArmor?:number;waveHit?:boolean;explored?:number[];layoutVersion?:1|2|3;waveSeconds?:number;runSeconds?:number;waveStartKills?:number;waveStartLooted?:number;peakThreat?:number;}
+type Run={wave:number;credits:number;hp:number;armor:number;mag:number;reserve:number;medkits:number;weaponTier:number;damage:number;maxMag:number;player:{x:number;y:number};enemies:Unit[];allies:Ally[];spawned:number;kills:number;bosses:number;cleared:number;seed:number;stage:'fight'|'shop';looted:number[];squadAmmo:number;activeSlot?:WeaponSlot;sideMag?:number;sideReserve?:number;reloadTimer?:number;reloadSlot?:WeaponSlot|null;playerDowned?:number;playerDead?:boolean;squadOrder?:SquadOrder;focusTarget?:number|null;reviveProgress?:number;equipment?:{loadout:Loadout;bag:Gear[];ammo:AmmoBank;capacity:number;rerolls:number;};killsTotal?:number;lootedTotal?:number;flawlessWaves?:number;bestSquad?:number;waveStartHp?:number;waveStartArmor?:number;waveHit?:boolean;explored?:number[];layoutVersion?:1|2|3;waveSeconds?:number;runSeconds?:number;waveStartKills?:number;waveStartLooted?:number;peakThreat?:number;triggeredEvents?:number[];secretOpened?:boolean;}
 type Profile=ProfileV5;
 const root=document.querySelector<HTMLDivElement>('#app')!;
 root.innerHTML=`<div id="rogue" style="height:100dvh;display:flex;flex-direction:column;background:#0c1416;color:#eaf0eb;font:14px system-ui;overflow:hidden">
@@ -93,7 +93,7 @@ function activeWeapon(r:Run):Weapon|null{return ensureEquipment(r).loadout[r.act
 function inventorySummary(r:Run){const eq=ensureEquipment(r);return usedSlots(eq.bag,eq.ammo,r.medkits)+'/'+eq.capacity}
 function gearId(r:Run):string{return 'gear-'+r.wave+'-'+r.kills+'-'+Math.floor(Math.random()*1e9)}
 
-function loadRun(){try{const r=JSON.parse(localStorage.getItem(store('run'))||'null') as Run|null;if(!r||!Number.isFinite(r.wave)||!['fight','shop'].includes(r.stage))return false;run=r;run.layoutVersion??=1;plan=makeWave(run.seed,run.wave,run.layoutVersion);run.looted??=[];run.squadAmmo??=run.allies.length*8;run.maxMag??=12;run.weaponTier??=1;run.damage??=1;run.activeSlot??='primary';run.sideMag??=12;run.sideReserve??=48;run.reloadTimer??=0;run.reloadSlot??=null;run.killsTotal??=0;run.lootedTotal??=0;run.flawlessWaves??=0;run.bestSquad??=run.allies.length;run.waveHit??=false;run.playerDowned??=0;run.playerDead??=false;run.squadOrder??='follow';run.focusTarget??=null;run.reviveProgress??=0;run.waveSeconds??=0;run.runSeconds??=0;run.waveStartKills??=run.killsTotal??0;run.waveStartLooted??=run.lootedTotal??0;run.peakThreat??=0;run.allies=(run.allies||[]).map((a,i)=>migrateSquadmate(a,i));
+function loadRun(){try{const r=JSON.parse(localStorage.getItem(store('run'))||'null') as Run|null;if(!r||!Number.isFinite(r.wave)||!['fight','shop'].includes(r.stage))return false;run=r;run.layoutVersion??=1;plan=makeWave(run.seed,run.wave,run.layoutVersion);run.triggeredEvents??=[];if(run.secretOpened&&plan.map.secret){const d=plan.map.secret.door;plan.map.tiles[d.y*plan.map.width+d.x]=0}run.looted??=[];run.squadAmmo??=run.allies.length*8;run.maxMag??=12;run.weaponTier??=1;run.damage??=1;run.activeSlot??='primary';run.sideMag??=12;run.sideReserve??=48;run.reloadTimer??=0;run.reloadSlot??=null;run.killsTotal??=0;run.lootedTotal??=0;run.flawlessWaves??=0;run.bestSquad??=run.allies.length;run.waveHit??=false;run.playerDowned??=0;run.playerDead??=false;run.squadOrder??='follow';run.focusTarget??=null;run.reviveProgress??=0;run.waveSeconds??=0;run.runSeconds??=0;run.waveStartKills??=run.killsTotal??0;run.waveStartLooted??=run.lootedTotal??0;run.peakThreat??=0;run.allies=(run.allies||[]).map((a,i)=>migrateSquadmate(a,i));
  run.player=nearestWalkable(plan.map,run.player);
  const occupied=[run.player];
  for(const a of run.allies){const p=nearestWalkable(plan.map,a);const placed=spacedSquadPosition(plan.map,p,occupied);a.x=placed.x;a.y=placed.y;occupied.push(a);}
@@ -153,7 +153,7 @@ function preRun(){loadProfile();paused=true;overlay.hidden=false;const p=profile
  overlay.querySelector<HTMLButtonElement>('#launch-run')!.onclick=()=>{read();newRun()};
  overlay.querySelector<HTMLButtonElement>('#prep-back')!.onclick=menu;
 }
-function buildFloor(seed:number,wave:number){combatFx=[];bloodFx=[];lootPopups=[];poseCache=new WeakMap<object,CharacterMotion>();if(run)run.layoutVersion=3;plan=makeWave(seed,wave,3);if(!run)return;run.explored=[];fog=createFog(plan.map);const p=plan.map.entrance;run.player={x:p.x,y:p.y};run.enemies=[];run.spawned=0;run.kills=0;run.looted=[];run.stage='fight';run.reloadTimer=0;run.reloadSlot=null;ensureEquipment(run).rerolls=0;run.focusTarget=null;run.waveHit=false;run.waveSeconds=0;run.waveStartKills=run.killsTotal??0;run.waveStartLooted=run.lootedTotal??0;run.peakThreat=0;run.waveStartHp=run.hp;run.waveStartArmor=run.armor;pathClock=0;pathField=null;bossPulse=0;noiseClock=0;const occupied=[run.player];for(let i=0;i<run.allies.length;i++){const ally=run.allies[i];const wanted={x:p.x-1-i*.45,y:p.y+1+i*.45};const placed=spacedSquadPosition(plan.map,wanted,occupied);ally.x=placed.x;ally.y=placed.y;occupied.push(ally);ally.anchor={x:ally.x,y:ally.y};ally.reviveProgress=0}spawnClock=0;allyClock=0;spawnInitial();save()}
+function buildFloor(seed:number,wave:number){combatFx=[];bloodFx=[];lootPopups=[];poseCache=new WeakMap<object,CharacterMotion>();if(run)run.layoutVersion=3;plan=makeWave(seed,wave,3);if(!run)return;run.explored=[];run.triggeredEvents=[];run.secretOpened=false;fog=createFog(plan.map);const p=plan.map.entrance;run.player={x:p.x,y:p.y};run.enemies=[];run.spawned=0;run.kills=0;run.looted=[];run.stage='fight';run.reloadTimer=0;run.reloadSlot=null;ensureEquipment(run).rerolls=0;run.focusTarget=null;run.waveHit=false;run.waveSeconds=0;run.waveStartKills=run.killsTotal??0;run.waveStartLooted=run.lootedTotal??0;run.peakThreat=0;run.waveStartHp=run.hp;run.waveStartArmor=run.armor;pathClock=0;pathField=null;bossPulse=0;noiseClock=0;const occupied=[run.player];for(let i=0;i<run.allies.length;i++){const ally=run.allies[i];const wanted={x:p.x-1-i*.45,y:p.y+1+i*.45};const placed=spacedSquadPosition(plan.map,wanted,occupied);ally.x=placed.x;ally.y=placed.y;occupied.push(ally);ally.anchor={x:ally.x,y:ally.y};ally.reviveProgress=0}spawnClock=0;allyClock=0;spawnInitial();save()}
 function newRun(){loadProfile();const kit=startingKit(profile);run={wave:1,credits:kit.credits,hp:100,armor:kit.armor,mag:kit.loadout.primary?.mag??0,reserve:kit.ammo.rifle,medkits:kit.medkits,weaponTier:1,damage:1,maxMag:kit.loadout.primary?.mag??0,player:{x:0,y:0},enemies:[],allies:kit.teammate==='none'?[]:[makeSquadmate(kit.teammate,'starter-01',0,0)],spawned:0,kills:0,bosses:0,cleared:0,seed:Math.floor(Math.random()*2000000000),stage:'fight',looted:[],squadAmmo:kit.teammate==='none'?0:8,activeSlot:'primary',sideMag:kit.loadout.secondary?.mag??12,sideReserve:kit.ammo.light,reloadTimer:0,reloadSlot:null,playerDowned:0,playerDead:false,squadOrder:'follow',focusTarget:null,reviveProgress:0,killsTotal:0,lootedTotal:0,flawlessWaves:0,bestSquad:kit.teammate==='none'?0:1,waveHit:false,equipment:{loadout:kit.loadout,bag:[],ammo:kit.ammo,capacity:kit.capacity,rerolls:0}};buildFloor(run.seed,1);overlay.hidden=true;paused=false;notice('WAVE 1 · Reach the elevator before the horde overwhelms you')}
 function isFloor(x:number,y:number){return !!plan&&walkableTile(plan.map,x,y)}
 function canSee(ax:number,ay:number,bx:number,by:number){const dist=Math.hypot(ax-bx,ay-by),count=Math.ceil(dist*4);for(let i=1;i<count;i++){const a=i/count;if(!isFloor(ax+(bx-ax)*a,ay+(by-ay)*a))return false}return true}
@@ -322,6 +322,39 @@ function waveReport(){
  overlay.querySelector<HTMLButtonElement>('#extraction-continue')!.onclick=shop;
  overlay.querySelector<HTMLButtonElement>('#extraction-cashout')!.onclick=()=>finishRun(true);
 }
+function openSecret(){
+ if(!run||!plan||!plan.map.secret||run.secretOpened)return;
+ const d=plan.map.secret.door;
+ if(Math.hypot(run.player.x-d.x,run.player.y-d.y)>1.65)return;
+ run.secretOpened=true;plan.map.tiles[d.y*plan.map.width+d.x]=0;
+ notice('SECRET ROOM DISCOVERED · Hidden military cache');
+ save();
+}
+function triggerFloorEvents(){
+ if(!run||!plan)return;
+ const events=plan.map.events??[];
+ for(let i=0;i<events.length;i++){
+  const event=events[i];
+  if(run.triggeredEvents?.includes(i)||Math.hypot(run.player.x-event.x,run.player.y-event.y)>1.5)continue;
+  (run.triggeredEvents??=[]).push(i);
+  switch(event.kind){
+   case 'supplyDrop':{
+    const amount=90+run.wave*15;run.credits+=amount;
+    notice('SUPPLY DROP RECOVERED · +'+amount+' credits');break;
+   }
+   case 'fieldHospital':
+    run.hp=Math.min(100,run.hp+35);run.medkits++;
+    notice('ABANDONED AID STATION · +35 health, +1 medkit');break;
+   case 'powerSurge':
+    run.armor=Math.min(100,run.armor+35);
+    notice('EMERGENCY POWER RESTORED · +35 armor');break;
+   case 'infectedNest':
+    for(let j=0;j<5;j++)spawnOne(false,false);
+    notice('INFECTED NEST DISTURBED · Horde alerted!');break;
+  }
+  save();
+ }
+}
 function elevator(){
  if(!run||!plan||run.stage!=='fight'||(run.playerDowned??0)>0)return;
  const p=plan.map.extraction;
@@ -335,10 +368,12 @@ function elevator(){
  save();
  waveReport();
 }
-type NearbyInteraction={kind:'loot';index:number}|{kind:'elevator'};
+type NearbyInteraction={kind:'loot';index:number}|{kind:'elevator'}|{kind:'secret'};
 function nearbyInteraction():NearbyInteraction|null{
  if(!run||!plan||paused||run.stage!=='fight'||(run.playerDowned??0)>0)return null;
  const p=run.player;
+ const secret=plan.map.secret;
+ if(secret&&!run.secretOpened&&Math.hypot(p.x-secret.door.x,p.y-secret.door.y)<=1.65)return {kind:'secret'};
  const index=plan.map.loot.findIndex((item,i)=>!run!.looted.includes(i)&&crateInRange(item,p));
  if(index>=0)return {kind:'loot',index};
  const exit=plan.map.extraction;
@@ -349,6 +384,7 @@ function interact(){
  const target=nearbyInteraction();
  if(!target)return;
  if(target.kind==='loot')search(target.index);
+ else if(target.kind==='secret')openSecret();
  else elevator();
 }
 function buySupply(cost:number,action:()=>boolean){if(!run||run.credits<cost){notice('Insufficient credits');return}if(!action())return;run.credits-=cost;save();shop()}
@@ -606,6 +642,7 @@ shotCooldown=Math.max(0,shotCooldown-dt);noiseClock=Math.max(0,noiseClock-dt);if
  if(readyWeapon&&weaponDefs[readyWeapon.model].ammo&&readyWeapon.mag===0&&!run.reloadTimer)reload();
  const p=run.player;let dx=0,dy=0;if(keys.has('KeyW')||keys.has('ArrowUp')||touch.has('up'))dy--;if(keys.has('KeyS')||keys.has('ArrowDown')||touch.has('down'))dy++;if(keys.has('KeyA')||keys.has('ArrowLeft')||touch.has('left'))dx--;if(keys.has('KeyD')||keys.has('ArrowRight')||touch.has('right'))dx++;const len=Math.hypot(dx,dy);if((run.playerDowned??0)===0){if(len)moveUnit(p,dx/len,dy/len,dt*(keys.has('ShiftLeft')?4:3));else if(moveAnalog.magnitude>0)moveUnit(p,moveAnalog.x,moveAnalog.y,dt*3)}
 rescueAction(dt,keys.has('KeyV')||touch.has('revive'));
+if((run.playerDowned??0)===0)triggerFloorEvents();
 if(aimAnalog.magnitude>0){aim={x:aimAnalog.x/aimAnalog.magnitude,y:aimAnalog.y/aimAnalog.magnitude}}
 else if(mouseAimActive&&canvas.width>0&&canvas.height>0){
  // Recalculate against the current player position; a stationary cursor still aims
@@ -683,6 +720,25 @@ function draw(){
  const r=run,m=plan.map,v=camera(m,r.player,cw,ch,cameraZoom);lastView=v;
  renderDungeon(ctx,m,v,r.wave);
  renderFacility(ctx,m,v,performance.now());
+ // Incident sites are only drawn while unexplored; activated sites are dormant.
+ for(const [i,event] of (m.events??[]).entries()){
+  if(r.triggeredEvents?.includes(i)||fog&&!discoveredAt(m,fog,event.x,event.y))continue;
+  const x=v.ox+event.x*v.tile,y=v.oy+event.y*v.tile;
+  ctx.save();ctx.fillStyle=event.kind==='infectedNest'?'#b34338':'#e1b76a';
+  ctx.globalAlpha=.7+.2*Math.sin(performance.now()/420);
+  ctx.beginPath();ctx.arc(x,y,v.tile*.26,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='#ecf1e9';ctx.lineWidth=Math.max(1,v.tile*.055);ctx.strokeRect(x-v.tile*.2,y-v.tile*.2,v.tile*.4,v.tile*.4);
+  ctx.restore();
+ }
+ if(m.secret&&!r.secretOpened){
+  const d=m.secret.door;
+  if(!fog||discoveredAt(m,fog,d.x,d.y)){
+   const x=v.ox+d.x*v.tile,y=v.oy+d.y*v.tile;
+   ctx.save();ctx.fillStyle='#495a58';ctx.fillRect(x-v.tile*.4,y-v.tile*.4,v.tile*.8,v.tile*.8);
+   ctx.strokeStyle='#a99a72';ctx.lineWidth=Math.max(1,v.tile*.07);ctx.strokeRect(x-v.tile*.31,y-v.tile*.31,v.tile*.62,v.tile*.62);
+   ctx.fillStyle='#bfb292';ctx.fillRect(x-v.tile*.06,y-v.tile*.12,v.tile*.12,v.tile*.24);ctx.restore();
+  }
+ }
  // Unknown floor and wall tiles remain visible, darkened; entities do not.
  if(fog)renderFog(ctx,m,v,fog);
  const isKnown=(x:number,y:number)=>!fog||discoveredAt(m,fog,x,y);
@@ -753,7 +809,7 @@ function draw(){
   const button=document.querySelector<HTMLButtonElement>('#'+id)!;
   button.disabled=!action;
   button.classList.toggle('in-range',!!action);
-  button.title=action?(action.kind==='loot'?(plan?.map.loot[action.index]?.kind==='weapon'?'Search weapon case':'Search supply container'):'Use elevator'):'Move closer to an object';
+  button.title=action?(action.kind==='loot'?(plan?.map.loot[action.index]?.kind==='weapon'?'Search weapon case':'Search supply container') :action.kind==='secret'?'Open concealed panel':'Use elevator'):'Move closer to an object';
  }
  const hpRatio=Math.max(0,r.hp/100),armorRatio=Math.max(0,r.armor/100);
  const hpBar=document.querySelector<HTMLElement>('#hud-hp')!,armorBar=document.querySelector<HTMLElement>('#hud-armor')!;
