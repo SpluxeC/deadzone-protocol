@@ -79,6 +79,10 @@ const palette=['#283633','#30403e','#2b3c48','#3b3830','#343c34','#393b2e','#334
 const rect=(ctx:CanvasRenderingContext2D,x:number,y:number,w:number,h:number,color:string)=>{ctx.fillStyle=color;ctx.fillRect(x,y,w,h)};
 function renderProp(ctx:CanvasRenderingContext2D,p:FacilityProp,v:View):void{
  const t=v.tile;ctx.save();ctx.translate(v.ox+p.x*t,v.oy+p.y*t);ctx.rotate(p.angle);
+ // Long soft directional shadow is deliberately offset from the object, so
+ // the geometry sits on the ground rather than floating above it.
+ ctx.fillStyle='rgba(1,7,9,.26)';ctx.beginPath();
+ ctx.ellipse(t*.15,t*.19,t*.53,t*.39,-.25,0,Math.PI*2);ctx.fill();
  ctx.fillStyle='rgba(1,8,10,.46)';ctx.fillRect(-t*.42,-t*.28,t*.87,t*.70);
  const metal='#667575',dark='#263437',highlight='#a2ada6',rust='#725243';
  if(p.kind==='bed'||p.kind==='stretcher'){
@@ -322,11 +326,27 @@ export function renderFacility(ctx:CanvasRenderingContext2D,map:DungeonLayout,v:
   const px=v.ox+light.x*t,py=v.oy+light.y*t;
   if(px<-t*9||py<-t*9||px>v.width+t*9||py>v.height+t*9)continue;
   const wobble=light.kind==='red'?.75+.25*Math.sin(time*.005+light.phase):1;
+  // Pool of darkness surrounds failed fixtures; working bulbs cast an
+  // illuminated center with a faint hardware silhouette.
+  ctx.save();
+  if(light.kind!=='dark'){
+   ctx.fillStyle='rgba(8,18,18,.35)';ctx.fillRect(px-t*.19,py-t*.18,t*.38,t*.36);
+   ctx.strokeStyle=light.kind==='red'?'#ba5c4b':light.kind==='amber'?'#b79e6b':'#a1bab5';
+   ctx.lineWidth=Math.max(1,t*.052);ctx.strokeRect(px-t*.14,py-t*.13,t*.28,t*.26);
+   ctx.fillStyle=light.kind==='red'?'rgba(255,89,65,.65)':light.kind==='amber'?'rgba(247,198,109,.65)':'rgba(189,234,220,.6)';
+   ctx.fillRect(px-t*.1,py-t*.09,t*.2,t*.17);
+  }
+  ctx.restore();
   const radius=t*(light.kind==='dark'?2.4:4.8);
   const gradient=ctx.createRadialGradient(px,py,0,px,py,radius);
   const color=light.kind==='red'?'142,30,31':light.kind==='amber'?'184,124,55':light.kind==='cold'?'97,165,164':'6,11,17';
   gradient.addColorStop(0,'rgba('+color+','+(light.kind==='dark'?.26:.15*wobble)+')');
   gradient.addColorStop(1,'rgba('+color+',0)');
   ctx.fillStyle=gradient;ctx.fillRect(px-radius,py-radius,radius*2,radius*2);
+  if(light.kind==='dark'){
+   const shade=ctx.createRadialGradient(px,py,t*.7,px,py,t*2.4);
+   shade.addColorStop(0,'rgba(2,8,12,.26)');shade.addColorStop(1,'rgba(2,8,12,0)');
+   ctx.fillStyle=shade;ctx.fillRect(px-t*2.4,py-t*2.4,t*4.8,t*4.8);
+  }
  }
 }
