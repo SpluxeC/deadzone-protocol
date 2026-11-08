@@ -1,5 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {makeSquadmate,migrateSquadmate,applyLethalDamage,bleed,revive,reviveDuration,shouldRevive,canRecruit,equipClassWeapon,classFireDelay,classRange,classDamage,gearUpgradeCost,CLASS_INFO,classIds,ALLY_BLEEDOUT,PLAYER_BLEEDOUT} from './squadSystems.ts';
+import {makeSquadmate,migrateSquadmate,applyLethalDamage,bleed,revive,reviveDuration,shouldRevive,canRecruit,equipClassWeapon,classFireDelay,classRange,classDamage,gearUpgradeCost,CLASS_INFO,classIds,ALLY_BLEEDOUT,PLAYER_BLEEDOUT,squadWeapon,setSquadWeaponSlot,refillSquadAmmo,squadAmmoNeeded,SQUAD_MAX_AMMO} from './squadSystems.ts';
 import {newWeapon,canClassEquip,armoryOffers} from './equipmentArmory.ts';
 test('all five specialist classes have valid distinct starting gear, abilities and prices',()=>{
  assert.equal(classIds.length,5);assert.equal(new Set(classIds.map(x=>CLASS_INFO[x].model)).size,5);
@@ -38,4 +38,42 @@ test('class rarity upgrades cost more through legendary and finish at exotic',()
 });
 test('rotating recruit offers contain a real allowed specialist',()=>{
  for(let w=1;w<=24;w++){const offer=armoryOffers(1223,w,0).find(v=>v.kind==='recruit');assert.ok(offer);assert.ok(classIds.includes(offer!.model as typeof classIds[number]));assert.equal(offer!.price,CLASS_INFO[offer!.model as keyof typeof CLASS_INFO].cost)}
+});
+
+test('squadmate loadouts support separate primary, secondary and melee weapons',()=>{
+ const ally=makeSquadmate('rifleman','loadout-01',3,4);
+ assert.equal(ally.weapon.model,'assault');
+ assert.equal(ally.secondaryWeapon.model,'pistol');
+ assert.equal(ally.meleeWeapon.model,'knife');
+ assert.equal(ally.activeSlot,'primary');
+ assert.equal(setSquadWeaponSlot(ally,'secondary'),true);
+ assert.equal(squadWeapon(ally).model,'pistol');
+ assert.equal(equipClassWeapon(ally,newWeapon('revolver',2,'sidearm')),true);
+ assert.equal(squadWeapon(ally).model,'revolver');
+ assert.equal(equipClassWeapon(ally,newWeapon('machete',2,'blade')),true);
+ assert.equal(setSquadWeaponSlot(ally,'melee'),true);
+ assert.equal(squadWeapon(ally).model,'machete');
+ assert.equal(setSquadWeaponSlot(ally,'primary'),true);
+ assert.equal(squadWeapon(ally).model,'assault');
+});
+test('refill all squad ammo respects the 400-round capacity and skips dead NPCs',()=>{
+ const a=makeSquadmate('heavy','heavy',2,2),b=makeSquadmate('medic','medic',3,3),dead=makeSquadmate('scout','dead',4,4);
+ a.magReserve=45;b.magReserve=300;dead.magReserve=0;dead.dead=true;
+ assert.equal(squadAmmoNeeded([a,b,dead]),(SQUAD_MAX_AMMO-45)+(SQUAD_MAX_AMMO-300));
+ assert.equal(refillSquadAmmo([a,b,dead]),455);
+ assert.equal(a.magReserve,400);
+ assert.equal(b.magReserve,400);
+ assert.equal(dead.magReserve,0);
+ assert.equal(refillSquadAmmo([a,b,dead]),0);
+});
+test('old squad saves gain sidearm and melee without losing primary gear',()=>{
+ const saved=makeSquadmate('engineer','old',8,9);
+ const legacy={...saved};delete (legacy as Partial<typeof legacy>).secondaryWeapon;
+ delete (legacy as Partial<typeof legacy>).meleeWeapon;
+ delete (legacy as Partial<typeof legacy>).activeSlot;
+ const restored=migrateSquadmate(legacy,0);
+ assert.equal(restored.weapon.model,'shotgun');
+ assert.equal(restored.secondaryWeapon.model,'pistol');
+ assert.equal(restored.meleeWeapon.model,'knife');
+ assert.equal(restored.activeSlot,'primary');
 });
