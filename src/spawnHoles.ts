@@ -23,6 +23,18 @@ export function spawnHoles(plan:WavePlan):SpawnHole[]{
    if(result.length>=8)return result;
   }
  }
+ // On very compact legacy maps, relax decorative clearances while preserving a
+ // walkable breach, separation, and distance from player spawn and elevator.
+ if(result.length<3){
+  for(let y=1;y<map.height-1&&result.length<3;y++)for(let x=1;x<map.width-1&&result.length<3;x++){
+   const p={x,y},floor=map.tiles[y*map.width+x]===0;
+   if(!floor||Math.hypot(x-map.entrance.x,y-map.entrance.y)<4||
+      Math.hypot(x-map.extraction.x,y-map.extraction.y)<1.8)continue;
+   if(map.loot.some(c=>Math.hypot(x-c.x,y-c.y)<.85))continue;
+   if(result.some(q=>Math.hypot(q.x-x,q.y-y)<1.8))continue;
+   result.push(p);
+  }
+ }
  return result;
 }
 /** Closure is indexed against the stable seed-based list. */
