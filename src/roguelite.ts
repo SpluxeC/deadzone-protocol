@@ -2,7 +2,7 @@ import {generateDungeon,type DungeonLayout} from './dungeon';
 import {makeWave,killPayout,clearPayout,permanentPayout,extractionSpawnInterval,extractionActiveCap,formatRunTime,type WavePlan} from './rogueliteRules';
 import {zombieKind,zombieStats,weaponStats,reloadTransfer,distanceField,nextZombieWaypoint,incomingDamage,bossAttack,bossImpact,bossIdentity,distanceToSegment,type ZombieKind,type WeaponSlot} from './combatSystems';
 import {weaponDefs,attachmentDefs,attachmentDescriptions,rarityName,rarityClass,canClassEquip,ammoTypes,ammoLabels,ammoPack,ammoStack,newWeapon,newMod,usedSlots,addAmmo,canAddItem,canEquipMod,itemName,salePrice,effectiveStats,armoryOffers,rareLoot,crateLoot,advanceOfferPrice,backpackUpgradePrice,upgradePrice,type Weapon,type Mod,type Gear,type AmmoBank,type Loadout,type AmmoType,type Tier,type WeaponId,type AttachmentId,type Slot} from './equipmentArmory';
-import {CLASS_INFO,classIds,makeSquadmate,migrateSquadmate,applyLethalDamage,bleed,revive,reviveDuration,shouldRevive,canRecruit,equipClassWeapon,classFireDelay,classRange,classDamage,canHeal,gearUpgradeCost,PLAYER_BLEEDOUT,ALLY_BLEEDOUT,type Squadmate,type SquadOrder} from './squadSystems';
+import {CLASS_INFO,classIds,makeSquadmate,migrateSquadmate,applyLethalDamage,bleed,revive,reviveDuration,shouldRevive,canRecruit,equipClassWeapon,classFireDelay,classRange,classDamage,canHeal,gearUpgradeCost,squadWeapon,setSquadWeaponSlot,refillSquadAmmo,squadAmmoNeeded,SQUAD_MAX_AMMO,SQUAD_AMMO_REFILL_COST,PLAYER_BLEEDOUT,ALLY_BLEEDOUT,type Squadmate,type SquadOrder} from './squadSystems';
 import {migrateProfile,unlocks,achievements,buyUnlock,allowedPrimary,allowedMelee,allowedTeammates,sanitizeChoice,startingKit,progressAchievements,performancePayout,eligibleRecruit,type ProfileV5,type UnlockId,type RunPerformance} from './metaprogression';
 import {camera,toWorld,renderDungeon,drawSprite,drawElevator,drawMilitaryCrate,drawLootPopup,drawBar,drawHazard,hudColor,type View,type SpriteKind} from './rogueliteVisuals';
 import {renderFacility} from './facilityAtmosphere';
@@ -651,26 +651,44 @@ function squadUpdate(dt:number){if(!run||!plan)return;const r=run,p=r.player,ord
    candidates.sort((x,y)=>(x.hp/x.maxHp)-(y.hp/y.maxHp));const injured=candidates[0];if(injured){if(injured.isPlayer&&!(r.playerDowned??0))r.hp=Math.min(100,r.hp+15+a.gearTier*3);else if('ally' in injured&&injured.ally)injured.ally.hp=Math.min(injured.ally.maxHp,injured.ally.hp+15+a.gearTier*3);a.abilityCooldown=11;notice('MEDIC FIELD HEAL')}}
   if(a.role==='engineer'&&a.abilityCooldown===0){const enemy=aliveEnemies.find(e=>Math.hypot(e.x-a.x,e.y-a.y)<3.2);if(enemy){for(const z of aliveEnemies.filter(e=>Math.hypot(e.x-enemy.x,e.y-enemy.y)<1.5))strikeZombie(z,1+a.gearTier,unit(z.x-a.x,z.y-a.y));a.abilityCooldown=13;notice('ENGINEER TRAP TRIGGERED')}
    else if(a.armor<CLASS_INFO.engineer.armor&&r.armor<80&&Math.hypot(a.x-p.x,a.y-p.y)<3){r.armor=Math.min(100,r.armor+8+a.gearTier*2);a.abilityCooldown=14;notice('ENGINEER ARMOR REPAIR')}}
-  if(!shooting||a.cooldown>0||a.magReserve<=0)continue;
-  const target=order==='focus'&&r.focusTarget!==null&&r.focusTarget!==undefined&&r.enemies[r.focusTarget]?.alive?r.enemies[r.focusTarget]:aliveEnemies.filter(e=>Math.hypot(e.x-a.x,e.y-a.y)<classRange(a.role)&&canSee(a.x,a.y,e.x,e.y)).sort((x,y)=>Math.hypot(x.x-a.x,x.y-a.y)-Math.hypot(y.x-a.x,y.y-a.y))[0];
-  if(target&&Math.hypot(target.x-a.x,target.y-a.y)<classRange(a.role)&&canSee(a.x,a.y,target.x,target.y)&&!friendlyFireLane(a,target,[r.player,...r.allies.filter(b=>b!==a&&!b.dead&&b.downed<=0)],.42)){
-   const dir=unit(target.x-a.x,target.y-a.y);
-   const trace=traceBullet(plan.map,a,dir,classRange(a.role),aliveEnemies,penetrationFor(a.weapon.model));
-   const damage=Math.max(.5,classDamage(a.role,a.weapon.tier)*(effectiveStats(a.weapon).damage/weaponDefs[CLASS_INFO[a.role].model].damage));
-   for(const hit of trace.hits){
-    const struck=hit.target;
-    strikeZombie(struck,damage,dir);
-    if(a.role==='heavy')for(const other of aliveEnemies)if(other!==struck&&Math.hypot(other.x-struck.x,other.y-struck.y)<1.2)other.suppressed=2.4;
-    if(a.role==='scout'){struck.scoutMarked=3.5;struck.aggro=5}
-    // Lethal hits are resolved by strikeZombie.
-   }
-   combatFx.push(...makeAttackFx(a.weapon.model,a.x,a.y,dir.x,dir.y,classRange(a.role),[trace.distance],weaponFlashAllowed(a.weapon)));
-   if(combatFx.length>120)combatFx.splice(0,combatFx.length-120);
-   a.cooldown=classFireDelay(a.role)*Math.max(.7,effectiveStats(a.weapon).rate/weaponDefs[CLASS_INFO[a.role].model].rate);
-   a.magReserve--;
-   shellEffects.push(ejectCasing(a.x,a.y,dir.x,dir.y,Math.floor(r.waveSeconds??0)*7+r.allies.indexOf(a)));
-   if(!r.noiseEvent||r.noiseEvent.radius<7)r.noiseEvent={x:a.x,y:a.y,radius:a.role==='heavy'?14:9,ttl:1.6};
+  if(!shooting||a.cooldown>0)continue;
+  const closest=aliveEnemies.filter(e=>canSee(a.x,a.y,e.x,e.y)).sort((x,y)=>Math.hypot(x.x-a.x,x.y-a.y)-Math.hypot(y.x-a.x,y.y-a.y))[0];
+  const target=order==='focus'&&r.focusTarget!==null&&r.focusTarget!==undefined&&r.enemies[r.focusTarget]?.alive?r.enemies[r.focusTarget]:closest;
+  if(!target)continue;
+  const distance=Math.hypot(target.x-a.x,target.y-a.y);
+  // Close enemies are handled with equipped melee weapons. When ammunition is
+  // exhausted, every NPC draws their melee weapon instead of becoming helpless.
+  if(distance<=1.35||a.magReserve<=0)setSquadWeaponSlot(a,'melee');
+  else if(a.activeSlot==='melee'||a.activeSlot==='secondary'&&distance>effectiveStats(a.secondaryWeapon).range*.9)
+   setSquadWeaponSlot(a,'primary');
+  // Sidearms are useful in tight corridors; player-selected sidearms remain
+  // active until the threat moves too far away.
+  if(a.activeSlot==='primary'&&distance<3.3&&distance>1.35)setSquadWeaponSlot(a,'secondary');
+  const weapon=squadWeapon(a),melee=a.activeSlot==='melee';
+  const reach=melee?1.45:Math.min(classRange(a.role),effectiveStats(weapon).range);
+  if(distance>reach||!canSee(a.x,a.y,target.x,target.y)||friendlyFireLane(a,target,[r.player,...r.allies.filter(b=>b!==a&&!b.dead&&b.downed<=0)],melee?.25:.42))continue;
+  const dir=unit(target.x-a.x,target.y-a.y);
+  if(melee){
+   const damage=Math.max(1.4,effectiveStats(weapon).damage*(1+.12*(a.gearTier-1)));
+   strikeZombie(target,damage,dir,true);
+   combatFx.push(...makeAttackFx(weapon.model,a.x,a.y,dir.x,dir.y,reach));
+   a.cooldown=Math.max(.45,effectiveStats(weapon).rate);
+   continue;
   }
+  if(a.magReserve<=0)continue;
+  const trace=traceBullet(plan.map,a,dir,reach,aliveEnemies,penetrationFor(weapon.model));
+  const damage=Math.max(.5,classDamage(a.role,weapon.tier)*(effectiveStats(weapon).damage/weaponDefs[CLASS_INFO[a.role].model].damage));
+  for(const hit of trace.hits){
+   const struck=hit.target;strikeZombie(struck,damage,dir);
+   if(a.role==='heavy')for(const other of aliveEnemies)if(other!==struck&&Math.hypot(other.x-struck.x,other.y-struck.y)<1.2)other.suppressed=2.4;
+   if(a.role==='scout'){struck.scoutMarked=3.5;struck.aggro=5}
+  }
+  combatFx.push(...makeAttackFx(weapon.model,a.x,a.y,dir.x,dir.y,reach,[trace.distance],weaponFlashAllowed(weapon)));
+  if(combatFx.length>120)combatFx.splice(0,combatFx.length-120);
+  a.cooldown=classFireDelay(a.role)*Math.max(.7,effectiveStats(weapon).rate/weaponDefs[CLASS_INFO[a.role].model].rate);
+  a.magReserve--;
+  shellEffects.push(ejectCasing(a.x,a.y,dir.x,dir.y,Math.floor(r.waveSeconds??0)*7+r.allies.indexOf(a)));
+  if(!r.noiseEvent||r.noiseEvent.radius<7)r.noiseEvent={x:a.x,y:a.y,radius:a.role==='heavy'?14:9,ttl:1.6};
  }
  r.allies=r.allies.filter(a=>!a.dead);
 }
@@ -936,7 +954,7 @@ function draw(){
   if(!isKnown(a.x,a.y))continue;
   const dir=allyDirection(a),direction=Math.atan2(dir.y,dir.x);
   const motion=animatedPose(a,now,direction,4);
-  drawSprite(ctx,a.role,v,a.x,a.y,{weapon:a.weapon.model,angle:motion.angle,stride:motion.phase,motionSpeed:motion.speed,idleTime:now/1000,scale:a.role==='heavy'?1.25:1.08,down:a.downed>0,alpha:a.dead?.3:1,glow:a.role==='medic'?'#69e8a1':undefined});
+  drawSprite(ctx,a.role,v,a.x,a.y,{weapon:squadWeapon(a).model,angle:motion.angle,stride:motion.phase,motionSpeed:motion.speed,idleTime:now/1000,scale:a.role==='heavy'?1.25:1.08,down:a.downed>0,alpha:a.dead?.3:1,glow:a.role==='medic'?'#69e8a1':undefined});
   if(a.hp<a.maxHp||a.downed>0)drawBar(ctx,v,a.x,a.y,a.downed>0?a.downed/ALLY_BLEEDOUT:a.hp/a.maxHp,a.downed>0?'#f1c17e':hudColor(a.hp/a.maxHp));
  }
  const playerMotion=animatedPose(r.player,now,Math.atan2(aim.y,aim.x),12,true);
