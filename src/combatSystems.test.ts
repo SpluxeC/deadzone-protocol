@@ -10,6 +10,7 @@ test('zombie variants unlock at intended waves and never inflate standard health
  assert.ok(zombieStats('runner').speed>zombieStats('shambler').speed);
  assert.ok(zombieStats('armored').hp>zombieStats('runner').hp);
  assert.ok(zombieStats('boss').damage>zombieStats('bruiser').damage);
+ assert.equal(zombieStats('boss').hp,90,'bosses have increased health without changing standard enemy HP');
 });
 test('weapon slots use distinct damage and reload characteristics',()=>{
  const primary=weaponStats('primary',3),secondary=weaponStats('secondary',3),melee=weaponStats('melee',3);
