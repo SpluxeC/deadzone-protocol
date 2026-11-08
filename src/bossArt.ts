@@ -117,6 +117,7 @@ export function drawBossArt(c:CanvasRenderingContext2D,v:View,kind:BossAttack,p:
  c.translate(0,-lift+wind*size*.10-recover*size*.045);
  const squash=kind==='charge'?wind*.15:kind==='slam'?wind*.08:-wind*.06;
  c.scale(size*(1+squash),size*(1-squash*.55));
+ if(recover>0)c.rotate((kind==='charge'?.17:.07)*recover);
  if(kind==='slam')butcher(c,p,t,stride,wind);
  else if(kind==='charge')breaker(c,p,t,stride,wind);
  else revenant(c,p,t,stride,wind);
@@ -136,6 +137,37 @@ export function drawBossImpact(c:CanvasRenderingContext2D,v:View,kind:BossAttack
    const ang=j*Math.PI/4,a1=v.tile*(.3+a*.9),a2=v.tile*(.6+a*2);
    c.beginPath();c.moveTo(px+Math.cos(ang)*a1,py+Math.sin(ang)*a1);
    c.lineTo(px+Math.cos(ang+.12)*a2,py+Math.sin(ang+.12)*a2);c.stroke();
+  }
+ }
+ c.restore();
+}
+
+/** Different defeated silhouettes: collapsed cleaver brute, shattered armor, dissipating mutant. */
+export function drawBossDeath(c:CanvasRenderingContext2D,v:View,kind:BossAttack,x:number,y:number,heading:number,age:number):void{
+ if(age>=1.15)return;
+ const progress=Math.max(0,age/1.15),px=v.ox+x*v.tile,py=v.oy+y*v.tile;
+ c.save();c.translate(px,py);c.globalAlpha=(1-progress)*.85;
+ c.rotate(heading+Math.PI/2+progress*(kind==='charge'?.7:kind==='slam'?-.45:.12));
+ c.scale(1-progress*.23,1-progress*(kind==='shockwave'?.85:.4));
+ const size=v.tile*(kind==='slam'?1.7:1.55);
+ c.scale(size,size);c.translate(0,progress*.17);
+ if(kind==='slam'){
+  circle(c,-.08,.05,.51,.37,'#663e3b',-.2);
+  polygon(c,[-.56,.14,-.90,.35,-.99,.23,-.72,-.18],'#99a4a1');
+  circle(c,.14,-.25,.19,.16,'#7f5952');
+ }else if(kind==='charge'){
+  polygon(c,[-.53,-.35,.37,-.39,.63,.06,.24,.36,-.37,.31],'#4b5a55');
+  polygon(c,[.28,-.39,.67,-.19,.79,.15,.42,.10],'#c09b63');
+  polygon(c,[-.52,.29,-.20,.34,-.34,.53,-.68,.44],'#77807a');
+  polygon(c,[.34,.27,.59,.35,.77,.47,.46,.44],'#7d8279');
+ }else{
+  c.shadowColor='#cc94ff';c.shadowBlur=.32;
+  circle(c,0,0,.20+progress*.3,.34+progress*.3,'#7e58a5');
+  circle(c,0,0,.10+progress*.2,.15+progress*.2,'#d7a7ff');
+  c.shadowBlur=0;
+  for(let i=0;i<7;i++){
+   const a=i*Math.PI*2/7+progress*.5;
+   circle(c,Math.cos(a)*(.25+progress*.6),Math.sin(a)*(.25+progress*.6),.045,.07,'#a48abc');
   }
  }
  c.restore();
