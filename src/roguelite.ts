@@ -72,7 +72,7 @@ let moveAnalog=zeroStick(),aimAnalog=zeroStick(),cameraZoom=1;
 // Desktop mouse aiming is active only while the pointer is over the dungeon canvas.
 let shellEffects:Casing[]=[];let shotKick=0;
 let bossEffects:{kind:ReturnType<typeof bossAttack>;x:number;y:number;age:number;death?:boolean;heading?:number}[]=[];
-let mouseAimActive=false,mouseAimX=.5,mouseAimY=.5;let pathClock=0,pathField:Int32Array|null=null,bossPulse=0,noiseClock=0,squadClock=0;
+let mouseAimActive=false,mouseAimX=.5,mouseAimY=.5;let pathClock=0,pathField:Int32Array|null=null,searchFields=new Map<string,Int32Array>(),bossPulse=0,noiseClock=0,squadClock=0;
 const store=(suffix:string)=>'deadzone-roguelite-v1-slot-'+slot+'-'+suffix;
 function loadProfile(){try{profile=migrateProfile(JSON.parse(localStorage.getItem(store('profile'))||'null'))}catch{profile=migrateProfile(null)}}
 function save(){try{localStorage.setItem(store('profile'),JSON.stringify(profile));if(run)localStorage.setItem(store('run'),JSON.stringify(run));else localStorage.removeItem(store('run'))}catch{notice('Browser storage unavailable — progress may not persist')}}
@@ -158,7 +158,7 @@ function preRun(){loadProfile();paused=true;overlay.hidden=false;const p=profile
  overlay.querySelector<HTMLButtonElement>('#launch-run')!.onclick=()=>{read();newRun()};
  overlay.querySelector<HTMLButtonElement>('#prep-back')!.onclick=menu;
 }
-function buildFloor(seed:number,wave:number){combatFx=[];bloodFx=[];shellEffects=[];shotKick=0;bossEffects=[];lootPopups=[];poseCache=new WeakMap<object,CharacterMotion>();if(run)run.layoutVersion=3;plan=makeWave(seed,wave,3);if(!run)return;run.explored=[];run.triggeredEvents=[];run.secretOpened=false;run.noiseEvent=null;fog=createFog(plan.map);const p=plan.map.entrance;run.player={x:p.x,y:p.y};run.enemies=[];run.spawned=0;run.kills=0;run.looted=[];run.stage='fight';run.reloadTimer=0;run.reloadSlot=null;ensureEquipment(run).rerolls=0;run.focusTarget=null;run.waveHit=false;run.waveSeconds=0;run.waveStartKills=run.killsTotal??0;run.waveStartLooted=run.lootedTotal??0;run.peakThreat=0;run.waveStartHp=run.hp;run.waveStartArmor=run.armor;pathClock=0;pathField=null;bossPulse=0;noiseClock=0;const occupied=[run.player];for(let i=0;i<run.allies.length;i++){const ally=run.allies[i];const wanted={x:p.x-1-i*.45,y:p.y+1+i*.45};const placed=spacedSquadPosition(plan.map,wanted,occupied);ally.x=placed.x;ally.y=placed.y;occupied.push(ally);ally.anchor={x:ally.x,y:ally.y};ally.reviveProgress=0}spawnClock=0;allyClock=0;spawnInitial();save()}
+function buildFloor(seed:number,wave:number){combatFx=[];bloodFx=[];shellEffects=[];shotKick=0;bossEffects=[];lootPopups=[];poseCache=new WeakMap<object,CharacterMotion>();if(run)run.layoutVersion=3;plan=makeWave(seed,wave,3);if(!run)return;run.explored=[];run.triggeredEvents=[];run.secretOpened=false;run.noiseEvent=null;fog=createFog(plan.map);const p=plan.map.entrance;run.player={x:p.x,y:p.y};run.enemies=[];run.spawned=0;run.kills=0;run.looted=[];run.stage='fight';run.reloadTimer=0;run.reloadSlot=null;ensureEquipment(run).rerolls=0;run.focusTarget=null;run.waveHit=false;run.waveSeconds=0;run.waveStartKills=run.killsTotal??0;run.waveStartLooted=run.lootedTotal??0;run.peakThreat=0;run.waveStartHp=run.hp;run.waveStartArmor=run.armor;pathClock=0;pathField=null;searchFields.clear();bossPulse=0;noiseClock=0;const occupied=[run.player];for(let i=0;i<run.allies.length;i++){const ally=run.allies[i];const wanted={x:p.x-1-i*.45,y:p.y+1+i*.45};const placed=spacedSquadPosition(plan.map,wanted,occupied);ally.x=placed.x;ally.y=placed.y;occupied.push(ally);ally.anchor={x:ally.x,y:ally.y};ally.reviveProgress=0}spawnClock=0;allyClock=0;spawnInitial();save()}
 function newRun(){loadProfile();const kit=startingKit(profile);run={wave:1,credits:kit.credits,hp:100,armor:kit.armor,mag:kit.loadout.primary?.mag??0,reserve:kit.ammo.rifle,medkits:kit.medkits,weaponTier:1,damage:1,maxMag:kit.loadout.primary?.mag??0,player:{x:0,y:0},enemies:[],allies:kit.teammate==='none'?[]:[makeSquadmate(kit.teammate,'starter-01',0,0)],spawned:0,kills:0,bosses:0,cleared:0,seed:Math.floor(Math.random()*2000000000),stage:'fight',looted:[],squadAmmo:kit.teammate==='none'?0:8,activeSlot:'primary',sideMag:kit.loadout.secondary?.mag??12,sideReserve:kit.ammo.light,reloadTimer:0,reloadSlot:null,playerDowned:0,playerDead:false,squadOrder:'follow',focusTarget:null,reviveProgress:0,killsTotal:0,lootedTotal:0,flawlessWaves:0,bestSquad:kit.teammate==='none'?0:1,waveHit:false,equipment:{loadout:kit.loadout,bag:[],ammo:kit.ammo,capacity:kit.capacity,rerolls:0}};buildFloor(run.seed,1);overlay.hidden=true;paused=false;notice('WAVE 1 · Reach the elevator before the horde overwhelms you')}
 function isFloor(x:number,y:number){return !!plan&&walkableTile(plan.map,x,y)}
 function canSee(ax:number,ay:number,bx:number,by:number){const dist=Math.hypot(ax-bx,ay-by),count=Math.ceil(dist*4);for(let i=1;i<count;i++){const a=i/count;if(!isFloor(ax+(bx-ax)*a,ay+(by-ay)*a))return false}return true}
@@ -694,7 +694,7 @@ if(spawnClock>=interval&&active<cap){
 if(run.enemies.length>cap*3)run.enemies=run.enemies.filter(e=>e.alive);
 squadUpdate(dt);
 if(fog&&updateFog(plan.map,fog,explorationSources()))run.explored=exploredIndices(fog);
-pathClock-=dt;if(pathClock<=0||!pathField){pathField=distanceField(plan.map,run.player);pathClock=.32}
+pathClock-=dt;if(pathClock<=0||!pathField){pathField=distanceField(plan.map,run.player);searchFields.clear();pathClock=.32}
 for(const e of run.enemies){if(!e.alive)continue;
  e.bossRecover=Math.max(0,(e.bossRecover??0)-dt);
  e.stagger=Math.max(0,(e.stagger??0)-dt);e.hitFlash=Math.max(0,(e.hitFlash??0)-dt);
@@ -741,8 +741,19 @@ for(const e of run.enemies){if(!e.alive)continue;
   if(destination){
    const goal=tacticalTarget(e.kind??'shambler',e,destination,run.enemies.indexOf(e),senses.mode);
    const direct=canSee(e.x,e.y,goal.x,goal.y);
-   // Player BFS is shared; alternate search targets use direct steering only where unobstructed.
-   const waypoint=direct?goal:nextZombieWaypoint(plan.map,pathField!,e);
+   // Cache a handful of sound/last-sighting navigation fields per tick; never leak the
+   // live player's location into an enemy that only remembers an older sighting.
+   let waypoint=goal;
+   if(!direct){
+    if(senses.mode==='chase')waypoint=nextZombieWaypoint(plan.map,pathField!,e);
+    else {
+     const point=nearestWalkable(plan.map,goal);
+     const key=Math.round(point.x)+','+Math.round(point.y);
+     let field=searchFields.get(key);
+     if(!field&&searchFields.size<8){field=distanceField(plan.map,point);searchFields.set(key,field)}
+     if(field)waypoint=nextZombieWaypoint(plan.map,field,e);
+    }
+   }
    const vx=waypoint.x-e.x,vy=waypoint.y-e.y,len=Math.hypot(vx,vy);
    if(len>.12){
     const nearby=run.enemies.find(other=>other!==e&&other.alive&&Math.hypot(other.x-e.x,other.y-e.y)<.4);
