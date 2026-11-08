@@ -53,7 +53,7 @@ async function setupExtraction(page){
   const {makeWave}=await import('/src/rogueliteRules.ts');
   const plan=makeWave(run.seed,run.wave,run.layoutVersion??3);
   run.stage='fight';run.player={...plan.map.extraction};run.enemies=[];run.hp=100;run.armor=100;
-  run.playerDowned=0;run.waveHit=false;
+  run.playerDowned=0;run.waveHit=false;run.sealedHoles=[0,1,2];run.breachEvent=null;
   localStorage.setItem(key,JSON.stringify(run));
  },{key,run});
  await page.reload();
@@ -122,6 +122,11 @@ async function runScenario(touch){
  console.log(label,'checking Armory and inventory interactions');
  await setupShop(page);
  await checkWiring(page,label+' armory');
+ const toolbarTop=await page.locator('.armory-screen .management-toolbar').boundingBox();
+ const supplyBottom=await page.locator('.armory-screen .armory-columns').boundingBox();
+ assert.ok(toolbarTop&&supplyBottom&&toolbarTop.y<supplyBottom.y,'Armory actions must sit above supplies');
+ assert.equal(await page.locator('#refill-all-armory').count(),1);
+
  // Exercise every available Armory/inventory/squad button separately, restoring
  // a known valid save between taps so purchases and destructive actions cannot
  // obscure later buttons.
@@ -167,6 +172,10 @@ async function runScenario(touch){
  await tap('#close-inventory');
  await tap('#shop-squad');
  await checkWiring(page,label+' squad management');
+ assert.equal(await page.locator('#squad-refill').count(),1);
+ assert.equal(await page.locator('[id^="sq-slot-secondary-"]').count()>0,true,'NPC sidearm selector present');
+ assert.equal(await page.locator('[id^="sq-slot-melee-"]').count()>0,true,'NPC melee selector present');
+
  await tap('#sq-heal-0');
  await tap('#sq-armor-0');
  await tap('#sq-ammo-0');
