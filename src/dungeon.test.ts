@@ -76,7 +76,7 @@ test('modern maps have rarer two-tile weapon cases and non-overlapping military 
   const map=generateDungeon(seed,64,48,3);
   const weapons=map.loot.filter(c=>c.kind==='weapon');
   const supplies=map.loot.filter(c=>c.kind!=='weapon');
-  assert.equal(weapons.length,2,'two weapon cases expected, seed '+seed);
+  assert.equal(weapons.length,2+(map.secret?1:0),'two normal weapon cases, plus an optional secret case, seed '+seed);
   assert.equal(supplies.length,8,'eight supply crates expected, seed '+seed);
   const claimed=new Set<string>();
   for(const crate of map.loot){
@@ -101,5 +101,38 @@ test('older dungeon layouts preserve one-tile supply crate footprint',()=>{
  for(const version of [1,2] as const){
   const map=generateDungeon(2458,32,24,version);
   assert.ok(map.loot.every(c=>crateCells(c).length===1));
+ }
+});
+
+test('rare secret annex stays sealed until opened and its cache occupies two real floor tiles',()=>{
+ let found=0;
+ for(let seed=1;seed<=750;seed++){
+  const map=generateDungeon(seed,64,48,3),secret=map.secret;
+  if(!secret)continue;
+  found++;
+  const index=secret.door.y*map.width+secret.door.x;
+  assert.equal(map.tiles[index],1,'secret entrance must be sealed');
+  const cache=map.loot[secret.rewardIndex];
+  assert.equal(cache.kind,'weapon');
+  assert.equal(crateCells(cache).length,2);
+  for(const p of crateCells(cache)){
+   assert.ok(Number.isInteger(p.x)&&Number.isInteger(p.y));
+   assert.equal(map.tiles[p.y*map.width+p.x],0,'hidden cache must rest on floor');
+   assert.ok(Math.abs(p.x-secret.center.x)<=1&&Math.abs(p.y-secret.center.y)<=1);
+  }
+  assert.deepEqual(map,generateDungeon(seed,64,48,3),'secret location must be deterministic after reload');
+ }
+ assert.ok(found>=1,'at least one seeded floor must contain a secret');
+});
+test('floor events are deterministic, in walkable rooms and outside the elevator',()=>{
+ for(let seed=1;seed<=150;seed++){
+  const map=generateDungeon(seed,64,48,3);
+  for(const event of map.events??[]){
+   assert.equal(map.tiles[event.y*map.width+event.x],0);
+   assert.ok(Math.hypot(event.x-map.entrance.x,event.y-map.entrance.y)>7);
+   assert.ok(Math.hypot(event.x-map.extraction.x,event.y-map.extraction.y)>3);
+   assert.ok(['supplyDrop','infectedNest','fieldHospital','powerSurge'].includes(event.kind));
+  }
+  assert.deepEqual(map.events,generateDungeon(seed,64,48,3).events);
  }
 });
