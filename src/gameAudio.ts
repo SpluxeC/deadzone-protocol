@@ -4,6 +4,7 @@
  */
 import type {WeaponId} from './equipmentArmory.ts';
 import type {ZombieKind} from './combatSystems.ts';
+import {makeWeaponClip,makeReloadClip,makeZombieClip,makeMachineryClip,type PcmClip} from './realisticSoundDesign.ts';
 
 export type AudioSetting={volume:number;muted:boolean};
 export type UiSound='tap'|'confirm'|'back'|'error'|'notice'|'success'|'warning'|'loot'|'heal';
@@ -36,6 +37,7 @@ class GameAudio{
  private context:AudioContext|null=null;
  private master:GainNode|null=null;
  private noise:AudioBuffer|null=null;
+ private clips=new Map<string,AudioBuffer>();
  private settings:AudioSetting={...defaults};
  private unlocked=false;
  private last=new Map<string,number>();
@@ -108,6 +110,49 @@ class GameAudio{
   // Count completed sources using their onended callbacks.
   return {gain,end:start+seconds+.01};
  }
+ /** Buffer-based Foley playback: dynamically filtered, slight randomised pitch,
+  * headroom-limited polyphony, spatial attenuation and soft industrial reflections. */
+ private sample(key:string,render:()=>PcmClip,volume:number,opts:{distance?:number;lowpass?:number;delay?:number}={}):void{
+  const c=this.ready(),master=this.master;if(!c||!master)return;
+  let buffer=this.clips.get(key);
+  if(!buffer){
+   const clip=render();
+   buffer=c.createBuffer(1,clip.samples.length,clip.sampleRate);
+   buffer.copyToChannel(clip.samples as Float32Array<ArrayBuffer>,0);
+   this.clips.set(key,buffer);
+  }
+  const distance=Math.max(0,opts.distance??0);
+  const damp=Math.min(.93,distance*.035);
+  const attenuation=1/(1+distance*.17+distance*distance*.015);
+  const gain=c.createGain();
+  const start=c.currentTime+(opts.delay??0);
+  gain.gain.setValueAtTime(Math.max(.001,volume*attenuation),start);
+  gain.gain.setTargetAtTime(.001,start+buffer.duration*.87,.08);
+  const filter=c.createBiquadFilter();filter.type='lowpass';
+  filter.frequency.value=Math.min(opts.lowpass??11000,11500/(1+distance*.19));
+  filter.Q.value=.54;
+  const source=c.createBufferSource();source.buffer=buffer;
+  // Very small variations prevent identical overlapping shots sounding robotic.
+  const hash=(Math.floor(c.currentTime*137)+key.length*31)%11;
+  source.playbackRate.value=1+(hash-5)*.004;
+  source.connect(filter);filter.connect(gain);gain.connect(master);
+  this.active++;
+  source.onended=()=>{
+   source.disconnect();filter.disconnect();gain.disconnect();
+   this.active=Math.max(0,this.active-1);
+  };
+  source.start(start);
+  // Single early wall reflection, attenuated and low-passed. Longer / more
+  // diffuse reflected tails come from the layers baked into the sound clip.
+  if(distance>1.2&&this.active<25){
+   const echo=c.createBufferSource();echo.buffer=buffer;echo.playbackRate.value=source.playbackRate.value;
+   const echoGain=c.createGain();echoGain.gain.value=Math.max(.001,volume*.08*(1-damp)*attenuation);
+   const echoFilter=c.createBiquadFilter();echoFilter.type='lowpass';echoFilter.frequency.value=1400;
+   echo.connect(echoFilter);echoFilter.connect(echoGain);echoGain.connect(master);
+   echo.start(start+.083);
+   echo.onended=()=>{echo.disconnect();echoFilter.disconnect();echoGain.disconnect()};
+  }
+ }
  private tone(freq:number,duration:number,volume:number,opts:{type?:OscillatorType;endFreq?:number;delay?:number;highpass?:number;lowpass?:number}={}):void{
   const c=this.ready();if(!c)return;
   const start=c.currentTime+(opts.delay??0),v=this.voice(start,duration,volume,opts.highpass,opts.lowpass);if(!v)return;
@@ -124,28 +169,20 @@ class GameAudio{
   source.onended=()=>{this.active=Math.max(0,this.active-1);source.disconnect();v.gain.disconnect()};
  }
  playWeapon(id:WeaponId,opts:{distance?:number;suppressed?:boolean}={}):void{
-  if(!this.canPlay('gun-'+id,isMelee(id)?.075:.035))return;
-  const p=weaponSignature(id),falloff=1/(1+Math.max(0,opts.distance??0)*.12);
-  const quiet=opts.suppressed||id==='suppressedSmg';
-  if(isMelee(id)){
-   const k=id==='axe'?1.2:id==='bat'?.82:id==='crowbar'?1.35:1;
-   this.burst(p.body*k,.13*falloff,{highpass:400*p.metal+170,lowpass:4000});
-   this.tone(p.pitch,p.tail,.16*k*falloff,{type:id==='crowbar'?'square':'triangle',endFreq:p.pitch*.49});
-   if(id==='crowbar'||id==='machete')this.tone(p.pitch*3,.19,.055*falloff,{type:'sine',endFreq:p.pitch*1.5});
-   return;
-  }
-  const amp=(quiet?.21:.31)*falloff;
-  this.burst(p.body,amp,{highpass:quiet?650:170,lowpass:quiet?2600:7800});
-  this.tone(p.pitch,Math.max(.07,p.tail),amp*(quiet?.55:.88),{type:quiet?'sine':'sawtooth',endFreq:p.pitch*.31});
-  this.tone(p.pitch*(2+p.metal),.047,.11*falloff,{type:'triangle',endFreq:p.pitch*.84,delay:.015});
-  if(p.body>=.22&&!quiet)this.burst(p.tail,.085*falloff,{delay:.075,highpass:110,lowpass:1700});
+  if(!this.canPlay('gun-'+id,isMelee(id)?.07:.035))return;
+  const damp=!!opts.suppressed||id==='suppressedSmg';
+  const key='foley-weapon-'+id+(damp?'-suppressed':'');
+  const weight=weaponSignature(id);
+  this.sample(key,()=>makeWeaponClip(id,24000,damp),isMelee(id)?.38:damp?.39:.62,
+   {distance:opts.distance,lowpass:damp?2700:11500});
+  // A quiet metallic bolt and casing after the loud report.
+  if(!isMelee(id)&&!damp)this.tone(1100+weight.metal*1300,.023,.024,{type:'triangle',endFreq:710,delay:.052});
  }
  playReload(id:WeaponId,complete=false):void{
   if(!this.canPlay('reload-'+id+(complete?'done':''),.12))return;
-  const p=weaponSignature(id);
-  this.burst(.035,.095,{highpass:1000,lowpass:5500});
-  this.tone(p.pitch*4,.065,.075,{type:'square',endFreq:p.pitch*2,delay:.035});
-  this.tone(complete?p.pitch*5:p.pitch*2.5,.065,.06,{type:'triangle',endFreq:p.pitch*3,delay:complete?.08:.12});
+  this.sample('foley-reload-'+id,()=>makeReloadClip(id),complete?.28:.20,{lowpass:6500});
+  // The closing bolt is slightly heavier at the end of the timed reload.
+  if(complete)this.burst(.045,.07,{delay:.08,highpass:640,lowpass:3200});
  }
  playUI(id:UiSound):void{
   if(!this.canPlay('ui-'+id,id==='tap'?.045:.09))return;
@@ -168,42 +205,35 @@ class GameAudio{
   this.playUI(id);
  }
  playZombie(kind:ZombieKind,event:ZombieSound,distance=0):void{
-  const interval=event==='growl'?1.5:event==='hurt'?.19:event==='spawn'?.30:event==='attack'?.14:.10;
+  const interval=event==='growl'?1.5:event==='hurt'?.18:event==='spawn'?.30:event==='attack'?.15:.10;
   if(!this.canPlay('z-'+kind+'-'+event,interval))return;
-  const base:Record<ZombieKind,number>={shambler:91,runner:156,armored:72,bruiser:58,boss:41};
-  const pitch=base[kind],gain=.24/(1+Math.max(0,distance)*.20);
-  if(event==='death'){this.burst(.25,gain*.6,{lowpass:1250});this.tone(pitch*.92,.39,gain,{type:'sawtooth',endFreq:pitch*.32});return}
-  if(event==='attack'){this.burst(.08,gain*.63,{highpass:280,lowpass:2300});this.tone(pitch*2.1,.16,gain*.75,{type:'sawtooth',endFreq:pitch*.8});return}
-  if(event==='hurt'){this.tone(pitch*1.65,.19,gain*.85,{type:'sawtooth',endFreq:pitch*.72});return}
-  if(event==='spawn'){this.burst(.3,gain*.45,{lowpass:650});this.tone(pitch*.8,.34,gain*.5,{endFreq:pitch*1.5});return}
-  this.tone(pitch*(kind==='runner'?1.3:.84),kind==='boss'?.75:.42,gain,{type:'sawtooth',endFreq:pitch*(kind==='runner'?.6:1.1)});
-  this.burst(.18,gain*.27,{lowpass:960});
+  this.sample('foley-zombie-'+kind+'-'+event,
+   ()=>makeZombieClip(kind,event),event==='attack'?.39:event==='death'?.38:.31,
+   {distance,lowpass:kind==='runner'?5500:kind==='boss'?2600:3600});
  }
  playElevator(event:ElevatorSound):void{
   if(!this.canPlay('elevator-'+event,.25))return;
-  if(event==='locked'){this.tone(162,.22,.2,{type:'square',endFreq:99});this.tone(143,.20,.14,{delay:.23,endFreq:90});return}
-  if(event==='open'||event==='arrive'){
-   this.burst(.55,.19,{lowpass:850});
-   this.tone(140,.55,.22,{type:'sawtooth',endFreq:event==='open'?70:208});
-   this.tone(560,.16,.10,{delay:.42,endFreq:760});return;
+  if(event==='locked'){
+   this.sample('foley-lock',()=>makeReloadClip('crowbar'),.19,{lowpass:2400});
+   this.tone(160,.11,.065,{type:'triangle',endFreq:135});return;
   }
-  this.tone(89,.9,.21,{type:'sawtooth',endFreq:55});this.burst(.75,.13,{lowpass:430});
+  this.sample('foley-elevator',()=>makeMachineryClip('elevator'),
+   event==='travel'?.35:.48,{lowpass:event==='travel'?2100:4900});
+  if(event==='open'||event==='arrive')this.burst(.28,.08,{delay:.28,lowpass:1400});
  }
  playBreach(event:BreachSound):void{
   if(!this.canPlay('breach-'+event,event==='pulse'?.46:.18))return;
-  if(event==='start'){
-   this.burst(.5,.23,{lowpass:1100});this.tone(85,.65,.24,{type:'sawtooth',endFreq:155});
-   this.tone(740,.12,.15,{type:'square',delay:.20,endFreq:590});return;
-  }
-  if(event==='pulse'){
-   this.tone(91,.38,.17,{type:'sawtooth',endFreq:113});this.burst(.27,.1,{lowpass:520});return;
+  if(event==='start'||event==='pulse'){
+   this.sample('foley-breach',()=>makeMachineryClip('breach'),
+    event==='start'?.5:.17,{lowpass:event==='start'?5100:2100});
+   return;
   }
   if(event==='wave'){
-   this.tone(460,.14,.19,{type:'square',endFreq:350});
-   this.tone(520,.13,.19,{type:'square',endFreq:380,delay:.19});return;
+   this.burst(.18,.15,{lowpass:1600});
+   this.tone(380,.18,.11,{type:'triangle',endFreq:300,delay:.13});return;
   }
-  this.burst(.27,.17,{lowpass:1150});
-  this.tone(390,.25,.15,{endFreq:670});this.tone(790,.32,.17,{delay:.16,endFreq:980});
+  this.sample('foley-breach-done',()=>makeMachineryClip('elevator'),.32,{lowpass:3800});
+  this.tone(650,.23,.09,{type:'sine',endFreq:870,delay:.26});
  }
  syncBreach(id:string|null):void{
   if(id===null||this.muted||!this.enabled){this.stopBreach();return}
