@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {weaponDefs,type WeaponId} from './equipmentArmory.ts';
 import {weaponSignature,isMelee,clampVolume,gameAudio} from './gameAudio.ts';
+import {weaponAcoustics,makeWeaponClip,makeZombieClip,makeReloadClip,makeMachineryClip,audioKindForWeapon} from './realisticSoundDesign.ts';
 test('all 25 weapons have their own original shot or melee sound profile',()=>{
  const weapons=Object.keys(weaponDefs) as WeaponId[];
  assert.equal(weapons.length,25);
@@ -31,4 +32,36 @@ test('saved master sound volume is safely clamped and engine stays silent until 
  assert.equal(gameAudio.muted,true);
  gameAudio.setMuted(false);
  assert.equal(gameAudio.muted,false);
+});
+
+test('realistic sound layers are deterministic, audible and clipped safely',()=>{
+ const weaponIds=Object.keys(weaponDefs) as WeaponId[];
+ assert.deepEqual(new Set(Object.keys(weaponAcoustics)),new Set(weaponIds));
+ for(const id of weaponIds){
+  const clip=makeWeaponClip(id,12000);
+  const again=makeWeaponClip(id,12000);
+  assert.equal(clip.sampleRate,12000);
+  assert.ok(clip.duration>.08&&clip.duration<1,'bounded generated sound length for '+id);
+  let peak=0,energy=0;
+  for(const sample of clip.samples){peak=Math.max(peak,Math.abs(sample));energy+=sample*sample}
+  assert.ok(peak>0.02&&peak<1,'safe audible peak '+id);
+  assert.ok(energy/clip.samples.length>0.00001,'non-silent sound '+id);
+  assert.deepEqual(clip.samples,again.samples,'same weapon profile reproduces consistently');
+  assert.equal(audioKindForWeapon(id),isMelee(id)?'melee':'gunshot');
+ }
+});
+test('zombie species, reloads and heavy machinery have distinct multi-layered foley',()=>{
+ const names=['shambler','runner','armored','bruiser','boss'] as const;
+ const clips=names.map(kind=>makeZombieClip(kind,'growl',12000));
+ const audioHashes=new Set(clips.map(({samples})=>samples.slice(600,670).join(',')));
+ assert.equal(audioHashes.size,names.length,'each enemy kind has different vocal texture');
+ for(const clip of [...clips,makeReloadClip('assault',12000),makeMachineryClip('elevator',12000),makeMachineryClip('breach',12000)]){
+  assert.ok(clip.samples.length>=1200);
+  assert.ok(clip.samples.some(x=>Math.abs(x)>.001));
+  assert.ok(clip.samples.every(Number.isFinite));
+ }
+ const normal=makeWeaponClip('assault',12000);
+ const suppressed=makeWeaponClip('assault',12000,true);
+ const energy=(clip:typeof normal)=>clip.samples.reduce((total,n)=>total+n*n,0);
+ assert.ok(energy(suppressed)<energy(normal)*.60,'suppressor reduces muzzle energy');
 });
