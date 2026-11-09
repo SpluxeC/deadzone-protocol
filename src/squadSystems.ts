@@ -1,5 +1,5 @@
 import {canClassEquip,weaponDefs,newWeapon,type ClassId,type Weapon,type Tier,type WeaponId,type Slot} from './equipmentArmory.ts';
-export type SquadOrder='follow'|'hold'|'focus'|'regroup'|'defensive';
+export type SquadOrder='follow'|'hold'|'focus'|'regroup'|'defensive'|'suppress';
 export type Squadmate={id:string;name:string;role:ClassId;hp:number;maxHp:number;x:number;y:number;cooldown:number;abilityCooldown:number;reviveProgress:number;downed:number;dead:boolean;anchor:{x:number;y:number};weapon:Weapon;secondaryWeapon:Weapon;meleeWeapon:Weapon;activeSlot:Slot;armor:number;armorTier:Tier;gearTier:Tier;magReserve:number};
 export type Downable={hp:number;downed:number;dead:boolean};
 export const SQUAD_LIMIT=4;
