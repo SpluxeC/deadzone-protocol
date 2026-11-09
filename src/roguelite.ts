@@ -70,7 +70,10 @@ audioTest.onclick=()=>{
  });
 };
 audioVolume.oninput=()=>{gameAudio.setVolume(Number(audioVolume.value)/100);void gameAudio.unlock();updateAudioControls()};
-function resumeAudioFromGesture(){
+function resumeAudioFromGesture(event:Event){
+ // The dedicated enable/test controls handle their own gesture; doing it on
+ // pointerdown too could activate audio before click and then mute it again.
+ if((event.target as Element|null)?.closest('#audio-toggle, #audio-test'))return;
  const wasReady=gameAudio.status==='ready';
  void gameAudio.unlock().then(ok=>{if(ok&&!wasReady&&!gameAudio.muted)gameAudio.playUI('confirm');updateAudioControls()});
 }
