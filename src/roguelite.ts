@@ -116,7 +116,7 @@ new MutationObserver(syncMenuChrome).observe(overlay,{attributes:true,attributeF
 syncMenuChrome();
 const stats=document.querySelector<HTMLElement>('#stats')!,keys=new Set<string>(),touch=new Set<string>();
 let slot=1,profile:Profile=migrateProfile(null),run:Run|null=null,plan:WavePlan|null=null;
-let last=performance.now(),lastSave=0,spawnClock=0,shotCooldown=0,allyClock=0,noticeUntil=0,aim={x:1,y:0},paused=false;
+let last=performance.now(),lastSave=0,spawnClock=0,shotCooldown=0,allyClock=0,noticeUntil=0,breachBannerUntil=0,aim={x:1,y:0},paused=false;
 const zeroStick=():StickVector=>({x:0,y:0,magnitude:0});
 type LootPopup={x:number;y:number;model:string;label:string;start:number};
 let lootPopups:LootPopup[]=[];
@@ -487,6 +487,7 @@ function closeSpawnHole(index:number){
  const result=startBreachEvent(run.credits,run.sealedHoles??[],index,spawnHoles(plan).length,run.breachEvent??null);
  if(!result){notice('NEED '+SEAL_COST+' CREDITS TO START SEALING');return}
  run.credits=result.credits;run.breachEvent=result.event;
+ breachBannerUntil=performance.now()+5000;
  gameAudio.playBreach('start');
  // The machinery immediately draws the attention of nearby infected.
  alertBreach(hole);
@@ -1113,9 +1114,9 @@ function draw(){
  mobileSquad.setAttribute('aria-hidden',String(!hasActiveSquad));
  const order=orderLabel(r.squadOrder??'follow');
  const banner=document.querySelector<HTMLElement>('#breach-banner')!;
- banner.hidden=!r.breachEvent;
+ banner.hidden=!r.breachEvent||performance.now()>=breachBannerUntil;
  if(r.breachEvent)banner.textContent='Wave incoming, protect the breach while its sealed · '+Math.ceil(r.breachEvent.remaining)+'s';
- stats.textContent='WAVE '+r.wave+' · HOLES '+(r.sealedHoles??[]).length+'/'+REQUIRED_SEALS;
+ stats.textContent='WAVE '+r.wave+' · BREACHES SEALED '+(r.sealedHoles??[]).length+'/'+REQUIRED_SEALS;
  document.querySelector<HTMLButtonElement>('#orders')!.textContent='SQUAD: '+order+' (Q)';
  document.querySelectorAll<HTMLButtonElement>('#mobile-squad [data-squad-order]').forEach(button=>{
   const selected=button.dataset.squadOrder===(r.squadOrder??'follow');
