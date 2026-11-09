@@ -46,6 +46,8 @@ class GameAudio{
  private onStatus=new Set<()=>void>();
  private last=new Map<string,number>();
  private active=0;
+ private played=0;
+ get playbackCount(){return this.played}
  private breach:OscillatorNode|null=null;
  private breachGain:GainNode|null=null;
  private breachFilter:BiquadFilterNode|null=null;
@@ -193,6 +195,7 @@ class GameAudio{
    this.active=Math.max(0,this.active-1);
   };
   source.start(start);
+  this.played++;
   // Single early wall reflection, attenuated and low-passed. Longer / more
   // diffuse reflected tails come from the layers baked into the sound clip.
   if(distance>1.2&&this.active<25){
@@ -210,13 +213,14 @@ class GameAudio{
   const osc=c.createOscillator();osc.type=opts.type??'triangle';
   osc.frequency.setValueAtTime(Math.max(20,freq),start);
   if(opts.endFreq)osc.frequency.exponentialRampToValueAtTime(Math.max(20,opts.endFreq),start+duration);
-  osc.connect(v.gain);osc.start(start);osc.stop(v.end);
+  osc.connect(v.gain);osc.start(start);this.played++;osc.stop(v.end);
   osc.onended=()=>{this.active=Math.max(0,this.active-1);osc.disconnect();v.gain.disconnect()};
  }
  private burst(duration:number,volume:number,opts:{delay?:number;highpass?:number;lowpass?:number}={}):void{
   const c=this.ready();if(!c||!this.noise)return;
   const start=c.currentTime+(opts.delay??0),v=this.voice(start,duration,volume,opts.highpass,opts.lowpass);if(!v)return;
   const source=c.createBufferSource();source.buffer=this.noise;source.loop=true;source.connect(v.gain);source.start(start);source.stop(v.end);
+  this.played++;
   source.onended=()=>{this.active=Math.max(0,this.active-1);source.disconnect();v.gain.disconnect()};
  }
  playWeapon(id:WeaponId,opts:{distance?:number;suppressed?:boolean}={}):void{
