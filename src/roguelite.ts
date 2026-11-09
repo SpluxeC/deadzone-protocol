@@ -5,6 +5,7 @@ import {weaponDefs,attachmentDefs,attachmentDescriptions,rarityName,rarityClass,
 import {CLASS_INFO,classIds,makeSquadmate,migrateSquadmate,applyLethalDamage,bleed,revive,reviveDuration,shouldRevive,canRecruit,equipClassWeapon,classFireDelay,classRange,classDamage,canHeal,gearUpgradeCost,squadWeapon,setSquadWeaponSlot,refillSquadAmmo,squadAmmoNeeded,squadAmmoRefillPrice,SQUAD_MAX_AMMO,PLAYER_BLEEDOUT,ALLY_BLEEDOUT,type Squadmate,type SquadOrder} from './squadSystems';
 import {migrateProfile,unlocks,achievements,buyUnlock,allowedPrimary,allowedMelee,allowedTeammates,sanitizeChoice,startingKit,progressAchievements,performancePayout,eligibleRecruit,type ProfileV5,type UnlockId,type RunPerformance} from './metaprogression';
 import {camera,toWorld,renderDungeon,drawSprite,drawElevator,drawMilitaryCrate,drawLootPopup,drawBar,drawHazard,hudColor,type View,type SpriteKind} from './rogueliteVisuals';
+import {renderMenuCinematic} from './menuCinematic';
 import {renderFacility} from './facilityAtmosphere';
 import {senseZombie,tacticalTarget,hitReaction,friendlyFireLane,type ThreatKind} from './combatAi';
 import {ejectCasing,ageCasings,drawCasings,type Casing} from './combatPolish';
@@ -105,7 +106,30 @@ function loadRun(){try{const r=JSON.parse(localStorage.getItem(store('run'))||'n
  for(const a of run.allies){const p=nearestWalkable(plan.map,a);const placed=spacedSquadPosition(plan.map,p,occupied);a.x=placed.x;a.y=placed.y;occupied.push(a);}
  ensureEquipment(run);fog=createFog(plan.map,run.explored??[]);for(const enemy of run.enemies){
  const p=nearestWalkable(plan.map,enemy);enemy.x=p.x;enemy.y=p.y;enemy.kind??=enemy.boss?'boss':'shambler';if(enemy.boss&&enemy.alive&&enemy.maxHp<zombieStats('boss').hp){const fraction=enemy.maxHp>0?enemy.hp/enemy.maxHp:1;enemy.maxHp=zombieStats('boss').hp;enemy.hp=Math.max(1,enemy.maxHp*fraction)}enemy.attack??=0;enemy.windup??=0;enemy.phase??=0;enemy.aggro??=0;enemy.suppressed??=0;enemy.scoutMarked??=0;enemy.stagger??=0;enemy.hitFlash??=0;enemy.searchClock??=0;enemy.lastKnown??=null;enemy.alertMode??='idle';}return true}catch{return false}}
-function menu(){combatFx=[];bloodFx=[];lootPopups=[];paused=true;overlay.hidden=false;overlay.innerHTML=`<article class="main-menu-screen"><h1>DEADZONE <span style="color:#f18567">PROTOCOL</span></h1><p>Wave-based survival roguelite. Outrun an endless growing horde, extract by elevator, upgrade in the Armory, and descend again. The old FOB campaign remains preserved in source code.</p><label>Save slot <select id="slot-select"><option value="1">SLOT 01</option><option value="2">SLOT 02</option><option value="3">SLOT 03</option></select></label><p id="career"></p><p id="build-version" role="status" style="background:#31564a;color:#f4fff4;font-weight:800;font-size:13px;letter-spacing:.025em;padding:10px 12px;border:1px solid #94b9a0;border-radius:8px;margin:10px 0 8px;text-align:center">UPDATED GAME · COMBAT AI · 10 CREDITS PER ZOMBIE<br>BUILD NOV 8, 2026</p><div class="menurow"><button id="continue-run">CONTINUE RUN</button><button id="new-run">NEW RUN</button><button id="upgrades">PERMANENT UNLOCKS</button></div></article>`;
+function menu(){
+ combatFx=[];bloodFx=[];lootPopups=[];paused=true;overlay.hidden=false;
+ overlay.innerHTML=`<article class="main-menu-screen" aria-label="Deadzone Protocol main menu">
+  <div class="menu-command-panel">
+   <div class="menu-kicker"><span class="menu-status-dot" aria-hidden="true"></span> OUTBREAK ZONE // SURVIVAL PROTOCOL</div>
+   <h1>DEADZONE <span>PROTOCOL</span></h1>
+   <p class="menu-tagline">Survive the horde. Seal the breaches. Reach the elevator.</p>
+   <div class="menu-profile">
+    <label for="slot-select">SAVE SLOT <select id="slot-select" aria-label="Save slot"><option value="1">SLOT 01</option><option value="2">SLOT 02</option><option value="3">SLOT 03</option></select></label>
+    <p id="career" aria-live="polite"></p>
+   </div>
+   <nav class="menu-main-actions" aria-label="Main menu actions">
+    <button id="continue-run" class="menu-continue">CONTINUE RUN</button>
+    <button id="new-run" class="menu-deploy">NEW RUN</button>
+    <button id="upgrades" class="menu-upgrades">PERMANENT UNLOCKS</button>
+   </nav>
+   <div class="menu-footer-note">SECURE YOUR SQUAD · HOLD YOUR GROUND</div>
+  </div>
+  <div class="menu-scene-panel" aria-hidden="true">
+   <canvas id="menu-cinematic"></canvas>
+   <span class="menu-scene-badge">CAM 04 · CONTAINMENT WING</span>
+   <span class="menu-scene-corner">● SIGNAL ACTIVE</span>
+  </div>
+ </article>`;
 const sel=overlay.querySelector<HTMLSelectElement>('#slot-select')!;sel.value=String(slot);const refresh=()=>{loadProfile();const active=localStorage.getItem(store('run'));overlay.querySelector('#career')!.textContent='BEST WAVE '+profile.bestWave+' · LEGACY TOKENS '+profile.tokens+' · RUNS '+profile.runs+(active?' · RUN IN PROGRESS':'');(overlay.querySelector<HTMLButtonElement>('#continue-run'))!.disabled=!active};refresh();
 sel.onchange=()=>{slot=Number(sel.value);run=null;plan=null;refresh()};
 overlay.querySelector<HTMLButtonElement>('#continue-run')!.onclick=()=>{if(!loadRun()){notice('No valid run found');return}paused=false;if(run!.stage==='shop')shop();else overlay.hidden=true};
@@ -1056,7 +1080,7 @@ function draw(){
  document.querySelector('#hud-weapon')!.textContent=(w?weaponDefs[w.model].name:'UNARMED')+' · '+ammo+(r.reloadTimer?' · RELOADING':'');
  document.querySelector('#hud-team')!.textContent='SQUAD '+r.allies.length+'/4'+(r.playerDowned?' · DOWN '+Math.ceil(r.playerDowned)+'s':'');
 }
-function frame(now:number){const dt=Math.min(.05,(now-last)/1000);last=now;update(dt);draw();if(noticeUntil<now)toastEl.textContent='';requestAnimationFrame(frame)}
+function frame(now:number){const dt=Math.min(.05,(now-last)/1000);last=now;update(dt);draw();const menuCanvas=overlay.hidden?null:overlay.querySelector<HTMLCanvasElement>('#menu-cinematic');if(menuCanvas)renderMenuCinematic(menuCanvas,now,window.matchMedia('(prefers-reduced-motion: reduce)').matches);if(noticeUntil<now)toastEl.textContent='';requestAnimationFrame(frame)}
 window.addEventListener('keydown',e=>{if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code))e.preventDefault();keys.add(e.code);if(e.repeat)return;if(e.code==='Digit1')equip('primary');if(e.code==='Digit2')equip('secondary');if(e.code==='Digit3')equip('melee');if(e.code==='KeyR')reload();if(e.code==='KeyH')heal();if(e.code==='KeyI'&&run&&run.stage==='fight')inventory();if(e.code==='KeyQ')changeOrder();if(e.code==='KeyT')squadPanel();if(e.code==='KeyE')interact();if(e.code==='Escape')menu()});window.addEventListener('keyup',e=>keys.delete(e.code));window.addEventListener('blur',()=>{keys.clear();mouseAimActive=false;touch.clear();resetAnalogs()});document.addEventListener('visibilitychange',()=>{if(document.hidden)resetAnalogs()});
 /** Independent pointer capture lets both thumbs move and aim at once. */
 function resetAnalogs(){moveAnalog=zeroStick();aimAnalog=zeroStick();document.querySelectorAll<HTMLElement>('.analog-knob').forEach(node=>{node.style.transform='translate(-50%,-50%)'})}
