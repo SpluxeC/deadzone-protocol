@@ -10,8 +10,8 @@ export function formationDestination(order:SquadOrder,player:TacticalPosition,he
   const angle=2*Math.PI*(index+.5)/Math.max(1,count);
   return {x:player.x+Math.cos(angle)*2.1,y:player.y+Math.sin(angle)*2.1};
  }
- const depth=order==='regroup'?.8+.2*row:order==='suppress'?-0.65-.45*row:1.1+.63*row;
- const width=order==='regroup'?.66+.13*row:order==='suppress'?1.5+.45*row:1.1+.26*row;
+ const depth=order==='regroup'?.8+.74*row:order==='suppress'?-0.65-.68*row:1.1+.79*row;
+ const width=order==='regroup'?.7+.17*row:order==='suppress'?1.5+.4*row:1.1+.32*row;
  return {x:player.x-fx*depth+sx*side*width,y:player.y-fy*depth+sy*side*width};
 }
 export function pickTacticalTarget<T extends TacticalEnemy>(order:SquadOrder,unit:TacticalPosition,player:TacticalPosition,visible:readonly T[],focus:T|null=null):T|null{
