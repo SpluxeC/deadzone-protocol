@@ -10,7 +10,7 @@ export type Slot='primary'|'secondary'|'melee';
 export type AttachmentSlot='optic'|'barrel'|'magazine'|'underbarrel';
 export type ClassId='rifleman'|'medic'|'heavy'|'scout'|'engineer';
 export type WeaponId='pistol'|'revolver'|'machinePistol'|'smg'|'compactSmg'|'suppressedSmg'|'carbine'|'assault'|'battleRifle'|'burstRifle'|'shotgun'|'autoShotgun'|'doubleBarrel'|'tacticalShotgun'|'lmg'|'squadAutomatic'|'heavyMachineGun'|'marksman'|'heavyMarksman'|'sniper'|'knife'|'axe'|'machete'|'bat'|'crowbar';
-export type AttachmentId='redDot'|'scope'|'holoSight'|'reflexSight'|'variableScope'|'suppressor'|'compensator'|'longBarrel'|'flashHider'|'portedBarrel'|'extended'|'quickMag'|'drumMag'|'lightMag'|'grip'|'bipod'|'angledGrip'|'laserSight';
+export type AttachmentId='redDot'|'scope'|'holoSight'|'reflexSight'|'variableScope'|'suppressor'|'compensator'|'longBarrel'|'flashHider'|'portedBarrel'|'extended'|'quickMag'|'drumMag'|'lightMag'|'grip'|'bipod'|'angledGrip'|'laserSight'|'thermalSight'|'breacherChoke'|'reinforcedReceiver'|'tacticalStock';
 export type Mod={id:string;kind:'attachment';model:AttachmentId;tier:Tier};
 export type Weapon={id:string;kind:'weapon';model:WeaponId;tier:Tier;mag:number;mods:Partial<Record<AttachmentSlot,Mod>>};
 export type Gear=Weapon|Mod;
@@ -68,6 +68,10 @@ export const attachmentDefs:Record<AttachmentId,{name:string;slot:AttachmentSlot
  grip:{name:'Foregrip',slot:'underbarrel',compatible:[...allSmgs,...allRifles,...allShotguns,'lmg','squadAutomatic','heavyMachineGun','marksman','heavyMarksman'],stat:'accuracy'},
  angledGrip:{name:'Angled Foregrip',slot:'underbarrel',compatible:[...allSmgs,...allRifles,...allShotguns,'lmg','squadAutomatic'],stat:'rate / accuracy'},
  laserSight:{name:'Laser Sight',slot:'underbarrel',compatible:[...allPistols,...allSmgs,...allRifles,...allShotguns],stat:'accuracy'},
+ thermalSight:{name:'Thermal Combat Optic',slot:'optic',compatible:[...allRifles,...allMarksman,'lmg','squadAutomatic','heavyMachineGun'],stat:'range / accuracy'},
+ breacherChoke:{name:'Breacher Choke',slot:'barrel',compatible:[...allShotguns],stat:'damage / accuracy'},
+ reinforcedReceiver:{name:'Reinforced Receiver',slot:'underbarrel',compatible:[...allRifles,'lmg','squadAutomatic','heavyMachineGun'],stat:'damage / firing speed'},
+ tacticalStock:{name:'Tactical Stock',slot:'underbarrel',compatible:[...allSmgs,...allRifles,...allMarksman],stat:'recoil / accuracy'},
  bipod:{name:'Bipod',slot:'underbarrel',compatible:['lmg','squadAutomatic','heavyMachineGun',...allMarksman],stat:'range'}
 };
 /** Plain-language player-facing effects, matching effectiveStats calculations. */
@@ -89,7 +93,11 @@ export const attachmentDescriptions:Record<AttachmentId,string>={
  grip:'Improves accuracy while firing.',
  bipod:'Increases range and accuracy.',
  angledGrip:'Improves accuracy and slightly increases firing speed.',
- laserSight:'Greatly improves shot accuracy.'
+ laserSight:'Greatly improves shot accuracy.',
+ thermalSight:'Improves precision and effective range against distant threats.',
+ breacherChoke:'Improves shotgun stopping power and pellet accuracy.',
+ reinforcedReceiver:'Increases bullet damage with slower follow-up shots.',
+ tacticalStock:'Steadies your weapon for improved accuracy and handling.'
 };
 export const ammoTypes:AmmoType[]=['light','rifle','shotgun','heavy','precision'];
 export const ammoLabels:Record<AmmoType,string>={light:'Pistol / SMG',rifle:'Rifle',shotgun:'Shotgun',heavy:'Heavy',precision:'Precision'};
@@ -130,6 +138,10 @@ export function effectiveStats(weapon:Weapon):{damage:number;capacity:number;rat
    case 'bipod':range+=.22*t;accuracy+=.05*t;break;
    case 'angledGrip':accuracy+=.035*t;rate*=Math.max(.8,1-.022*t);break;
    case 'laserSight':accuracy+=.1+.06*t;break;
+   case 'thermalSight':range+=.55*t;accuracy+=.07*t;break;
+   case 'breacherChoke':damage*=1+.026*t;accuracy+=.048*t;break;
+   case 'reinforcedReceiver':damage*=1+.035*t;rate*=1+.025*t;break;
+   case 'tacticalStock':accuracy+=.07*t;rate*=Math.max(.84,1-.018*t);break;
   }
  }
  return {damage,capacity,rate:Math.max(.07,rate),range,reload:Math.max(0,reload),accuracy,noise};
