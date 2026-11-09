@@ -106,9 +106,11 @@ function loadRun(){try{const r=JSON.parse(localStorage.getItem(store('run'))||'n
  for(const a of run.allies){const p=nearestWalkable(plan.map,a);const placed=spacedSquadPosition(plan.map,p,occupied);a.x=placed.x;a.y=placed.y;occupied.push(a);}
  ensureEquipment(run);fog=createFog(plan.map,run.explored??[]);for(const enemy of run.enemies){
  const p=nearestWalkable(plan.map,enemy);enemy.x=p.x;enemy.y=p.y;enemy.kind??=enemy.boss?'boss':'shambler';if(enemy.boss&&enemy.alive&&enemy.maxHp<zombieStats('boss').hp){const fraction=enemy.maxHp>0?enemy.hp/enemy.maxHp:1;enemy.maxHp=zombieStats('boss').hp;enemy.hp=Math.max(1,enemy.maxHp*fraction)}enemy.attack??=0;enemy.windup??=0;enemy.phase??=0;enemy.aggro??=0;enemy.suppressed??=0;enemy.scoutMarked??=0;enemy.stagger??=0;enemy.hitFlash??=0;enemy.searchClock??=0;enemy.lastKnown??=null;enemy.alertMode??='idle';}return true}catch{return false}}
+/** One cinematic backdrop shared by the menu, loadout and upgrade screens. */
+function menuBackdrop():string{return '<div class="menu-cinematic-backdrop" aria-hidden="true"><canvas id="menu-cinematic"></canvas><span class="menu-scene-badge">CAM 04 · CONTAINMENT WING</span><span class="menu-scene-corner">● SIGNAL ACTIVE</span></div>'}
 function menu(){
  combatFx=[];bloodFx=[];lootPopups=[];paused=true;overlay.hidden=false;
- overlay.innerHTML=`<article class="main-menu-screen" aria-label="Deadzone Protocol main menu">
+ overlay.innerHTML=menuBackdrop()+`<article class="main-menu-screen" aria-label="Deadzone Protocol main menu">
   <div class="menu-command-panel">
    <div class="menu-kicker"><span class="menu-status-dot" aria-hidden="true"></span> OUTBREAK ZONE // SURVIVAL PROTOCOL</div>
    <h1>DEADZONE <span>PROTOCOL</span></h1>
@@ -123,11 +125,6 @@ function menu(){
     <button id="upgrades" class="menu-upgrades">PERMANENT UNLOCKS</button>
    </nav>
    <div class="menu-footer-note">SECURE YOUR SQUAD · HOLD YOUR GROUND</div>
-  </div>
-  <div class="menu-scene-panel" aria-hidden="true">
-   <canvas id="menu-cinematic"></canvas>
-   <span class="menu-scene-badge">CAM 04 · CONTAINMENT WING</span>
-   <span class="menu-scene-corner">● SIGNAL ACTIVE</span>
   </div>
  </article>`;
 const sel=overlay.querySelector<HTMLSelectElement>('#slot-select')!;sel.value=String(slot);const refresh=()=>{loadProfile();const active=localStorage.getItem(store('run'));overlay.querySelector('#career')!.textContent='BEST WAVE '+profile.bestWave+' · LEGACY TOKENS '+profile.tokens+' · RUNS '+profile.runs+(active?' · RUN IN PROGRESS':'');(overlay.querySelector<HTMLButtonElement>('#continue-run'))!.disabled=!active};refresh();
@@ -145,7 +142,7 @@ function permanentShop(section='Core Bonuses'){loadProfile();paused=true;overlay
   :section==='Achievements'
   ?'<div class="achievement-grid">'+Object.entries(achievements).map(([id,x])=>'<div class="achievement-item">'+(profile.achievements.includes(id as keyof typeof achievements)?'✓ ':'○ ')+x.label+' · '+x.reward+' tokens</div>').join('')+'</div>'
   :'<div class="shop">'+Object.entries(unlocks).filter(([_,x])=>x.group===section).map(([id,x])=>'<button id="unlock-'+id+'">'+x.label+' · '+(profile.unlocked.includes(id as UnlockId)?'UNLOCKED':x.cost+' TOKENS')+'<small>'+x.description+'</small></button>').join('')+'</div>';
- overlay.innerHTML=`<article class="progression-screen"><h1>PERMANENT PROGRESSION</h1><p><strong>${profile.tokens} LEGACY TOKENS</strong> · Best wave ${profile.bestWave} · Runs ${profile.runs}</p><label class="progression-category">Category <select id="progression-group">${choices}</select></label>${selection}<div class="menurow"><button id="back-menu">BACK TO MENU</button></div></article>`;
+ overlay.innerHTML=menuBackdrop()+`<article class="progression-screen"><h1>PERMANENT PROGRESSION</h1><p><strong>${profile.tokens} LEGACY TOKENS</strong> · Best wave ${profile.bestWave} · Runs ${profile.runs}</p><label class="progression-category">Category <select id="progression-group">${choices}</select></label>${selection}<div class="menurow"><button id="back-menu">BACK TO MENU</button></div></article>`;
  overlay.querySelector<HTMLSelectElement>('#progression-group')!.onchange=e=>permanentShop((e.target as HTMLSelectElement).value);
  if(section==='Core Bonuses'){
   overlay.querySelector<HTMLButtonElement>('#credit-unlock')!.disabled=profile.tokens<25||profile.startingCredits>=200;
@@ -167,7 +164,7 @@ function updateAchievements(r:Run){const award=progressAchievements(profile,runP
 function preRun(){loadProfile();paused=true;overlay.hidden=false;const p=profile;const c=sanitizeChoice(p,p.chosen);p.chosen=c;
  const options=(values:string[],selected:string,labels:Record<string,string>={})=>values.map(v=>'<option value="'+v+'"'+(v===selected?' selected':'')+'>'+(labels[v]??v.replace(/([A-Z])/g,' $1'))+'</option>').join('');
  const kit=startingKit(p);
- overlay.innerHTML=`<article class="prepare-run-screen"><h1>PREPARE NEW RUN</h1><p>Choose only from your permanent unlocks. All starting weapons and attachments are Basic rarity. In-run gear and credits reset on death.</p>
+ overlay.innerHTML=menuBackdrop()+`<article class="prepare-run-screen"><h1>PREPARE NEW RUN</h1><p>Choose only from your permanent unlocks. All starting weapons and attachments are Basic rarity. In-run gear and credits reset on death.</p>
  <div class="prep-grid">
  <label>Primary Weapon<select id="start-primary">${options(allowedPrimary(p),c.primary,Object.fromEntries(Object.entries(weaponDefs).map(([id,w])=>[id,w.name])))}</select></label>
  <label>Secondary Weapon<select disabled><option>Service Pistol</option></select></label>
