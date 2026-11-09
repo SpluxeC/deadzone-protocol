@@ -672,3 +672,72 @@
  #rogue #overlay .squad-management .menurow{gap:4px}
  #rogue #overlay .squad-management .menurow button{padding:5px 6px!important;font-size:10px!important}
 }
+
+/* Mobile HUD visibility repair: one actual flex row, not a clipped two-row grid. */
+#rogue #overlay .management-heading{
+ display:flex;align-items:center;justify-content:space-between;gap:8px;
+ flex-wrap:nowrap;min-width:0;
+}
+#rogue #overlay .management-heading h1{min-width:0;margin:0!important}
+#rogue #overlay .management-credits{
+ flex:0 0 auto;display:inline-flex;align-items:center;
+ padding:5px 9px;border:1px solid #9ab887;border-radius:6px;
+ color:#f9e6a2;background:#284436;font-size:clamp(11px,1.6vw,14px);
+ font-weight:900;letter-spacing:.02em;font-variant-numeric:tabular-nums;
+ white-space:nowrap;
+}
+@media (pointer:coarse), (max-width:780px){
+ #rogue > header{
+  display:flex!important;
+  flex-direction:row!important;flex-wrap:nowrap!important;
+  align-items:center!important;justify-content:space-between!important;
+  grid-template-columns:none!important;grid-template-rows:none!important;
+  width:100%;height:44px!important;min-height:44px!important;
+  max-height:44px!important;flex:0 0 44px!important;
+  box-sizing:border-box!important;
+  visibility:visible!important;opacity:1!important;
+  padding:3px max(5px,env(safe-area-inset-right)) 3px max(5px,env(safe-area-inset-left))!important;
+  overflow:visible!important;gap:5px!important;
+ }
+ #rogue > header .game-title{
+  display:block!important;position:static!important;min-width:0;
+  grid-column:auto!important;grid-row:auto!important;
+  font-size:10px!important;line-height:1.05!important;
+  flex:0 0 auto!important;
+ }
+ #rogue > header #combat-hud{
+  display:flex!important;position:static!important;
+  grid-column:auto!important;grid-row:auto!important;
+  flex:1 1 0!important;width:auto!important;min-width:0!important;
+  max-width:none!important;align-items:center!important;
+  justify-content:flex-start!important;gap:4px!important;
+  overflow-x:auto!important;overflow-y:hidden!important;
+  white-space:nowrap!important;scrollbar-width:none;
+ }
+ #rogue > header #combat-hud::-webkit-scrollbar{display:none}
+ #rogue > header #combat-hud .top-stat,
+ #rogue > header #combat-hud .hud-meter{
+  display:flex!important;visibility:visible!important;
+  flex:0 0 auto!important;white-space:nowrap!important;
+ }
+ #rogue > header #hud-credits{
+  font-weight:900!important;color:#f5e3a0!important;
+ }
+ #rogue > header #menu{
+  display:block!important;position:static!important;
+  grid-column:auto!important;grid-row:auto!important;
+  justify-self:auto!important;min-width:44px!important;
+  padding:5px 6px!important;min-height:26px!important;
+  flex:0 0 auto!important;visibility:visible!important;
+ }
+ #rogue #overlay .management-credits{
+  display:inline-flex!important;font-size:11px!important;
+  padding:4px 7px!important;
+ }
+ #rogue #overlay .management-heading h1{font-size:13px!important}
+}
+/* In the special landscape overlay mode the management toolbar replaces
+ * the gameplay header; on the active game the header stays visible. */
+@media (pointer:coarse) and (orientation:landscape){
+ #rogue:has(#overlay[hidden]) > header{display:flex!important}
+}
