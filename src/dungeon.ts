@@ -154,6 +154,7 @@ if(layoutVersion===3&&rand()<.13){
   }
  }
 }
+if(layoutVersion===3){
 // Final physical-layout pass: make sure loot cases never turn a connected
 // corridor into a dead end or prevent access to a secret door. Test as though
 // the secret panel is open, so the newly discovered room is actually usable.
@@ -184,7 +185,7 @@ const allowed=(c:LootCrate,isReward:boolean)=>{
  if(cells.some(k=>k<0||k>=blocked.length||!baseReach[k]||blocked[k]))return false;
  if(cells.some(k=>{
   const x=k%width,y=Math.floor(k/width);
-  return Math.hypot(x-entrance.x,y-entrance.y)<2.3||
+  return Math.hypot(x-entrance.x,y-entrance.y)<=7||
    Math.hypot(x-extraction.x,y-extraction.y)<2.2||
    events.some(e=>Math.hypot(x-e.x,y-e.y)<1.5);
  }))return false;
@@ -210,8 +211,17 @@ const allowed=(c:LootCrate,isReward:boolean)=>{
 const originalCrates=[...loot],safeCrates=new Array<LootCrate>(loot.length);
 const priority=originalCrates.map((_,i)=>i).sort((a,b)=>
  (a===secret?.rewardIndex?-1:b===secret?.rewardIndex?1:a-b));
-const candidatesFor=(crate:LootCrate):LootCrate[]=>{
+const candidatesFor=(crate:LootCrate,isReward:boolean):LootCrate[]=>{
  const values:LootCrate[]=[crate];
+ if(isReward&&secret){
+  // Never move the hidden reward out of the discovered annex. Allow it to
+  // rotate or shift a cell when needed to leave a traversable approach.
+  const cx=secret.center.x,cy=secret.center.y;
+  for(const [x,y] of [[cx-.5,cy],[cx+.5,cy],[cx,cy-.5],[cx,cy+.5]]){
+   values.push({x,y,kind:'weapon',orientation:x%1?'horizontal':'vertical'});
+  }
+  return values;
+ }
  // Retain the crate's type and footprint. A weapons case always remains
  // two cells long and never overlaps another crate.
  for(const k of pending){
@@ -225,7 +235,7 @@ const candidatesFor=(crate:LootCrate):LootCrate[]=>{
 };
 for(const i of priority){
  const crate=originalCrates[i],isReward=i===secret?.rewardIndex;
- const candidate=candidatesFor(crate).find(c=>allowed(c,isReward));
+ const candidate=candidatesFor(crate,isReward).find(c=>allowed(c,isReward));
  if(candidate)safeCrates[i]=candidate;
  else {
   // Extremely crowded legacy layouts retain their original loot geometry
@@ -235,5 +245,6 @@ for(const i of priority){
  }
 }
 for(let i=0;i<loot.length;i++)loot[i]=safeCrates[i];
+}
 return{width,height,seed,tiles,entrance,extraction,extractionSize,loot,enemies,rooms:atmosphereRooms,events,secret};
 }
