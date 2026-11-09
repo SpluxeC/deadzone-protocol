@@ -99,6 +99,33 @@ async function runScenario(touch){
  await page.goto(origin);
  await page.waitForFunction(()=>document.documentElement.dataset.deadzoneReady==='true');
  await checkWiring(page,label+' main menu');
+ assert.equal(await page.locator('#build-version').count(),0,'main menu must have no version banner');
+ assert.equal(await page.locator('#menu-cinematic').count(),1,'the animated outbreak scene must exist');
+ const sceneMetrics=await page.evaluate(()=>{
+  const article=document.querySelector('.main-menu-screen'),scene=document.querySelector('#menu-cinematic');
+  const overlay=document.querySelector('#overlay'),panel=document.querySelector('.menu-command-panel');
+  const rect=article?.getBoundingClientRect();
+  return {articleHeight:rect?.height??0,articleWidth:rect?.width??0,
+   viewportHeight:innerHeight,viewportWidth:innerWidth,
+   overlayScrollHeight:overlay?.scrollHeight??0,overlayClientHeight:overlay?.clientHeight??0,
+   panelScrollHeight:panel?.scrollHeight??0,panelClientHeight:panel?.clientHeight??0,
+   cinematicWidth:scene?.getBoundingClientRect().width??0,
+   cinematicHeight:scene?.getBoundingClientRect().height??0};
+ });
+ assert.ok(sceneMetrics.cinematicWidth>120&&sceneMetrics.cinematicHeight>120,'cinematic must be visible');
+ if(touch){
+  assert.ok(sceneMetrics.articleHeight<=sceneMetrics.viewportHeight+1,'main menu fits landscape mobile height');
+  assert.ok(sceneMetrics.articleWidth<=sceneMetrics.viewportWidth+1,'main menu fits landscape mobile width');
+  assert.ok(sceneMetrics.overlayScrollHeight<=sceneMetrics.overlayClientHeight+2,'overlay must not scroll on mobile');
+  assert.ok(sceneMetrics.panelScrollHeight<=sceneMetrics.panelClientHeight+2,'menu command buttons must all fit without scrolling');
+  for(const selector of ['#slot-select','#continue-run','#new-run','#upgrades']){
+   const inside=await page.locator(selector).evaluate(el=>{
+    const r=el.getBoundingClientRect();return r.top>=0&&r.bottom<=innerHeight&&r.left>=0&&r.right<=innerWidth;
+   });
+   assert.ok(inside,selector+' must remain on screen without scrolling');
+  }
+ }
+
  await tap('#upgrades');
  await checkWiring(page,label+' permanent upgrades');
  await page.locator('#progression-group').selectOption({index:1});
