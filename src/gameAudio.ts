@@ -186,14 +186,39 @@ class GameAudio{
  }
  playUI(id:UiSound):void{
   if(!this.canPlay('ui-'+id,id==='tap'?.045:.09))return;
-  if(id==='tap'){this.tone(620,.035,.085,{endFreq:480});return}
-  if(id==='back'){this.tone(430,.09,.095,{endFreq:310});return}
-  if(id==='error'){this.tone(185,.2,.13,{type:'sawtooth',endFreq:120});return}
-  if(id==='warning'){this.tone(580,.11,.12,{type:'square',endFreq:420});this.tone(580,.11,.12,{type:'square',endFreq:420,delay:.17});return}
-  if(id==='success'||id==='confirm'){this.tone(570,.09,.11,{endFreq:720});this.tone(870,.16,.10,{delay:.10,endFreq:1020});return}
-  if(id==='heal'){this.tone(380,.18,.09,{endFreq:740});this.tone(680,.22,.06,{delay:.08,endFreq:930});return}
-  if(id==='loot'){this.tone(470,.07,.10,{endFreq:630});this.tone(820,.12,.1,{delay:.075,endFreq:1080});return}
-  this.tone(750,.075,.1,{endFreq:510});this.tone(460,.13,.055,{delay:.065,endFreq:570});
+  // Tactile switch clicks, soft magnetic relay contacts and subdued emergency
+  // alarms instead of melodic arcade tones.
+  if(id==='tap'){
+   this.burst(.023,.055,{highpass:950,lowpass:4900});
+   this.tone(290,.021,.025,{type:'triangle',endFreq:178,delay:.005});return;
+  }
+  if(id==='back'){
+   this.burst(.042,.08,{highpass:460,lowpass:2200});
+   this.tone(235,.04,.035,{endFreq:150});return;
+  }
+  if(id==='error'){
+   this.burst(.05,.10,{lowpass:1400});
+   this.tone(190,.16,.09,{type:'triangle',endFreq:132});return;
+  }
+  if(id==='warning'){
+   this.burst(.05,.085,{highpass:270,lowpass:1500});
+   this.tone(350,.18,.11,{type:'triangle',endFreq:310});
+   this.tone(350,.18,.11,{type:'triangle',endFreq:310,delay:.25});return;
+  }
+  if(id==='success'||id==='confirm'){
+   this.burst(.044,.07,{highpass:650,lowpass:4400});
+   this.tone(455,.085,.05,{endFreq:575,delay:.045});return;
+  }
+  if(id==='heal'){
+   this.burst(.15,.11,{highpass:180,lowpass:1600});
+   this.tone(260,.11,.05,{endFreq:420});return;
+  }
+  if(id==='loot'){
+   this.burst(.064,.1,{highpass:700,lowpass:4800});
+   this.tone(760,.06,.045,{type:'triangle',endFreq:920,delay:.042});return;
+  }
+  this.burst(.042,.065,{highpass:540,lowpass:2700});
+  this.tone(495,.065,.032,{endFreq:410,delay:.027});
  }
  playNotice(text:string):void{
   const t=text.toLowerCase();
