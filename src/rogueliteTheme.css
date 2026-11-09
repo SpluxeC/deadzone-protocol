@@ -1142,3 +1142,49 @@
   gap:3px!important;padding:5px 9px!important;
  }
 }
+
+/* Accessible master SFX controls; never cover the gameplay HUD or mobile
+ * joysticks. Controls remain visible in every menu and during combat. */
+#rogue{position:relative!important}
+#rogue #audio-dock{
+ position:absolute;top:8px;right:clamp(7px,1.3vw,18px);z-index:15;
+ display:flex;align-items:center;gap:6px;min-width:0;
+ padding:5px 7px;border:1px solid #709c86;border-radius:8px;
+ background:#0a2223eb;box-shadow:0 3px 16px #0009;
+ backdrop-filter:blur(5px);
+}
+#rogue #audio-dock button{
+ flex:0 0 auto;min-height:27px!important;padding:4px 8px!important;
+ font:800 10px/1 system-ui!important;letter-spacing:.04em!important;
+ white-space:nowrap!important;border-color:#84a998!important;
+}
+#rogue #audio-dock .audio-volume-label{
+ font:800 9px system-ui;letter-spacing:.07em;color:#b9d0c1;
+}
+#rogue #audio-dock input[type="range"]{
+ appearance:auto;accent-color:#b0d4a6;width:76px;max-width:15vw;
+ min-height:26px;cursor:pointer;touch-action:pan-x;
+}
+#rogue #audio-dock #audio-toggle[aria-pressed="false"]{
+ color:#f3c5ac!important;border-color:#b47864!important;
+}
+#rogue:has(#overlay[hidden]) #audio-dock{
+ top:47px;right:8px;
+}
+@media (pointer:coarse), (max-width:780px){
+ #rogue #audio-dock{
+  top:5px!important;right:max(6px,env(safe-area-inset-right))!important;
+  padding:3px 5px!important;gap:4px!important;
+ }
+ #rogue:has(#overlay[hidden]) #audio-dock{top:46px!important}
+ #rogue #audio-dock button{
+  min-height:25px!important;padding:3px 5px!important;
+  font-size:9px!important;
+ }
+ #rogue #audio-dock input[type="range"]{
+  width:54px!important;max-width:11vw!important;min-height:24px!important;
+ }
+ #rogue #audio-dock .audio-volume-label{font-size:8px!important}
+}
+/* Hidden overlays remain inert despite cinematic backgrounds and audio dock. */
+#rogue #overlay[hidden]{display:none!important;pointer-events:none!important}
