@@ -101,6 +101,18 @@ async function runScenario(touch){
  await checkWiring(page,label+' main menu');
  assert.equal(await page.locator('#build-version').count(),0,'main menu must have no version banner');
  assert.equal(await page.locator('#menu-cinematic').count(),1,'the animated outbreak scene must exist');
+ const layered=await page.evaluate(()=>{
+  const overlay=document.querySelector('#overlay'),backdrop=document.querySelector('.menu-cinematic-backdrop'),panel=document.querySelector('.menu-command-panel');
+  if(!overlay||!backdrop||!panel)return false;
+  const bg=backdrop.getBoundingClientRect(),r=overlay.getBoundingClientRect();
+  const sceneStyle=getComputedStyle(backdrop),panelStyle=getComputedStyle(panel);
+  const badge=document.querySelector('.menu-scene-badge');
+  return Math.abs(bg.width-r.width)<=2&&Math.abs(bg.height-r.height)<=2&&
+    sceneStyle.position==='absolute'&&panelStyle.backgroundImage.includes('gradient')&&
+    !!badge;
+ });
+ assert.ok(layered,'cinematic must cover the whole menu behind the overlaid controls');
+
  const sceneMetrics=await page.evaluate(()=>{
   const article=document.querySelector('.main-menu-screen'),scene=document.querySelector('#menu-cinematic');
   const overlay=document.querySelector('#overlay'),panel=document.querySelector('.menu-command-panel');
@@ -127,6 +139,7 @@ async function runScenario(touch){
  }
 
  await tap('#upgrades');
+ assert.equal(await page.locator('.menu-cinematic-backdrop #menu-cinematic').count(),1,'cinematic stays behind progression menu');
  await checkWiring(page,label+' permanent upgrades');
  await page.locator('#progression-group').selectOption({index:1});
  await checkWiring(page,label+' permanent category');
@@ -134,6 +147,7 @@ async function runScenario(touch){
  await checkWiring(page,label+' achievements');
  await tap('#back-menu');
  await tap('#new-run');
+ assert.equal(await page.locator('.menu-cinematic-backdrop #menu-cinematic').count(),1,'cinematic stays behind loadout menu');
  await checkWiring(page,label+' preparation');
  await page.locator('#start-primary').selectOption({index:0});
  await tap('#prep-back');
