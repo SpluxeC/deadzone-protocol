@@ -1058,3 +1058,87 @@
  display:none!important;visibility:hidden!important;
  pointer-events:none!important;
 }
+
+/* Cinematic is the MENU BACKGROUND, not a side-by-side illustration.
+ * The same looping scene remains behind Main Menu, New Run, and Unlocks. */
+#rogue #overlay:has(> .menu-cinematic-backdrop){
+ position:absolute!important;inset:0!important;isolation:isolate;
+ background:#071315!important;backdrop-filter:none!important;
+ overflow:hidden!important;
+}
+#rogue #overlay > .menu-cinematic-backdrop{
+ position:absolute!important;inset:0!important;z-index:0!important;
+ width:100%!important;height:100%!important;pointer-events:none!important;
+ overflow:hidden!important;background:#081515;
+}
+#rogue #overlay .menu-cinematic-backdrop::after{
+ content:"";position:absolute;inset:0;pointer-events:none;
+ background:linear-gradient(90deg,rgba(3,14,17,.85) 0%,rgba(6,19,21,.65) 34%,
+   rgba(6,17,20,.16) 72%,rgba(4,12,16,.23) 100%);
+}
+#rogue #overlay .menu-cinematic-backdrop #menu-cinematic{
+ display:block;position:absolute;inset:0;width:100%;height:100%;
+ object-fit:cover;pointer-events:none!important;
+}
+#rogue #overlay .menu-cinematic-backdrop .menu-scene-badge,
+#rogue #overlay .menu-cinematic-backdrop .menu-scene-corner{
+ z-index:2!important;pointer-events:none!important;
+}
+#rogue #overlay:has(> .menu-cinematic-backdrop) > article{
+ position:relative!important;z-index:2!important;
+}
+#rogue #overlay:has(> .main-menu-screen){
+ padding:clamp(8px,1.8vw,24px)!important;
+}
+#rogue #overlay > article.main-menu-screen{
+ display:flex!important;flex-direction:row!important;
+ align-items:center!important;justify-content:flex-start!important;
+ width:100%!important;max-width:none!important;
+ height:100%!important;max-height:100%!important;
+ border:0!important;border-radius:0!important;
+ margin:0!important;padding:0!important;box-shadow:none!important;
+ background:transparent!important;overflow:hidden!important;
+}
+#rogue #overlay .main-menu-screen .menu-command-panel{
+ width:min(500px,52%)!important;max-width:none!important;
+ padding:clamp(14px,3.1vw,48px)!important;
+ border:1px solid rgba(152,194,161,.28)!important;
+ border-radius:12px!important;
+ background:linear-gradient(110deg,rgba(9,27,28,.91),rgba(13,30,29,.77))!important;
+ box-shadow:0 12px 48px #000a,inset 0 1px #cedcc312!important;
+ backdrop-filter:blur(7px);
+}
+#rogue #overlay .main-menu-screen .menu-command-panel .menu-main-actions{
+ position:relative!important;
+}
+#rogue #overlay:has(> .menu-cinematic-backdrop) > .prepare-run-screen,
+#rogue #overlay:has(> .menu-cinematic-backdrop) > .progression-screen{
+ background:linear-gradient(125deg,rgba(14,34,34,.92),rgba(14,32,36,.85))!important;
+ backdrop-filter:blur(7px);
+ box-shadow:0 15px 65px #000b!important;
+}
+@media (pointer:coarse), (max-width:780px), (max-height:480px){
+ #rogue #overlay:has(> .menu-cinematic-backdrop){
+  padding:4px!important;overflow:hidden!important;
+ }
+ #rogue #overlay > article.main-menu-screen{
+  display:flex!important;align-items:center!important;
+  width:100%!important;height:100%!important;max-height:100%!important;
+  max-width:none!important;min-height:0!important;
+ }
+ #rogue #overlay .main-menu-screen .menu-command-panel{
+  width:min(480px,56%)!important;flex:0 0 min(480px,56%)!important;
+  padding:clamp(8px,2vh,15px) clamp(10px,2vw,19px)!important;
+  gap:clamp(3px,1.2vh,8px)!important;
+  background:linear-gradient(100deg,rgba(6,20,22,.95),rgba(9,29,27,.8))!important;
+ }
+ #rogue #overlay .menu-cinematic-backdrop::after{
+  background:linear-gradient(90deg,rgba(2,13,16,.67),rgba(5,18,19,.18) 65%,rgba(3,12,13,.22));
+ }
+}
+/* Low-height landscape phones retain every button without scrolling. */
+@media (pointer:coarse) and (orientation:landscape) and (max-height:345px){
+ #rogue #overlay .main-menu-screen .menu-command-panel{
+  gap:3px!important;padding:5px 9px!important;
+ }
+}
