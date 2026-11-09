@@ -98,7 +98,24 @@ async function runScenario(touch){
  console.log(label,'checking main menu');
  await page.goto(origin);
  await page.waitForFunction(()=>document.documentElement.dataset.deadzoneReady==='true');
+ assert.equal(await page.locator('#audio-volume').inputValue(),'35','saved sound setting restored');
  await checkWiring(page,label+' main menu');
+ const audioDock=page.locator('#audio-dock');
+ assert.equal(await audioDock.count(),1,'audio settings must appear in main menu');
+ const toggle=page.locator('#audio-toggle'),volume=page.locator('#audio-volume');
+ assert.equal(await volume.count(),1);
+ assert.equal(await toggle.getAttribute('aria-pressed'),'true');
+ await action(page,'#audio-toggle',touch);
+ assert.equal(await toggle.getAttribute('aria-pressed'),'false','mute button turns sound off');
+ await action(page,'#audio-toggle',touch);
+ assert.equal(await toggle.getAttribute('aria-pressed'),'true','sound can be unmuted');
+ await volume.evaluate(el=>{el.value='35';el.dispatchEvent(new Event('input',{bubbles:true}))});
+ assert.equal(await volume.inputValue(),'35');
+ assert.deepEqual(await page.evaluate(()=>JSON.parse(localStorage.getItem('deadzone-audio-v1')||'null')),
+  {volume:.35,muted:false},'master volume and mute state persist');
+ const dockBox=await audioDock.boundingBox();
+ assert.ok(dockBox&&dockBox.width>75&&dockBox.height>20,'audio controls must remain visible');
+
  assert.equal(await page.locator('#build-version').count(),0,'main menu must have no version banner');
  assert.equal(await page.locator('#menu-cinematic').count(),1,'the animated outbreak scene must exist');
  const layered=await page.evaluate(()=>{
@@ -153,6 +170,7 @@ async function runScenario(touch){
  await tap('#prep-back');
  await tap('#new-run');
  await tap('#launch-run');
+ assert.equal(await page.locator('#audio-dock').count(),1,'audio controls remain accessible in gameplay');
  if(touch){
   const hudMetrics=await page.evaluate(()=>{
    const header=document.querySelector('#rogue > header');
