@@ -4,7 +4,14 @@ export type Squadmate={id:string;name:string;role:ClassId;hp:number;maxHp:number
 export type Downable={hp:number;downed:number;dead:boolean};
 export const SQUAD_LIMIT=4;
 export const SQUAD_MAX_AMMO=400;
-export const SQUAD_AMMO_REFILL_COST=300;
+/** Individual NPC reloads cost 150 credits for 80 rounds; bulk refill uses
+ * the same per-round rate, rounded up once for the actual missing ammo. */
+export const SQUAD_AMMO_PACK_ROUNDS=80;
+export const SQUAD_AMMO_PACK_CREDITS=150;
+export function squadAmmoRefillPrice(allies:readonly Squadmate[]):number{
+ const rounds=squadAmmoNeeded(allies);
+ return rounds===0?0:Math.ceil(rounds*SQUAD_AMMO_PACK_CREDITS/SQUAD_AMMO_PACK_ROUNDS);
+}
 export function squadAmmoNeeded(allies:readonly Squadmate[]):number{return allies.filter(a=>!a.dead).reduce((n,a)=>n+Math.max(0,SQUAD_MAX_AMMO-a.magReserve),0)}
 export function refillSquadAmmo(allies:Squadmate[]):number{let filled=0;for(const ally of allies){if(ally.dead)continue;const needed=Math.max(0,SQUAD_MAX_AMMO-ally.magReserve);ally.magReserve+=needed;filled+=needed;}return filled}
 export function squadWeapon(ally:Squadmate):Weapon{return ally.activeSlot==='secondary'?ally.secondaryWeapon:ally.activeSlot==='melee'?ally.meleeWeapon:ally.weapon}
