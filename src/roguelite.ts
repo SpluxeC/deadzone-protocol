@@ -1114,7 +1114,12 @@ function draw(){
  mobileSquad.setAttribute('aria-hidden',String(!hasActiveSquad));
  const order=orderLabel(r.squadOrder??'follow');
  const banner=document.querySelector<HTMLElement>('#breach-banner')!;
- banner.hidden=!r.breachEvent||performance.now()>=breachBannerUntil;
+ // Stay fully visible for five seconds, then fade smoothly over 800ms.
+ // Only remove the banner after the fade; the 25-second breach timer continues.
+ const fadeRemaining=breachBannerUntil+800-performance.now();
+ const showBanner=!!r.breachEvent&&fadeRemaining>0;
+ banner.hidden=!showBanner;
+ banner.style.opacity=showBanner?String(Math.max(0,Math.min(1,fadeRemaining/800))):'0';
  if(r.breachEvent)banner.textContent='Wave incoming, protect the breach while its sealed · '+Math.ceil(r.breachEvent.remaining)+'s';
  stats.textContent='WAVE '+r.wave+' · Breaches Sealed '+(r.sealedHoles??[]).length+'/'+REQUIRED_SEALS;
  document.querySelector<HTMLButtonElement>('#orders')!.textContent='SQUAD: '+order+' (Q)';
