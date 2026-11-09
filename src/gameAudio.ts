@@ -7,6 +7,7 @@ import type {ZombieKind} from './combatSystems.ts';
 import {makeWeaponClip,makeReloadClip,makeZombieClip,makeMachineryClip,type PcmClip} from './realisticSoundDesign.ts';
 
 export type AudioSetting={volume:number;muted:boolean};
+export type AudioStatus='locked'|'starting'|'ready'|'suspended'|'unavailable';
 export type UiSound='tap'|'confirm'|'back'|'error'|'notice'|'success'|'warning'|'loot'|'heal';
 export type ElevatorSound='locked'|'open'|'arrive'|'travel';
 export type BreachSound='start'|'pulse'|'wave'|'complete';
@@ -40,6 +41,9 @@ class GameAudio{
  private clips=new Map<string,AudioBuffer>();
  private settings:AudioSetting={...defaults};
  private unlocked=false;
+ private starting:Promise<boolean>|null=null;
+ private failed=false;
+ private onStatus=new Set<()=>void>();
  private last=new Map<string,number>();
  private active=0;
  private breach:OscillatorNode|null=null;
@@ -59,19 +63,35 @@ class GameAudio{
  get volume(){return this.settings.volume}
  get muted(){return this.settings.muted}
  get enabled(){return this.unlocked&&!!this.context&&this.context.state==='running'&&!this.muted}
+ get status():AudioStatus{
+  if(this.failed)return 'unavailable';
+  if(!this.context)return 'locked';
+  if(this.context.state==='running')return 'ready';
+  return this.starting?'starting':'suspended';
+ }
+ onStatusChange(callback:()=>void):()=>void{this.onStatus.add(callback);return ()=>this.onStatus.delete(callback)}
+ private notify(){for(const listener of this.onStatus)listener()}
  private persist(){
   try{localStorage.setItem(STORAGE,JSON.stringify(this.settings))}catch{/* private browsing */}
  }
  private updateMaster(){
   if(this.master&&this.context)this.master.gain.setTargetAtTime(this.muted?0:this.volume,this.context.currentTime,.018)
  }
- setVolume(n:number){this.settings.volume=clampVolume(n);this.persist();this.updateMaster()}
- setMuted(value:boolean){this.settings.muted=value;this.persist();this.updateMaster();if(value)this.stopBreach()}
+ setVolume(n:number){this.settings.volume=clampVolume(n);this.persist();this.updateMaster();this.notify()}
+ setMuted(value:boolean){this.settings.muted=value;this.persist();this.updateMaster();if(value)this.stopBreach();this.notify()}
  toggle(){this.setMuted(!this.muted);if(!this.muted)this.playUI('confirm')}
- unlock():void{
+ /**
+  * Call directly from an actual pointer/key gesture. On iOS and embedded WebKit,
+  * start one silent source synchronously before awaiting resume(). We surface
+  * startup failures instead of silently throwing away every requested SFX.
+  */
+ unlock():Promise<boolean>{
+  if(this.context?.state==='running'){this.unlocked=true;this.notify();return Promise.resolve(true)}
   if(!this.context){
    try{
-    const context=new AudioContext({latencyHint:'interactive'});
+    const supported=(window.AudioContext??(window as typeof window&{webkitAudioContext?:typeof AudioContext}).webkitAudioContext);
+    if(!supported){this.failed=true;this.notify();return Promise.resolve(false)}
+    const context=new supported({latencyHint:'interactive'});
     const master=context.createGain();master.gain.value=this.muted?0:this.volume;
     master.connect(context.destination);
     const noise=context.createBuffer(1,context.sampleRate*2,context.sampleRate);
@@ -82,11 +102,42 @@ class GameAudio{
      samples[i]=((random>>>0)/2147483648-1)*.72;
     }
     this.context=context;this.master=master;this.noise=noise;
-   }catch{return}
+    context.onstatechange=()=>{this.notify()};
+   }catch{this.failed=true;this.notify();return Promise.resolve(false)}
   }
+  const context=this.context;
+  if(!context)return Promise.resolve(false);
+  // Safari permits this zero-amplitude source when created in the tap handler.
+  // It does not create an audible autoplay event.
+  try{
+   const silence=context.createBuffer(1,1,context.sampleRate);
+   const source=context.createBufferSource();source.buffer=silence;
+   source.connect(this.master!);source.start(0);
+   source.onended=()=>source.disconnect();
+  }catch{/* Resume below may still work. */}
   this.unlocked=true;
-  if(this.context.state==='suspended')void this.context.resume().catch(()=>{});
+  if(this.starting)return this.starting;
+  let resume:Promise<void>;
+  try{resume=context.resume()}catch{this.notify();return Promise.resolve(false)}
+  this.starting=resume.then(()=>{
+   this.failed=false;return context.state==='running';
+  }).catch(()=>false).then(ok=>{
+   this.starting=null;this.notify();return ok;
+  });
+  this.notify();
+  return this.starting;
  }
+ /** Test is explicitly requested, and only plays after audio is actually on. */
+ async testSound():Promise<boolean>{
+  if(this.muted)this.setMuted(false);
+  const ready=await this.unlock();
+  if(!ready)return false;
+  this.last.delete('ui-success');
+  this.playUI('success');
+  this.playUI('tap');
+  return true;
+ }
+
  private ready():AudioContext|null{
   return this.enabled&&this.active<36?this.context:null;
  }
