@@ -374,20 +374,34 @@ function search(targetIndex?:number){
   eq.bag.push(gear);model=gear.model;label=gear.kind==='weapon'?weaponDefs[gear.model].name:attachmentDefs[gear.model].name;
   notice((kind==='weapon'?'Weapon case: ':'Supply crate: ')+itemName(gear)+' added to backpack');
  }else{
-  // Regular crates exclusively contain supplies (no guns). Attachments are bonus finds.
-  const reward=(i+run.wave)%4;
-  if(reward===0){
-   const credits=75+run.wave*5;run.credits+=credits;label='+'+credits+' CREDITS';notice('Supply crate: '+label);
-  }else if(reward===1){
-   const type:AmmoType=(['rifle','light','shotgun','precision','heavy'] as AmmoType[])[(i+run.wave)%5];
-   const added=addAmmo(eq.ammo,type,ammoPack[type].count,eq.bag,run.medkits,eq.capacity);
+  // Deterministic expanded military supplies: no guns in ordinary crates.
+  const reward=supplyReward(run.seed,run.wave,i);
+  if(reward.kind==='credits'){
+   run.credits+=reward.amount;label='+'+reward.amount+' CREDITS';notice('Supply crate: '+label);
+  }else if(reward.kind==='ammo'){
+   const added=addAmmo(eq.ammo,reward.type,reward.amount,eq.bag,run.medkits,eq.capacity);
    if(!added){notice('BACKPACK FULL — cannot carry ammo');return}
-   model='ammo';label=ammoLabels[type]+' +'+added;notice('Supply crate: '+label);
-  }else if(reward===2){
+   model='ammo';label=ammoLabels[reward.type]+' +'+added;notice('Supply crate: '+label);
+  }else if(reward.kind==='medkit'){
    if(usedSlots(eq.bag,eq.ammo,run.medkits+1)>eq.capacity){notice('BACKPACK FULL — cannot carry medkit');return}
-   run.medkits++;model='medkit';label='MEDKIT +1';notice('Supply crate: medkit');
+   run.medkits++;model='medkit';label='MEDKIT +1';notice('Supply crate: '+label);
+  }else if(reward.kind==='armor'){
+   const added=Math.min(reward.amount,100-run.armor);
+   run.armor+=added;model='armor';label='ARMOR +'+added;notice('FIELD ARMOR PLATES · +'+added+' ARMOR');
+  }else if(reward.kind==='fieldHeal'){
+   const added=Math.min(reward.amount,100-run.hp);
+   run.hp+=added;model='medkit';label='HEALTH +'+added;notice('FIELD FIRST-AID · +'+added+' HP');
   }else{
-   const credits=45+run.wave*4;run.credits+=credits;label='+'+credits+' CREDITS';notice('Supply crate: '+label);
+   const allies=run.allies.filter(a=>!a.dead);
+   let remaining=reward.amount,filled=0;
+   // Give the lowest-ammo teammate priority, preserving the 400-round cap.
+   for(const ally of [...allies].sort((a,b)=>a.magReserve-b.magReserve)){
+    const amount=Math.min(remaining,Math.max(0,SQUAD_MAX_AMMO-ally.magReserve));
+    ally.magReserve+=amount;remaining-=amount;filled+=amount;
+    if(remaining===0)break;
+   }
+   if(filled===0){run.credits+=45;model='credits';label='+45 CREDITS';notice('SQUAD CACHE: AMMO FULL · +45 CR')}
+   else{model='ammo';label='SQUAD AMMO +'+filled;notice('SQUAD AMMO CACHE · +'+filled+' ROUNDS')}
   }
  }
  gameAudio.playUI('loot');run.looted.push(i);run.lootedTotal=(run.lootedTotal??0)+1;
