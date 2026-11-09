@@ -182,7 +182,8 @@ const allowed=(c:LootCrate,isReward:boolean)=>{
  const cells=cellIndices(c);
  if(new Set(cells).size!==cells.length)return false;
  if(!isReward&&nearSecretDoor(c))return false;
- if(cells.some(k=>k<0||k>=blocked.length||!baseReach[k]||blocked[k]))return false;
+ if(cells.some(k=>k<0||k>=blocked.length||!baseReach[k]||blocked[k]||
+  enemies.some(e=>tileKey(e.x,e.y)===k)))return false;
  if(cells.some(k=>{
   const x=k%width,y=Math.floor(k/width);
   return Math.hypot(x-entrance.x,y-entrance.y)<=7||
