@@ -496,14 +496,14 @@ function mobileTabStrip(items:readonly {id:string;label:string}[],selected:strin
 function wireMobilePanels(screen:HTMLElement,selected:string,saveChoice:(tab:string)=>void):void{
  const activate=(id:string)=>{
   saveChoice(id);
-  for(const button of screen.querySelectorAll<HTMLButtonElement>('[data-mobile-tab]')){
+  for(const button of Array.from(screen.querySelectorAll<HTMLButtonElement>('[data-mobile-tab]'))){
    const active=button.dataset.mobileTab===id;button.classList.toggle('selected',active);
    button.setAttribute('aria-selected',String(active));
   }
-  for(const panel of screen.querySelectorAll<HTMLElement>('[data-mobile-panel]'))
+  for(const panel of Array.from(screen.querySelectorAll<HTMLElement>('[data-mobile-panel]')))
    panel.classList.toggle('mobile-active',panel.dataset.mobilePanel===id);
  };
- for(const button of screen.querySelectorAll<HTMLButtonElement>('[data-mobile-tab]'))
+ for(const button of Array.from(screen.querySelectorAll<HTMLButtonElement>('[data-mobile-tab]')))
   button.onclick=()=>activate(button.dataset.mobileTab!);
  activate(selected);
 }
@@ -586,7 +586,7 @@ function squadPanel(){if(!run)return;paused=true;overlay.hidden=false;const r=ru
  const cards=r.allies.map((a,i)=>{const eligible=eq.bag.map((item,j)=>item.kind==='weapon'&&canClassEquip(a.role,item.model)?'<button id="sq-equip-'+i+'-'+j+'">EQUIP '+itemName(item)+'</button>':'').join('');
  return `<details class="squad-card" data-squad-index="${i}" open><summary><span><b>${a.name} · ${CLASS_INFO[a.role].label}</b><small>HP ${Math.ceil(a.hp)} · ARM ${Math.ceil(a.armor)} · AMMO ${a.magReserve}/${SQUAD_MAX_AMMO}</small></span><span class="squad-expand-indicator" aria-hidden="true">⌄</span></summary><div class="squad-card-body"><p>HP ${Math.ceil(a.hp)}/${a.maxHp} · ARMOR ${Math.ceil(a.armor)} · ${a.downed>0?'DOWNED '+Math.ceil(a.downed)+'s':'ACTIVE'} · ACTIVE ${a.activeSlot.toUpperCase()} · Gear ${rarityName(a.gearTier)} · AMMO ${a.magReserve}/${SQUAD_MAX_AMMO}<br>${CLASS_INFO[a.role].special}</p><div class="squad-weapons"><small>PRIMARY: ${itemName(a.weapon)} · SECONDARY: ${itemName(a.secondaryWeapon)} · MELEE: ${itemName(a.meleeWeapon)}</small><div class="menurow"><button id="sq-slot-primary-${i}">PRIMARY</button><button id="sq-slot-secondary-${i}">SIDEARM</button><button id="sq-slot-melee-${i}">MELEE</button></div></div><div class="menurow">${atShop?'<button id="sq-heal-'+i+'">HEAL +40 · 175 CR</button><button id="sq-armor-'+i+'">ARMOR +40 · 220 CR</button><button id="sq-ammo-'+i+'">CLASS AMMO +80 · 150 CR</button><button id="sq-up-'+i+'">CLASS GEAR UPGRADE · '+gearUpgradeCost(a)+' CR</button>':''}${eligible}</div></div></details>`}).join('');
  overlay.innerHTML=`<article class="squad-management"><div class="armory-top"><div class="management-heading"><h1>SQUAD MANAGEMENT</h1><strong class="management-credits" aria-label="Available credits">₡${r.credits.toLocaleString()} CREDITS</strong></div><nav class="management-toolbar" aria-label="Squad navigation"><button id="squad-return">${atShop?'BACK TO ARMORY':'RETURN TO GAME'}</button><button id="squad-inventory">INVENTORY</button><button id="squad-refill">REFILL ALL AMMO · ${SQUAD_AMMO_REFILL_COST} CR</button></nav></div><p>${r.allies.length}/4 specialists · ${r.credits} credits · Order: ${orderLabel(r.squadOrder??'follow')}</p>${cards||'<p>No living squad members. Recruits appear in the between-wave Armory.</p>'}</article>`;
- const squadCards=[...overlay.querySelectorAll<HTMLDetailsElement>('.squad-card')];
+ const squadCards=Array.from(overlay.querySelectorAll<HTMLDetailsElement>('.squad-card'));
  const compactSquad=window.matchMedia('(pointer:coarse), (max-width:780px)').matches;
  if(compactSquad)squadCards.forEach((card,i)=>{card.open=i===Math.min(squadOpenIndex,squadCards.length-1)});
  squadCards.forEach((card,i)=>card.addEventListener('toggle',()=>{
