@@ -202,7 +202,7 @@ function preRun(){loadProfile();paused=true;overlay.hidden=false;const p=profile
  overlay.querySelector<HTMLButtonElement>('#launch-run')!.onclick=()=>{read();newRun()};
  overlay.querySelector<HTMLButtonElement>('#prep-back')!.onclick=menu;
 }
-function buildFloor(seed:number,wave:number){combatFx=[];bloodFx=[];shellEffects=[];shotKick=0;bossEffects=[];lootPopups=[];poseCache=new WeakMap<object,CharacterMotion>();if(run)run.layoutVersion=3;plan=makeWave(seed,wave,3);if(!run)return;run.explored=[];run.triggeredEvents=[];run.secretOpened=false;run.noiseEvent=null;run.sealedHoles=[];run.breachEvent=null;fog=createFog(plan.map);const p=plan.map.entrance;run.player={x:p.x,y:p.y};run.enemies=[];run.spawned=0;run.kills=0;run.looted=[];run.stage='fight';run.reloadTimer=0;run.reloadSlot=null;ensureEquipment(run).rerolls=0;run.focusTarget=null;run.waveHit=false;run.waveSeconds=0;run.waveStartKills=run.killsTotal??0;run.waveStartLooted=run.lootedTotal??0;run.peakThreat=0;run.waveStartHp=run.hp;run.waveStartArmor=run.armor;pathClock=0;pathField=null;searchFields.clear();bossPulse=0;noiseClock=0;const occupied=[run.player];for(let i=0;i<run.allies.length;i++){const ally=run.allies[i];const wanted={x:p.x-1-i*.45,y:p.y+1+i*.45};const placed=spacedSquadPosition(plan.map,wanted,occupied);ally.x=placed.x;ally.y=placed.y;occupied.push(ally);ally.anchor={x:ally.x,y:ally.y};ally.reviveProgress=0}spawnClock=0;allyClock=0;spawnInitial();save()}
+function buildFloor(seed:number,wave:number){gameAudio.stopBreach();combatFx=[];bloodFx=[];shellEffects=[];shotKick=0;bossEffects=[];lootPopups=[];poseCache=new WeakMap<object,CharacterMotion>();if(run)run.layoutVersion=3;plan=makeWave(seed,wave,3);if(!run)return;run.explored=[];run.triggeredEvents=[];run.secretOpened=false;run.noiseEvent=null;run.sealedHoles=[];run.breachEvent=null;fog=createFog(plan.map);const p=plan.map.entrance;run.player={x:p.x,y:p.y};run.enemies=[];run.spawned=0;run.kills=0;run.looted=[];run.stage='fight';run.reloadTimer=0;run.reloadSlot=null;ensureEquipment(run).rerolls=0;run.focusTarget=null;run.waveHit=false;run.waveSeconds=0;run.waveStartKills=run.killsTotal??0;run.waveStartLooted=run.lootedTotal??0;run.peakThreat=0;run.waveStartHp=run.hp;run.waveStartArmor=run.armor;pathClock=0;pathField=null;searchFields.clear();bossPulse=0;noiseClock=0;const occupied=[run.player];for(let i=0;i<run.allies.length;i++){const ally=run.allies[i];const wanted={x:p.x-1-i*.45,y:p.y+1+i*.45};const placed=spacedSquadPosition(plan.map,wanted,occupied);ally.x=placed.x;ally.y=placed.y;occupied.push(ally);ally.anchor={x:ally.x,y:ally.y};ally.reviveProgress=0}spawnClock=0;allyClock=0;spawnInitial();save()}
 function newRun(){loadProfile();const kit=startingKit(profile);run={wave:1,credits:kit.credits,hp:100,armor:kit.armor,mag:kit.loadout.primary?.mag??0,reserve:kit.ammo.rifle,medkits:kit.medkits,weaponTier:1,damage:1,maxMag:kit.loadout.primary?.mag??0,player:{x:0,y:0},enemies:[],allies:kit.teammate==='none'?[]:[makeSquadmate(kit.teammate,'starter-01',0,0)],spawned:0,kills:0,bosses:0,cleared:0,seed:Math.floor(Math.random()*2000000000),stage:'fight',looted:[],squadAmmo:kit.teammate==='none'?0:8,activeSlot:'primary',sideMag:kit.loadout.secondary?.mag??12,sideReserve:kit.ammo.light,reloadTimer:0,reloadSlot:null,playerDowned:0,playerDead:false,squadOrder:'follow',focusTarget:null,reviveProgress:0,killsTotal:0,lootedTotal:0,flawlessWaves:0,bestSquad:kit.teammate==='none'?0:1,waveHit:false,equipment:{loadout:kit.loadout,bag:[],ammo:kit.ammo,capacity:kit.capacity,rerolls:0}};buildFloor(run.seed,1);overlay.hidden=true;paused=false;notice('WAVE 1 · Reach the elevator before the horde overwhelms you')}
 function isFloor(x:number,y:number){return !!plan&&walkableTile(plan.map,x,y)}
 function canSee(ax:number,ay:number,bx:number,by:number){const dist=Math.hypot(ax-bx,ay-by),count=Math.ceil(dist*4);for(let i=1;i<count;i++){const a=i/count;if(!isFloor(ax+(bx-ax)*a,ay+(by-ay)*a))return false}return true}
@@ -591,7 +591,7 @@ function shop(){if(!run)return;
  refillArmory.disabled=r.credits<refillCost||refillCost===0;
  refillArmory.onclick=()=>{const price=squadAmmoRefillPrice(r.allies);if(price===0||r.credits<price)return;r.credits-=price;const amount=refillSquadAmmo(r.allies);notice('SQUAD REARMED · +'+amount+' ROUNDS · -'+price+' CR');save();shop()};
  overlay.querySelector<HTMLButtonElement>('#shop-inventory')!.onclick=()=>{inventoryScroll=null;inventory()};overlay.querySelector<HTMLButtonElement>('#shop-squad')!.onclick=squadPanel;
- overlay.querySelector<HTMLButtonElement>('#descend')!.onclick=()=>{if(!run)return;run.wave++;run.seed=(run.seed^Math.imul(run.wave,0x9e3779b1))>>>0;buildFloor(run.seed,run.wave);overlay.hidden=true;paused=false;notice('WAVE '+run.wave+' · Find the elevator before the endless horde catches you')};
+ overlay.querySelector<HTMLButtonElement>('#descend')!.onclick=()=>{if(!run)return;gameAudio.playElevator('travel');run.wave++;run.seed=(run.seed^Math.imul(run.wave,0x9e3779b1))>>>0;buildFloor(run.seed,run.wave);overlay.hidden=true;paused=false;notice('WAVE '+run.wave+' · Find the elevator before the endless horde catches you')};
  overlay.querySelector<HTMLButtonElement>('#save-menu')!.onclick=()=>{save();menu()};
 }
 function inventory(){if(!run)return;paused=true;overlay.hidden=false;
@@ -759,6 +759,7 @@ function squadUpdate(dt:number){if(!run||!plan)return;const r=run,p=r.player,ord
   if(distance>reach||!canSee(a.x,a.y,target.x,target.y)||friendlyFireLane(a,target,[r.player,...r.allies.filter(b=>b!==a&&!b.dead&&b.downed<=0)],melee?.25:.42))continue;
   const dir=unit(target.x-a.x,target.y-a.y);
   if(melee){
+   gameAudio.playWeapon(weapon.model,{distance:Math.hypot(a.x-p.x,a.y-p.y)});
    const damage=Math.max(1.4,effectiveStats(weapon).damage*(1+.12*(a.gearTier-1)));
    strikeZombie(target,damage,dir,true);
    combatFx.push(...makeAttackFx(weapon.model,a.x,a.y,dir.x,dir.y,reach));
@@ -766,6 +767,7 @@ function squadUpdate(dt:number){if(!run||!plan)return;const r=run,p=r.player,ord
    continue;
   }
   if(a.magReserve<=0)continue;
+  gameAudio.playWeapon(weapon.model,{distance:Math.hypot(a.x-p.x,a.y-p.y),suppressed:weapon.mods?.barrel?.model==='suppressor'});
   const trace=traceBullet(plan.map,a,dir,reach,aliveEnemies,penetrationFor(weapon.model));
   const damage=Math.max(.5,classDamage(a.role,weapon.tier)*(effectiveStats(weapon).damage/weaponDefs[CLASS_INFO[a.role].model].damage));
   for(const hit of trace.hits){
@@ -812,7 +814,14 @@ function explorationSources():Explorer[]{
  for(const a of run.allies)if(!a.dead&&a.downed<=0)explorers.push({x:a.x,y:a.y,radius:4.5});
  return explorers;
 }
+let zombieAudioClock=0;
 function update(dt:number){if(!run||!plan||paused||run.stage!=='fight'){gameAudio.stopBreach();return;}
+ zombieAudioClock+=dt;
+ if(zombieAudioClock>2.7){
+  zombieAudioClock=0;
+  const near=run.enemies.filter(e=>e.alive&&Math.hypot(e.x-run!.player.x,e.y-run!.player.y)<9);
+  if(near.length){const z=near[Math.floor((run.waveSeconds??0)*7)%near.length];gameAudio.playZombie(z.kind??'shambler','growl',Math.hypot(z.x-run.player.x,z.y-run.player.y))}
+ }
 combatFx=ageCombatFx(combatFx,dt);
  shellEffects=ageCasings(shellEffects,dt);shotKick=Math.max(0,shotKick-dt*1.9);
  bossEffects=bossEffects.filter(fx=>(fx.age+=dt)<(fx.death?1.15:.55));
@@ -898,7 +907,7 @@ for(const e of run.enemies){if(!e.alive)continue;
  notice(identity.name+' · '+identity.ability.toUpperCase()+' INCOMING!');
  continue
 }
- if((e.stagger??0)<=0&&dist<=stats.reach&&e.attack===0&&((target!==p)||(run.playerDowned??0)===0)){e.attack=stats.attackInterval;if(target===p){hurtPlayer(stats.damage)}else{const ally=target as Ally;hurtAlly(ally,stats.damage)}continue}
+ if((e.stagger??0)<=0&&dist<=stats.reach&&e.attack===0&&((target!==p)||(run.playerDowned??0)===0)){gameAudio.playZombie(e.kind??'shambler','attack',Math.hypot(e.x-p.x,e.y-p.y));e.attack=stats.attackInterval;if(target===p){hurtPlayer(stats.damage)}else{const ally=target as Ally;hurtAlly(ally,stats.damage)}continue}
  if((e.aggro??0)>0&&(e.stagger??0)<=0){
   // Squadmates can be attacked in close quarters, but lost player sightings are not omniscient.
   const destination=target!==p&&dist<2.5?target:senses.target;
