@@ -882,3 +882,171 @@
  #rogue #overlay .mobile-management-tabs button{min-height:27px!important;padding:3px!important}
  #rogue #overlay .armory-screen .armory-section .shop{grid-template-columns:repeat(3,minmax(0,1fr))!important}
 }
+
+/* Full-window main menu, rebuilt as a two-panel operations screen.
+ * Unlike the old article, it never grows beyond the mobile viewport. */
+#rogue #overlay:has(> .main-menu-screen){
+ box-sizing:border-box!important;
+ padding:clamp(5px,1.2vw,13px)!important;
+ overflow:hidden!important;
+ display:flex!important;align-items:center!important;justify-content:center!important;
+}
+#rogue #overlay > article.main-menu-screen{
+ display:grid!important;grid-template-columns:minmax(0,.93fr) minmax(0,1.07fr)!important;
+ grid-template-rows:minmax(0,1fr)!important;
+ width:min(1120px,100%)!important;max-width:1120px!important;
+ height:min(720px,100%)!important;max-height:100%!important;
+ min-height:0!important;min-width:0!important;
+ box-sizing:border-box!important;overflow:hidden!important;
+ border:1px solid #6d8a77!important;border-radius:13px!important;
+ padding:0!important;margin:0!important;gap:0!important;
+ background:linear-gradient(135deg,#172c2b,#091719)!important;
+ box-shadow:0 16px 50px #000c!important;
+}
+#rogue #overlay .main-menu-screen .menu-command-panel{
+ position:relative;z-index:2;min-height:0;min-width:0;
+ display:flex;flex-direction:column;justify-content:center;
+ gap:clamp(8px,1.5vh,17px);padding:clamp(12px,3vw,40px);
+ box-sizing:border-box;overflow:hidden;
+ border-right:1px solid #7f9c802b;
+ background:linear-gradient(125deg,#213734f8,#102324fc);
+}
+#rogue #overlay .menu-kicker{
+ display:flex;align-items:center;gap:8px;
+ font:800 clamp(9px,.95vw,12px)/1.1 system-ui;
+ color:#b9dfba;letter-spacing:.13em;
+}
+#rogue #overlay .menu-status-dot{
+ display:inline-block;width:8px;height:8px;flex:0 0 auto;border-radius:100%;
+ background:#d0e7a5;box-shadow:0 0 10px #8fe093;
+}
+#rogue #overlay .main-menu-screen h1{
+ margin:0!important;font-weight:900!important;
+ font-size:clamp(30px,4.6vw,63px)!important;
+ letter-spacing:.012em!important;line-height:.93!important;
+ color:#ecf2e4!important;text-shadow:0 3px 16px #000a;
+}
+#rogue #overlay .main-menu-screen h1 span{display:block;color:#f18e72}
+#rogue #overlay .main-menu-screen p.menu-tagline{
+ margin:0!important;font-size:clamp(11px,1.2vw,14px)!important;
+ line-height:1.4!important;color:#cbd9ce!important;
+ max-width:34ch;
+}
+#rogue #overlay .menu-profile{
+ display:flex;align-items:center;flex-wrap:wrap;gap:8px 13px;
+ border-top:1px solid #66867850;border-bottom:1px solid #66867850;
+ padding:10px 0;min-height:0;
+}
+#rogue #overlay .menu-profile label{
+ display:flex!important;align-items:center!important;gap:8px!important;
+ margin:0!important;white-space:nowrap;font-size:10px!important;
+}
+#rogue #overlay .menu-profile label select{
+ width:114px!important;max-width:115px!important;min-height:31px!important;
+ padding:4px 7px!important;margin:0!important;font-size:11px!important;
+}
+#rogue #overlay .menu-profile #career{
+ margin:0!important;flex:1 1 140px;min-width:0;
+ font-size:10px!important;line-height:1.35!important;
+ color:#c4d9c1!important;
+}
+#rogue #overlay .main-menu-screen .menu-main-actions{
+ display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));
+ gap:8px!important;margin:0!important;min-width:0;
+}
+#rogue #overlay .main-menu-screen .menu-main-actions button{
+ display:block!important;min-width:0!important;min-height:43px!important;
+ padding:8px 10px!important;white-space:nowrap!important;
+ font:800 clamp(10px,1.1vw,13px)/1.15 system-ui!important;
+ letter-spacing:.035em!important;
+}
+#rogue #overlay .main-menu-screen #new-run{
+ background:linear-gradient(145deg,#8c4a35,#713327)!important;
+ border-color:#b9765a!important;
+}
+#rogue #overlay .main-menu-screen #continue-run{
+ background:linear-gradient(145deg,#3c7f5b,#25563f)!important;
+ border-color:#8db899!important;
+}
+#rogue #overlay .main-menu-screen #upgrades{grid-column:1/-1}
+#rogue #overlay .menu-footer-note{
+ color:#799e91;font:700 10px/1.25 system-ui;letter-spacing:.16em;
+}
+#rogue #overlay .main-menu-screen .menu-scene-panel{
+ position:relative;min-height:0;min-width:0;overflow:hidden;
+ background:#071115;
+}
+#rogue #overlay .main-menu-screen #menu-cinematic{
+ position:absolute;inset:0;display:block;width:100%;height:100%;
+ pointer-events:none;
+}
+#rogue #overlay .menu-scene-badge,
+#rogue #overlay .menu-scene-corner{
+ position:absolute;z-index:2;pointer-events:none;
+ font:800 10px/1.1 monospace;letter-spacing:.08em;
+ color:#c4decc;background:#081916ad;
+ border:1px solid #7e99815a;border-radius:4px;padding:6px 8px;
+}
+#rogue #overlay .menu-scene-badge{top:12px;left:12px}
+#rogue #overlay .menu-scene-corner{top:12px;right:12px;color:#ed9880}
+@media (pointer:coarse), (max-width:780px), (max-height:480px){
+ #rogue #overlay:has(> .main-menu-screen){
+  padding:4px!important;overflow:hidden!important;
+ }
+ #rogue #overlay > article.main-menu-screen{
+  width:100%!important;height:100%!important;max-width:100%!important;
+  max-height:100%!important;
+  grid-template-columns:minmax(0,.48fr) minmax(0,.52fr)!important;
+  overflow:hidden!important;
+ }
+ #rogue #overlay .main-menu-screen .menu-command-panel{
+  padding:clamp(8px,2vh,13px) clamp(9px,2vw,18px)!important;
+  gap:clamp(4px,1.2vh,8px)!important;
+  justify-content:center!important;
+ }
+ #rogue #overlay .main-menu-screen .menu-kicker{
+  font-size:clamp(8px,1.8vh,10px)!important;letter-spacing:.06em!important;
+ }
+ #rogue #overlay .main-menu-screen h1{
+  font-size:clamp(24px,6.2vh,38px)!important;
+  letter-spacing:.005em!important;line-height:.94!important;
+ }
+ #rogue #overlay .main-menu-screen .menu-tagline{
+  font-size:clamp(9px,2.4vh,12px)!important;line-height:1.2!important;
+ }
+ #rogue #overlay .main-menu-screen .menu-profile{
+  padding:4px 0!important;gap:3px 6px!important;
+  display:flex!important;flex-wrap:wrap!important;
+ }
+ #rogue #overlay .main-menu-screen .menu-profile label{
+  gap:5px!important;font-size:9px!important;
+ }
+ #rogue #overlay .main-menu-screen .menu-profile select{
+  min-height:25px!important;width:94px!important;max-width:94px!important;
+  padding:2px 4px!important;font-size:10px!important;
+ }
+ #rogue #overlay .main-menu-screen #career{
+  font-size:9px!important;line-height:1.17!important;
+ }
+ #rogue #overlay .main-menu-screen .menu-main-actions{
+  display:grid!important;grid-template-columns:1fr 1fr!important;
+  gap:5px!important;min-height:0!important;
+ }
+ #rogue #overlay .main-menu-screen .menu-main-actions button{
+  min-height:31px!important;padding:5px 4px!important;
+  font-size:clamp(9px,2.5vh,11px)!important;
+  line-height:1.2!important;
+ }
+ #rogue #overlay .menu-footer-note{font-size:8px!important;letter-spacing:.08em!important}
+ #rogue #overlay .menu-scene-badge,#rogue #overlay .menu-scene-corner{
+  font-size:8px!important;padding:4px 5px!important;
+ }
+ #rogue #overlay .menu-scene-corner{display:none!important}
+}
+/* On short landscape phones, hide redundant prose instead of requiring scroll. */
+@media (pointer:coarse) and (orientation:landscape) and (max-height:345px){
+ #rogue #overlay .main-menu-screen .menu-command-panel{gap:3px!important}
+ #rogue #overlay .main-menu-screen .menu-tagline{display:none!important}
+ #rogue #overlay .main-menu-screen .menu-footer-note{display:none!important}
+ #rogue #overlay .main-menu-screen .menu-main-actions button{min-height:27px!important}
+}
