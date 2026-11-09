@@ -21,7 +21,12 @@ export function propCollisionGrid(map:DungeonLayout):Uint8Array{
  const elevator=new Set(elevatorCells(map).map(c=>index(c.x,c.y)));
  const eventCells=map.events??[];
  const center=map.entrance;
- const canStand=(x:number,y:number)=>inBounds(x,y)&&tiles[index(x,y)]===0&&grid[index(x,y)]===0;
+ // Simulate the secret panel as OPEN for connectivity checks. Otherwise props
+ // placed near the annex can block the room after the player opens its door.
+ const secretDoor=map.secret?.door;
+ const isOpenFloor=(x:number,y:number)=>tiles[index(x,y)]===0||
+  (!!secretDoor&&x===secretDoor.x&&y===secretDoor.y);
+ const canStand=(x:number,y:number)=>inBounds(x,y)&&isOpenFloor(x,y)&&grid[index(x,y)]===0;
  // The passable count from entrance before adding a prop. Reject furniture that
  // isolates reachable floor tiles or leaves any objective with no adjacent space.
  const countReachable=()=>{
@@ -46,11 +51,12 @@ export function propCollisionGrid(map:DungeonLayout):Uint8Array{
  for(const prop of atmosphere.props){
   if(flatDecorations.has(prop.kind)){retained.push(prop);continue}
   const x=Math.round(prop.x),y=Math.round(prop.y),k=index(x,y);
-  if(!inBounds(x,y)||!canStand(x,y)||elevator.has(k))continue;
+  if(!inBounds(x,y)||!canStand(x,y)||elevator.has(k)||
+     (secretDoor&&x===secretDoor.x&&y===secretDoor.y))continue;
   if(Math.hypot(x-center.x,y-center.y)<3.2||
      Math.hypot(x-map.extraction.x,y-map.extraction.y)<3.1||
      eventCells.some(e=>Math.hypot(e.x-x,e.y-y)<1.5)||
-     (map.secret&&Math.hypot(map.secret.door.x-x,map.secret.door.y-y)<2))continue;
+     (map.secret&&Math.hypot(map.secret.door.x-x,map.secret.door.y-y)<3))continue;
   grid[k]=1;
   const reach=countReachable();
   if(reach!==connected-1){grid[k]=0;continue}
