@@ -98,7 +98,6 @@ async function runScenario(touch){
  console.log(label,'checking main menu');
  await page.goto(origin);
  await page.waitForFunction(()=>document.documentElement.dataset.deadzoneReady==='true');
- assert.equal(await page.locator('#audio-volume').inputValue(),'35','saved sound setting restored');
  await checkWiring(page,label+' main menu');
  const audioDock=page.locator('#audio-dock');
  assert.equal(await audioDock.count(),1,'audio settings must appear in main menu');
@@ -113,6 +112,11 @@ async function runScenario(touch){
  assert.equal(await volume.inputValue(),'35');
  assert.deepEqual(await page.evaluate(()=>JSON.parse(localStorage.getItem('deadzone-audio-v1')||'null')),
   {volume:.35,muted:false},'master volume and mute state persist');
+ await page.reload();
+ await page.waitForFunction(()=>document.documentElement.dataset.deadzoneReady==='true');
+ assert.equal(await page.locator('#audio-volume').inputValue(),'35','saved sound setting restored on reload');
+ assert.equal(await page.locator('#audio-toggle').getAttribute('aria-pressed'),'true','unmuted state restored');
+
  const dockBox=await audioDock.boundingBox();
  assert.ok(dockBox&&dockBox.width>75&&dockBox.height>20,'audio controls must remain visible');
 
