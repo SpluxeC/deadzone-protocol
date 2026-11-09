@@ -154,5 +154,86 @@ if(layoutVersion===3&&rand()<.13){
   }
  }
 }
+// Final physical-layout pass: make sure loot cases never turn a connected
+// corridor into a dead end or prevent access to a secret door. Test as though
+// the secret panel is open, so the newly discovered room is actually usable.
+const baseWalkable=new Uint8Array(width*height);
+for(let y=0;y<height;y++)for(let x=0;x<width;x++){
+ const k=tileKey(x,y);
+ if(tiles[k]===0||(secret&&x===secret.door.x&&y===secret.door.y))baseWalkable[k]=1;
+}
+const baseReach=new Uint8Array(width*height),pending:number[]=[tileKey(entrance.x,entrance.y)];
+baseReach[pending[0]]=1;
+for(let head=0;head<pending.length;head++){
+ const k=pending[head],x=k%width,y=Math.floor(k/width);
+ for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){
+  const nx=x+dx,ny=y+dy,nk=tileKey(nx,ny);
+  if(nx<0||nx>=width||ny<0||ny>=height||!baseWalkable[nk]||baseReach[nk])continue;
+  baseReach[nk]=1;pending.push(nk);
+ }
+}
+const requiredCells=pending.length;
+const blocked=new Uint8Array(width*height);
+const cellIndices=(c:LootCrate)=>crateCells(c).map(p=>tileKey(Math.round(p.x),Math.round(p.y)));
+const nearSecretDoor=(c:LootCrate)=>!!secret&&crateCells(c).some(p=>
+ Math.abs(p.x-secret!.door.x)<=2.15&&Math.abs(p.y-secret!.door.y)<=2.15);
+const allowed=(c:LootCrate,isReward:boolean)=>{
+ const cells=cellIndices(c);
+ if(new Set(cells).size!==cells.length)return false;
+ if(!isReward&&nearSecretDoor(c))return false;
+ if(cells.some(k=>k<0||k>=blocked.length||!baseReach[k]||blocked[k]))return false;
+ if(cells.some(k=>{
+  const x=k%width,y=Math.floor(k/width);
+  return Math.hypot(x-entrance.x,y-entrance.y)<2.3||
+   Math.hypot(x-extraction.x,y-extraction.y)<2.2||
+   events.some(e=>Math.hypot(x-e.x,y-e.y)<1.5);
+ }))return false;
+ for(const k of cells)blocked[k]=1;
+ const start=tileKey(entrance.x,entrance.y);
+ const found=new Uint8Array(width*height),q:number[]=[start];
+ found[start]=1;
+ for(let head=0;head<q.length;head++){
+  const k=q[head],x=k%width,y=Math.floor(k/width);
+  for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){
+   const nx=x+dx,ny=y+dy,nk=tileKey(nx,ny);
+   if(nx<0||nx>=width||ny<0||ny>=height||!baseReach[nk]||blocked[nk]||found[nk])continue;
+   found[nk]=1;q.push(nk);
+  }
+ }
+ const safe=q.length===requiredCells-blocked.reduce((n,v)=>n+v,0)&&
+   (!secret||found[tileKey(secret.door.x,secret.door.y)]===1);
+ if(!safe)for(const k of cells)blocked[k]=0;
+ return safe;
+};
+// Reserve the annex's reward case before placing all random floor loot.
+// Otherwise an ordinary crate could make the reward inaccessible.
+const originalCrates=[...loot],safeCrates=new Array<LootCrate>(loot.length);
+const priority=originalCrates.map((_,i)=>i).sort((a,b)=>
+ (a===secret?.rewardIndex?-1:b===secret?.rewardIndex?1:a-b));
+const candidatesFor=(crate:LootCrate):LootCrate[]=>{
+ const values:LootCrate[]=[crate];
+ // Retain the crate's type and footprint. A weapons case always remains
+ // two cells long and never overlaps another crate.
+ for(const k of pending){
+  const x=k%width,y=Math.floor(k/width);
+  if(crate.kind==='weapon'){
+   values.push({x:x+.5,y,kind:'weapon',orientation:'horizontal'});
+   values.push({x,y:y+.5,kind:'weapon',orientation:'vertical'});
+  }else values.push({x,y,kind:'supply'});
+ }
+ return values;
+};
+for(const i of priority){
+ const crate=originalCrates[i],isReward=i===secret?.rewardIndex;
+ const candidate=candidatesFor(crate).find(c=>allowed(c,isReward));
+ if(candidate)safeCrates[i]=candidate;
+ else {
+  // Extremely crowded legacy layouts retain their original loot geometry
+  // rather than silently changing save indices or removing the reward.
+  safeCrates[i]=crate;
+  for(const k of cellIndices(crate))if(k>=0&&k<blocked.length)blocked[k]=1;
+ }
+}
+for(let i=0;i<loot.length;i++)loot[i]=safeCrates[i];
 return{width,height,seed,tiles,entrance,extraction,extractionSize,loot,enemies,rooms:atmosphereRooms,events,secret};
 }
