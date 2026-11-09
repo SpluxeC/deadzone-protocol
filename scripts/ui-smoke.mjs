@@ -186,6 +186,7 @@ async function runScenario(touch){
  await tap('#prep-back');
  await tap('#new-run');
  await tap('#launch-run');
+ assert.equal(await page.locator('[data-squad-order="suppress"]').count(),1,'new suppression command is present');
  assert.equal(await page.locator('#audio-dock').count(),1,'audio controls remain accessible in gameplay');
  if(touch){
   const hudMetrics=await page.evaluate(()=>{
