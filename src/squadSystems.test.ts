@@ -1,5 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {makeSquadmate,migrateSquadmate,applyLethalDamage,bleed,revive,reviveDuration,shouldRevive,canRecruit,equipClassWeapon,classFireDelay,classRange,classDamage,gearUpgradeCost,CLASS_INFO,classIds,ALLY_BLEEDOUT,PLAYER_BLEEDOUT,squadWeapon,setSquadWeaponSlot,refillSquadAmmo,squadAmmoNeeded,SQUAD_MAX_AMMO} from './squadSystems.ts';
+import {makeSquadmate,migrateSquadmate,applyLethalDamage,bleed,revive,reviveDuration,shouldRevive,canRecruit,equipClassWeapon,classFireDelay,classRange,classDamage,gearUpgradeCost,CLASS_INFO,classIds,ALLY_BLEEDOUT,PLAYER_BLEEDOUT,squadWeapon,setSquadWeaponSlot,refillSquadAmmo,squadAmmoNeeded,squadAmmoRefillPrice,SQUAD_MAX_AMMO} from './squadSystems.ts';
 import {newWeapon,canClassEquip,armoryOffers} from './equipmentArmory.ts';
 test('all five specialist classes have valid distinct starting gear, abilities and prices',()=>{
  assert.equal(classIds.length,5);assert.equal(new Set(classIds.map(x=>CLASS_INFO[x].model)).size,5);
@@ -76,4 +76,29 @@ test('old squad saves gain sidearm and melee without losing primary gear',()=>{
  assert.equal(restored.secondaryWeapon.model,'pistol');
  assert.equal(restored.meleeWeapon.model,'knife');
  assert.equal(restored.activeSlot,'primary');
+});
+
+test('squad refill price scales with only the missing ammunition and is zero when full',()=>{
+ const ally=makeSquadmate('rifleman','priceA',1,1),other=makeSquadmate('medic','priceB',2,2);
+ ally.magReserve=SQUAD_MAX_AMMO;other.magReserve=SQUAD_MAX_AMMO;
+ assert.equal(squadAmmoRefillPrice([ally,other]),0,'full squad should not be charged');
+ other.magReserve=320;
+ assert.equal(squadAmmoRefillPrice([ally,other]),150,'80 rounds cost 150 credits');
+ other.magReserve=399;
+ assert.equal(squadAmmoRefillPrice([ally,other]),2,'one round is prorated and rounded up');
+ other.magReserve=200;ally.magReserve=240;
+ assert.equal(squadAmmoRefillPrice([ally,other]),675,'360 total missing rounds are billed once');
+ const priced=squadAmmoRefillPrice([ally,other]);
+ assert.equal(refillSquadAmmo([ally,other]),360);
+ assert.equal(priced,675);
+ assert.equal(squadAmmoRefillPrice([ally,other]),0);
+ other.dead=true;other.magReserve=0;
+ assert.equal(squadAmmoRefillPrice([ally,other]),0,'dead squadmates are not included');
+});
+test('random Armory inventory rotates for different wave seeds without manual rerolls',()=>{
+ const seed=14039;
+ const first=armoryOffers(seed,2,0).map(x=>x.model);
+ const second=armoryOffers(seed^Math.imul(3,0x9e3779b1),3,0).map(x=>x.model);
+ assert.notDeepEqual(first,second,'next wave should generate another random offer selection');
+ assert.deepEqual(first,armoryOffers(seed,2,0).map(x=>x.model),'same wave remains stable');
 });
