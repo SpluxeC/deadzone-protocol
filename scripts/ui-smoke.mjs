@@ -9,6 +9,16 @@ const browser=await chromium.launch({headless:true});
 const errors=[];
 async function action(page,selector,touch=false){
  const el=page.locator(selector).first();
+ await el.waitFor({state:'attached',timeout:12000});
+ // On phones the controls live inside a category tab or an NPC accordion.
+ // Navigate to that category before exercising its original button.
+ const panel=await el.evaluate(node=>node.closest('[data-mobile-panel]')?.getAttribute('data-mobile-panel')??null);
+ if(panel){
+  const tab=page.locator('[data-mobile-tab="'+panel+'"]');
+  if(await tab.isVisible()&&(await tab.getAttribute('aria-selected'))!=='true')
+   await (touch?tab.tap():tab.click());
+ }
+ await el.evaluate(node=>{const card=node.closest('details.squad-card');if(card&&!card.open)card.open=true});
  await el.waitFor({state:'visible',timeout:12000});
  assert.equal(await el.isDisabled(),false,selector+' should be enabled');
  if(touch)await el.tap({timeout:12000});else await el.click({timeout:12000});
@@ -137,9 +147,19 @@ async function runScenario(touch){
  await setupShop(page);
  await checkWiring(page,label+' armory');
  const toolbarTop=await page.locator('.armory-screen .management-toolbar').boundingBox();
- const supplyBottom=await page.locator('.armory-screen .armory-columns').boundingBox();
+ const supplyBottom=await page.locator(touch?'.armory-screen .armory-supplies':'.armory-screen .armory-columns').boundingBox();
  assert.ok(toolbarTop&&supplyBottom&&toolbarTop.y<supplyBottom.y,'Armory actions must sit above supplies');
  assert.equal(await page.locator('#refill-all-armory').count(),1);
+ if(touch){
+  assert.equal(await page.locator('.armory-screen [data-mobile-tab]').count(),2,'Armory should have two mobile categories');
+  const viewport=page.viewportSize();
+  const active=await page.locator('.armory-screen .mobile-active').boundingBox();
+  assert.ok(active&&active.y+active.height<=viewport.height+6,'Armory selected tab must fit the mobile viewport');
+  await action(page,'[data-mobile-tab="offers"]',touch);
+  assert.equal(await page.locator('.armory-offers').evaluate(el=>getComputedStyle(el).display!=='none'),true);
+  await action(page,'[data-mobile-tab="supplies"]',touch);
+ }
+
  const creditsLabel=page.locator('.armory-screen .management-credits');
  assert.equal(await creditsLabel.count(),1);
  const creditsBox=await creditsLabel.boundingBox();
@@ -179,6 +199,12 @@ async function runScenario(touch){
  assert.ok((await getRun(page)).run.credits<initialCredits);
  await tap('#shop-inventory');
  await checkWiring(page,label+' Armory inventory');
+ if(touch){
+  assert.equal(await page.locator('.inventory-screen [data-mobile-tab]').count(),3,'Inventory should have three categories');
+  const panels=await page.locator('.inventory-screen [data-mobile-panel]').evaluateAll(nodes=>nodes.filter(n=>getComputedStyle(n).display!=='none').length);
+  assert.equal(panels,1,'Only one inventory category should be visible on mobile');
+ }
+
  await tap('#upgrade-equipped-primary');
  assert.equal((await getRun(page)).run.equipment.loadout.primary.tier,6,'Legendary -> Exotic button works');
  await checkWiring(page,label+' refreshed inventory');
