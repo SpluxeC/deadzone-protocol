@@ -1,5 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {weaponDefs,attachmentDefs,attachmentDescriptions,ammoPack,ammoTypes,newWeapon,newMod,canEquipMod,canClassEquip,effectiveStats,emptyAmmo,usedSlots,canAddItem,addAmmo,crateLoot,rarityForWave,rarityName,rarityClass,itemName,armoryOffers,rareLoot,upgradePrice,weaponPrice,salePrice,backpackUpgradePrice,ammoStack} from './equipmentArmory.ts';
+import {weaponDefs,attachmentDefs,attachmentDescriptions,ammoPack,ammoTypes,newWeapon,newMod,canEquipMod,canClassEquip,effectiveStats,emptyAmmo,usedSlots,canAddItem,addAmmo,crateLoot,rarityForWave,rarityName,rarityClass,itemName,armoryOffers,rareLoot,upgradePrice,weaponPrice,salePrice,backpackUpgradePrice,ammoStack,supplyReward} from './equipmentArmory.ts';
 test('six rarity tiers improve weapon stats without changing weapon category',()=>{
  const basic=newWeapon('assault',1,'base'),legendary=newWeapon('assault',5,'legend');
  assert.ok(effectiveStats(legendary).damage>effectiveStats(basic).damage);
@@ -144,4 +144,36 @@ test('weapon cases contain only guns, while standard military crates never conta
   assert.notEqual(supply?.kind,'weapon','ordinary crate must not contain a gun');
  }
  assert.deepEqual(crateLoot(123,9,4,'weapon'),crateLoot(123,9,4,'weapon'),'weapon loot deterministic');
+});
+
+test('expanded rare attachments stay compatible and alter the intended weapon stats',()=>{
+ const samples=[
+  ['thermalSight','marksman','optic'],
+  ['breacherChoke','shotgun','barrel'],
+  ['reinforcedReceiver','assault','underbarrel'],
+  ['tacticalStock','carbine','underbarrel']
+ ] as const;
+ for(const [model,weaponModel,slot] of samples){
+  const gun=newWeapon(weaponModel,2,'expanded'),before=effectiveStats(gun);
+  const attachment=newMod(model,3,'new-'+model);
+  assert.equal(attachmentDefs[model].slot,slot);
+  assert.equal(canEquipMod(gun,attachment),true,model+' compatible');
+  gun.mods[slot]=attachment;
+  assert.notDeepEqual(effectiveStats(gun),before,model+' changes stats');
+  assert.ok(attachmentDescriptions[model].length>=16);
+ }
+ assert.equal(canEquipMod(newWeapon('shotgun',2,'s'),newMod('thermalSight',3,'scope')),false);
+ assert.equal(canEquipMod(newWeapon('pistol',2,'p'),newMod('breacherChoke',3,'choke')),false);
+});
+test('new supply rewards are seeded, varied and never contain guns',()=>{
+ const kinds=new Set<string>();
+ for(let seed=1;seed<=80;seed++)for(let index=0;index<20;index++){
+  const a=supplyReward(seed,8,index),b=supplyReward(seed,8,index);
+  assert.deepEqual(a,b);
+  assert.ok(a.amount>0);
+  kinds.add(a.kind);
+  if(a.kind==='ammo')assert.ok(ammoTypes.includes(a.type));
+ }
+ for(const kind of ['credits','ammo','medkit','armor','fieldHeal','squadAmmo'])
+  assert.ok(kinds.has(kind),'reward category '+kind+' must appear');
 });
