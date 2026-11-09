@@ -6,6 +6,7 @@ import {CLASS_INFO,classIds,makeSquadmate,migrateSquadmate,applyLethalDamage,ble
 import {migrateProfile,unlocks,achievements,buyUnlock,allowedPrimary,allowedMelee,allowedTeammates,sanitizeChoice,startingKit,progressAchievements,performancePayout,eligibleRecruit,type ProfileV5,type UnlockId,type RunPerformance} from './metaprogression';
 import {camera,toWorld,renderDungeon,drawSprite,drawElevator,drawMilitaryCrate,drawLootPopup,drawBar,drawHazard,hudColor,type View,type SpriteKind} from './rogueliteVisuals';
 import {renderMenuCinematic} from './menuCinematic';
+import {gameAudio} from './gameAudio';
 import {renderFacility} from './facilityAtmosphere';
 import {senseZombie,tacticalTarget,hitReaction,friendlyFireLane,type ThreatKind} from './combatAi';
 import {ejectCasing,ageCasings,drawCasings,type Casing} from './combatPolish';
@@ -36,6 +37,27 @@ root.innerHTML=`<div id="rogue" style="height:100dvh;display:flex;flex-direction
 <div id="toast" style="position:fixed;left:50%;bottom:78px;transform:translateX(-50%);pointer-events:none;background:#243c37e8;padding:6px 12px;border-radius:6px;color:white;z-index:5"></div></div>`;
 const style=document.createElement('style');style.textContent=`#overlay[hidden]{display:none!important}#overlay article{margin:auto 0}#rogue button{background:#304941;color:white;border:1px solid #879a80;border-radius:5px;padding:9px 12px;font:600 13px system-ui;cursor:pointer;touch-action:none}#rogue button:hover{background:#436354}#rogue button:disabled{opacity:.42;cursor:not-allowed}#overlay article{background:#1a2d2b;border:1px solid #8f9c82;border-radius:10px;padding:22px;max-width:560px;width:min(100%,560px);box-sizing:border-box;box-shadow:0 15px 60px #0009}#overlay h1{font-size:24px;margin:0 0 8px}#overlay h2{font-size:18px;margin:14px 0 8px}#overlay p{color:#c7d1c8;line-height:1.5}#overlay .shop{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px}#overlay .shop button{text-align:left;min-height:66px}#overlay .menurow{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}#overlay label{display:block;margin:8px 0}#overlay select{padding:8px;background:#1c3030;color:white;border:1px solid #7b9385}`;document.head.append(style);
 const canvas=document.querySelector<HTMLCanvasElement>('#rogue-canvas')!,ctx=canvas.getContext('2d')!,overlay=document.querySelector<HTMLDivElement>('#overlay')!,toastEl=document.querySelector<HTMLDivElement>('#toast')!;
+/** Always reachable on mobile and desktop without adding another scroll area. */
+document.querySelector<HTMLElement>('#rogue')!.insertAdjacentHTML('beforeend',
+ '<div id="audio-dock" role="group" aria-label="Game audio settings"><button id="audio-toggle" type="button" aria-label="Mute game audio">SOUND ON</button><label for="audio-volume" class="audio-volume-label">VOL</label><input id="audio-volume" type="range" min="0" max="100" step="5" aria-label="Game sound volume"></div>');
+const audioToggle=document.querySelector<HTMLButtonElement>('#audio-toggle')!;
+const audioVolume=document.querySelector<HTMLInputElement>('#audio-volume')!;
+function updateAudioControls(){
+ audioToggle.textContent=gameAudio.muted?'SOUND OFF':'SOUND ON';
+ audioToggle.setAttribute('aria-label',gameAudio.muted?'Unmute game audio':'Mute game audio');
+ audioToggle.setAttribute('aria-pressed',String(!gameAudio.muted));
+ audioVolume.value=String(Math.round(gameAudio.volume*100));
+}
+updateAudioControls();
+audioToggle.onclick=()=>{gameAudio.unlock();gameAudio.toggle();updateAudioControls()};
+audioVolume.oninput=()=>{gameAudio.unlock();gameAudio.setVolume(Number(audioVolume.value)/100);updateAudioControls()};
+document.addEventListener('pointerdown',()=>gameAudio.unlock(),{capture:true,passive:true});
+document.addEventListener('keydown',()=>gameAudio.unlock(),{capture:true});
+document.addEventListener('click',event=>{
+ const button=(event.target as Element|null)?.closest('button');
+ if(button instanceof HTMLButtonElement&&!button.disabled&&button!==audioToggle)gameAudio.playUI('tap');
+},true);
+
 /** Protect the gameplay surface from iOS/Android text selection, callouts, and drag highlights.
  * The overlay remains interactive so menu dropdowns and buttons continue working.
  */
@@ -78,7 +100,7 @@ let mouseAimActive=false,mouseAimX=.5,mouseAimY=.5;let pathClock=0,pathField:Int
 const store=(suffix:string)=>'deadzone-roguelite-v1-slot-'+slot+'-'+suffix;
 function loadProfile(){try{profile=migrateProfile(JSON.parse(localStorage.getItem(store('profile'))||'null'))}catch{profile=migrateProfile(null)}}
 function save(){try{localStorage.setItem(store('profile'),JSON.stringify(profile));if(run)localStorage.setItem(store('run'),JSON.stringify(run));else localStorage.removeItem(store('run'))}catch{notice('Browser storage unavailable — progress may not persist')}}
-function notice(t:string){toastEl.textContent=t;noticeUntil=performance.now()+2900}
+function notice(t:string){toastEl.textContent=t;noticeUntil=performance.now()+2900;gameAudio.playNotice(t)}
 const safe=(v:number,a:number,b:number)=>Math.max(a,Math.min(b,v));
 const ammoBank=(light=48,rifle=72):AmmoBank=>({light,rifle,shotgun:0,heavy:0,precision:0});
 function ensureEquipment(r:Run){
@@ -109,7 +131,7 @@ function loadRun(){try{const r=JSON.parse(localStorage.getItem(store('run'))||'n
 /** One cinematic backdrop shared by the menu, loadout and upgrade screens. */
 function menuBackdrop():string{return '<div class="menu-cinematic-backdrop" aria-hidden="true"><canvas id="menu-cinematic"></canvas><span class="menu-scene-badge">CAM 04 · CONTAINMENT WING</span><span class="menu-scene-corner">● SIGNAL ACTIVE</span></div>'}
 function menu(){
- combatFx=[];bloodFx=[];lootPopups=[];paused=true;overlay.hidden=false;
+ gameAudio.stopBreach();combatFx=[];bloodFx=[];lootPopups=[];paused=true;overlay.hidden=false;
  overlay.innerHTML=menuBackdrop()+`<article class="main-menu-screen" aria-label="Deadzone Protocol main menu">
   <div class="menu-command-panel">
    <div class="menu-kicker"><span class="menu-status-dot" aria-hidden="true"></span> OUTBREAK ZONE // SURVIVAL PROTOCOL</div>
@@ -214,6 +236,7 @@ function spawnOne(boss=false,initial=false,preferredHole?:number){
  if(!candidates.length)return false;
  candidates.sort((a,b)=>a.score-b.score);
  const chosen=candidates[0],kind=zombieKind(run.wave,n,boss),stats=zombieStats(kind);
+ if(!initial)gameAudio.playZombie(kind,'spawn',Math.hypot(chosen.x-player.x,chosen.y-player.y));
  run.enemies.push({x:chosen.x,y:chosen.y,hp:stats.hp,maxHp:stats.hp,speed:stats.speed,attack:0,boss,alive:true,kind,windup:0,phase:0,aggro:0,suppressed:0,scoutMarked:0,alertMode:'idle',searchClock:0,lastKnown:null,stagger:0,hitFlash:0,emerging:.55});
  run.spawned++;
  return true;
@@ -244,6 +267,7 @@ function swapFirearm(){
 function strikeZombie(enemy:Unit,damage:number,direction:{x:number;y:number},melee=false){
  if(!enemy.alive||!plan)return;
  enemy.hp-=damage;
+ if(enemy.hp>0)gameAudio.playZombie(enemy.kind??'shambler','hurt',run?Math.hypot(enemy.x-run.player.x,enemy.y-run.player.y):0);
  const reaction=hitReaction(enemy.kind??'shambler',damage,melee);
  enemy.stagger=Math.max(enemy.stagger??0,reaction.stagger);
  enemy.hitFlash=.20;
@@ -268,6 +292,7 @@ function shoot(){
  if(def.ammo&&w.mag<=0){reload();return}
  if(def.ammo){w.mag--;noiseClock=2.4*handling.noise;run.noiseEvent={x:p.x,y:p.y,radius:Math.max(3,Math.min(19,12*handling.noise)),ttl:2.4};shotKick=Math.min(.3,shotKick+.09+handling.damage*.009);shellEffects.push(ejectCasing(p.x,p.y,aim.x,aim.y,run.kills+run.spawned+w.mag));}
  shotCooldown=handling.rate;
+ gameAudio.playWeapon(w.model,{suppressed:w.mods?.barrel?.model==='suppressor'||w.model==='suppressedSmg'});
  const facing=unit(aim.x,aim.y);
  if(def.slot==='melee'){
   const hits=meleeHits(plan.map,p,facing,handling.range,run.enemies,w.model==='axe'?'axe':'knife');
@@ -295,13 +320,13 @@ function shoot(){
  if(def.ammo&&w.mag===0)reload();
  save();
 }
-function defeat(e:Unit){if(!run||!e.alive)return;if(e.boss)bossEffects.push({kind:bossAttack(run.wave),x:e.x,y:e.y,age:0,death:true,heading:Math.atan2(run.player.y-e.y,run.player.x-e.x)});e.alive=false;run.kills++;run.killsTotal=(run.killsTotal??0)+1;run.credits+=killPayout(run.wave,!!e.boss);if(e.boss){run.bosses++;notice(bossIdentity(run.wave).name+' ELIMINATED');const eq=ensureEquipment(run),reward=rareLoot(run.seed,run.wave,999,true);if(reward&&canAddItem(eq.bag,eq.ammo,run.medkits,eq.capacity)){eq.bag.push(reward);notice('BOSS REWARD: '+itemName(reward))}else{run.credits+=250;notice('BOSS REWARD: +250 credits (backpack full)')}}}
+function defeat(e:Unit){if(!run||!e.alive)return;gameAudio.playZombie(e.kind??'shambler','death',Math.hypot(e.x-run.player.x,e.y-run.player.y));if(e.boss)bossEffects.push({kind:bossAttack(run.wave),x:e.x,y:e.y,age:0,death:true,heading:Math.atan2(run.player.y-e.y,run.player.x-e.x)});e.alive=false;run.kills++;run.killsTotal=(run.killsTotal??0)+1;run.credits+=killPayout(run.wave,!!e.boss);if(e.boss){run.bosses++;notice(bossIdentity(run.wave).name+' ELIMINATED');const eq=ensureEquipment(run),reward=rareLoot(run.seed,run.wave,999,true);if(reward&&canAddItem(eq.bag,eq.ammo,run.medkits,eq.capacity)){eq.bag.push(reward);notice('BOSS REWARD: '+itemName(reward))}else{run.credits+=250;notice('BOSS REWARD: +250 credits (backpack full)')}}}
 function reload(){if(!run||run.stage!=='fight'||run.reloadTimer||(run.playerDowned??0)>0)return;const w=activeWeapon(run);if(!w)return;const def=weaponDefs[w.model];if(!def.ammo)return;
  const eq=ensureEquipment(run),cap=effectiveStats(w).capacity,available=eq.ammo[def.ammo];
- if(w.mag>=cap||available<=0)return;run.reloadTimer=effectiveStats(w).reload;run.reloadSlot=run.activeSlot??'primary';notice('Reloading '+def.name+'...');save()}
-function finishReload(){if(!run||!run.reloadSlot)return;const w=ensureEquipment(run).loadout[run.reloadSlot];if(w){const type=weaponDefs[w.model].ammo;if(type){const eq=ensureEquipment(run),n=Math.min(Math.max(0,effectiveStats(w).capacity-w.mag),eq.ammo[type]);w.mag+=n;eq.ammo[type]-=n}}
+ if(w.mag>=cap||available<=0)return;gameAudio.playReload(w.model);run.reloadTimer=effectiveStats(w).reload;run.reloadSlot=run.activeSlot??'primary';notice('Reloading '+def.name+'...');save()}
+function finishReload(){if(!run||!run.reloadSlot)return;const w=ensureEquipment(run).loadout[run.reloadSlot];if(w){gameAudio.playReload(w.model,true);const type=weaponDefs[w.model].ammo;if(type){const eq=ensureEquipment(run),n=Math.min(Math.max(0,effectiveStats(w).capacity-w.mag),eq.ammo[type]);w.mag+=n;eq.ammo[type]-=n}}
  run.reloadTimer=0;run.reloadSlot=null;save()}
-function heal(){if(!run||run.stage!=='fight'||(run.playerDowned??0)>0||run.medkits<=0||run.hp>=100)return;run.medkits--;run.hp=Math.min(100,run.hp+40);save()}
+function heal(){if(!run||run.stage!=='fight'||(run.playerDowned??0)>0||run.medkits<=0||run.hp>=100)return;gameAudio.playUI('heal');run.medkits--;run.hp=Math.min(100,run.hp+40);save()}
 function search(targetIndex?:number){
  if(!run||!plan||run.stage!=='fight'||(run.playerDowned??0)>0)return;
  const map=plan.map;
@@ -335,7 +360,7 @@ function search(targetIndex?:number){
    const credits=45+run.wave*4;run.credits+=credits;label='+'+credits+' CREDITS';notice('Supply crate: '+label);
   }
  }
- run.looted.push(i);run.lootedTotal=(run.lootedTotal??0)+1;
+ gameAudio.playUI('loot');run.looted.push(i);run.lootedTotal=(run.lootedTotal??0)+1;
  lootPopups=lootPopups.filter(p=>performance.now()-p.start<2200);
  lootPopups.push({x:crate.x,y:crate.y,model,label,start:performance.now()});
  save();
@@ -398,11 +423,11 @@ function triggerFloorEvents(){
 function elevator(){
  if(!run||!plan||run.stage!=='fight'||(run.playerDowned??0)>0)return;
  if(!canExtract(run.sealedHoles??[],run.breachEvent??null)){
-  notice('ELEVATOR LOCKED · Seal '+REQUIRED_SEALS+' holes first ('+(run.sealedHoles??[]).length+'/'+REQUIRED_SEALS+')');return;
+  gameAudio.playElevator('locked');notice('ELEVATOR LOCKED · Seal '+REQUIRED_SEALS+' holes first ('+(run.sealedHoles??[]).length+'/'+REQUIRED_SEALS+')');return;
  }
  const p=plan.map.extraction;
  if(!elevatorInRange(plan.map,run.player)){notice('Move closer to the elevator doors');return}
- run.credits+=clearPayout(run.wave);
+ gameAudio.playElevator('open');run.credits+=clearPayout(run.wave);
  run.cleared++;
  if(!run.waveHit)run.flawlessWaves=(run.flawlessWaves??0)+1;
  run.bestSquad=Math.max(run.bestSquad??0,run.allies.filter(a=>!a.dead).length);
@@ -433,6 +458,7 @@ function closeSpawnHole(index:number){
  const result=startBreachEvent(run.credits,run.sealedHoles??[],index,spawnHoles(plan).length,run.breachEvent??null);
  if(!result){notice('NEED '+SEAL_COST+' CREDITS TO START SEALING');return}
  run.credits=result.credits;run.breachEvent=result.event;
+ gameAudio.playBreach('start');
  // The machinery immediately draws the attention of nearby infected.
  alertBreach(hole);
  notice('SEALING STARTED · -'+SEAL_COST+' CREDITS');
@@ -448,12 +474,14 @@ function alertBreach(hole:{x:number;y:number}){
  }
 }
 function updateBreach(dt:number){
- if(!run||!plan||!run.breachEvent)return;
+ if(!run||!plan||!run.breachEvent){gameAudio.stopBreach();return}
  const event=run.breachEvent,hole=spawnHoles(plan)[event.index];
+ gameAudio.syncBreach(run.wave+':'+event.index);gameAudio.tickBreach();
  if(!hole){run.breachEvent=null;save();return}
  const next=advanceBreachEvent(event,dt);
  // Keep the loud sealing machinery audible throughout the countdown.
  alertBreach(hole);
+ if(next.spawnCount>0)gameAudio.playBreach('wave');
  for(let i=0;i<next.spawnCount;i++){
   const active=run.enemies.reduce((count,e)=>count+(e.alive?1:0),0);
   if(active>=extractionActiveCap(run.waveSeconds??0,run.wave)+8)break;
@@ -465,6 +493,7 @@ function updateBreach(dt:number){
  }
  run.breachEvent=next.event;
  if(next.completed){
+  gameAudio.stopBreach();gameAudio.playBreach('complete');
   if(!(run.sealedHoles??[]).includes(event.index))(run.sealedHoles??=[]).push(event.index);
   notice('BREACH SEALED · '+run.sealedHoles!.length+'/'+REQUIRED_SEALS+' REQUIRED');
   save();
@@ -674,8 +703,8 @@ function setOrder(order:SquadOrder){
  notice('SQUAD ORDER: '+orderLabel(order));save();
 }
 function changeOrder(){if(!run||run.stage!=='fight'||paused)return;const orders:SquadOrder[]=['follow','hold','focus','regroup','defensive'];setOrder(orders[(orders.indexOf(run.squadOrder??'follow')+1)%orders.length])}
-function hurtPlayer(amount:number){if(!run||run.playerDead||(run.playerDowned??0)>0)return;const hit=incomingDamage(amount,run.armor);run.armor=hit.armor;run.hp=Math.max(0,run.hp-hit.hpDamage);run.waveHit=true;if(run.hp<=0){run.playerDowned=PLAYER_BLEEDOUT;run.reloadSlot=null;run.reloadTimer=0;notice('PLAYER DOWN — TEAMMATES CAN REVIVE YOU!')} }
-function hurtAlly(a:Ally,amount:number){if(a.dead||a.downed>0)return;let value=Math.max(0,amount);const armorAbsorb=Math.min(a.armor,value);a.armor-=armorAbsorb;value-=armorAbsorb;applyLethalDamage(a,value,ALLY_BLEEDOUT);if(a.downed>0)notice(a.name+' DOWN — REVIVE BEFORE BLEED-OUT')}
+function hurtPlayer(amount:number){if(!run||run.playerDead||(run.playerDowned??0)>0)return;gameAudio.playUI('warning');const hit=incomingDamage(amount,run.armor);run.armor=hit.armor;run.hp=Math.max(0,run.hp-hit.hpDamage);run.waveHit=true;if(run.hp<=0){run.playerDowned=PLAYER_BLEEDOUT;run.reloadSlot=null;run.reloadTimer=0;notice('PLAYER DOWN — TEAMMATES CAN REVIVE YOU!')} }
+function hurtAlly(a:Ally,amount:number){if(a.dead||a.downed>0)return;gameAudio.playUI('warning');let value=Math.max(0,amount);const armorAbsorb=Math.min(a.armor,value);a.armor-=armorAbsorb;value-=armorAbsorb;applyLethalDamage(a,value,ALLY_BLEEDOUT);if(a.downed>0)notice(a.name+' DOWN — REVIVE BEFORE BLEED-OUT')}
 function rescueAction(dt:number,manual=false){if(!run||paused)return;const r=run,p=r.player;
  for(const a of r.allies){if(a.dead||a.downed<=0)continue;const dist=Math.hypot(a.x-p.x,a.y-p.y);
   if(manual&&dist<1.55&&(r.playerDowned??0)===0){r.reviveProgress=(r.reviveProgress??0)+dt;if((r.reviveProgress??0)>=3.5){revive(a,28);a.reviveProgress=0;r.reviveProgress=0;notice(a.name+' REVIVED');save()}}}
@@ -783,7 +812,7 @@ function explorationSources():Explorer[]{
  for(const a of run.allies)if(!a.dead&&a.downed<=0)explorers.push({x:a.x,y:a.y,radius:4.5});
  return explorers;
 }
-function update(dt:number){if(!run||!plan||paused||run.stage!=='fight')return;
+function update(dt:number){if(!run||!plan||paused||run.stage!=='fight'){gameAudio.stopBreach();return;}
 combatFx=ageCombatFx(combatFx,dt);
  shellEffects=ageCasings(shellEffects,dt);shotKick=Math.max(0,shotKick-dt*1.9);
  bossEffects=bossEffects.filter(fx=>(fx.age+=dt)<(fx.death?1.15:.55));
