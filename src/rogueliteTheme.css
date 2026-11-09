@@ -1050,3 +1050,11 @@
  #rogue #overlay .main-menu-screen .menu-footer-note{display:none!important}
  #rogue #overlay .main-menu-screen .menu-main-actions button{min-height:27px!important}
 }
+
+/* Hidden overlays must never retain a hitbox. This outranks the cinematic
+ * menu's display:flex rule when a run resumes or starts. */
+#rogue #overlay[hidden],
+#rogue #overlay[hidden]:has(> .main-menu-screen){
+ display:none!important;visibility:hidden!important;
+ pointer-events:none!important;
+}
