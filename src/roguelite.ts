@@ -1,7 +1,7 @@
 import {generateDungeon,type DungeonLayout} from './dungeon';
 import {makeWave,killPayout,clearPayout,permanentPayout,extractionSpawnInterval,extractionActiveCap,formatRunTime,type WavePlan} from './rogueliteRules';
 import {zombieKind,zombieStats,weaponStats,reloadTransfer,distanceField,nextZombieWaypoint,incomingDamage,bossAttack,bossImpact,bossIdentity,distanceToSegment,type ZombieKind,type WeaponSlot} from './combatSystems';
-import {weaponDefs,attachmentDefs,attachmentDescriptions,rarityName,rarityClass,canClassEquip,ammoTypes,ammoLabels,ammoPack,ammoStack,newWeapon,newMod,usedSlots,addAmmo,canAddItem,canEquipMod,itemName,salePrice,effectiveStats,armoryOffers,rareLoot,crateLoot,backpackUpgradePrice,upgradePrice,type Weapon,type Mod,type Gear,type AmmoBank,type Loadout,type AmmoType,type Tier,type WeaponId,type AttachmentId,type Slot} from './equipmentArmory';
+import {weaponDefs,attachmentDefs,attachmentDescriptions,rarityName,rarityClass,canClassEquip,ammoTypes,ammoLabels,ammoPack,ammoStack,newWeapon,newMod,usedSlots,addAmmo,canAddItem,canEquipMod,itemName,salePrice,effectiveStats,armoryOffers,rareLoot,crateLoot,supplyReward,backpackUpgradePrice,upgradePrice,type Weapon,type Mod,type Gear,type AmmoBank,type Loadout,type AmmoType,type Tier,type WeaponId,type AttachmentId,type Slot} from './equipmentArmory';
 import {CLASS_INFO,classIds,makeSquadmate,migrateSquadmate,applyLethalDamage,bleed,revive,reviveDuration,shouldRevive,canRecruit,equipClassWeapon,classFireDelay,classRange,classDamage,canHeal,gearUpgradeCost,squadWeapon,setSquadWeaponSlot,refillSquadAmmo,squadAmmoNeeded,squadAmmoRefillPrice,SQUAD_MAX_AMMO,PLAYER_BLEEDOUT,ALLY_BLEEDOUT,type Squadmate,type SquadOrder} from './squadSystems';
 import {migrateProfile,unlocks,achievements,buyUnlock,allowedPrimary,allowedMelee,allowedTeammates,sanitizeChoice,startingKit,progressAchievements,performancePayout,eligibleRecruit,type ProfileV5,type UnlockId,type RunPerformance} from './metaprogression';
 import {camera,toWorld,renderDungeon,drawSprite,drawElevator,drawMilitaryCrate,drawLootPopup,drawBar,drawHazard,hudColor,type View,type SpriteKind} from './rogueliteVisuals';
@@ -21,6 +21,7 @@ import {createFog,updateFog,renderFog,exploredIndices,discoveredAt,clipToExplore
 import {normalizeStick,stickKnob,type StickVector} from './mobileControls';
 import {walkableTile,canOccupy,nearestWalkable} from './tileCollision';
 import {squadMove,spacedSquadPosition} from './squadMovement';
+import {formationDestination,pickTacticalTarget} from './squadCommandAI';
 import {spawnHoles,openHoleIndices,startBreachEvent,advanceBreachEvent,canExtract,SEAL_COST,BREACH_DURATION,REQUIRED_SEALS,drawSpawnHole,type BreachEvent} from './spawnHoles';
 import './rogueliteTheme.css';
 import './style.css';
@@ -32,7 +33,7 @@ type Profile=ProfileV5;
 const root=document.querySelector<HTMLDivElement>('#app')!;
 root.innerHTML=`<div id="rogue" style="height:100dvh;display:flex;flex-direction:column;background:#0c1416;color:#eaf0eb;font:14px system-ui;overflow:hidden">
 <header><strong class="game-title">DEADZONE <span style="color:#f18567">PROTOCOL</span></strong><div id="combat-hud" aria-label="Survivor status"><span id="stats" class="top-stat">WAVE 1</span><div class="hud-meter" aria-label="Health"><span>HP</span><div><i id="hud-hp"></i></div><b id="hud-hp-text">100</b></div><div class="hud-meter" aria-label="Armor"><span>ARM</span><div><i id="hud-armor"></i></div><b id="hud-armor-text">50</b></div><span class="top-stat" id="hud-weapon">CARBINE · 30/90</span><span class="top-stat" id="hud-team">SQUAD 0/4</span><span class="top-stat" id="hud-credits">₡0</span></div><button id="menu" type="button">MENU</button></header>
-<div id="playarea" style="position:relative;min-height:0;flex:1;display:flex;justify-content:center;align-items:center;background:#0a1113"><canvas id="rogue-canvas" style="width:100%;height:100%;object-fit:contain;touch-action:none"></canvas><div id="breach-banner" role="alert" aria-live="polite" hidden style="position:absolute;top:8px;left:50%;transform:translateX(-50%);z-index:4;pointer-events:none;max-width:94%;min-width:min(90%,440px);box-sizing:border-box;padding:9px 14px;border-radius:7px;background:#64231eee;border:2px solid #ffac79;text-align:center;color:#fff4da;font-size:clamp(11px,2vw,15px);font-weight:800;box-shadow:0 4px 18px #000a"></div><div id="mobile-sticks" aria-label="Touch analog controls"><div class="analog-group analog-left"><button id="mobile-inventory-team" type="button" aria-label="Tap inventory; hold for team">INVENTORY / TEAM</button><div class="analog-base" id="move-stick" role="group" aria-label="Move"><div class="analog-ring"></div><div class="analog-knob"></div></div><span class="analog-caption">MOVE</span></div><div id="mobile-squad" aria-label="Squad commands"><button type="button" data-squad-order="follow">FOLLOW</button><button type="button" data-squad-order="hold">HOLD</button><button type="button" data-squad-order="focus">FOCUS</button><button type="button" data-squad-order="regroup">REGROUP</button><button type="button" data-squad-order="defensive">DEFEND</button></div><button id="mobile-medkit-revive" type="button" aria-label="Tap to use medkit; hold to revive">MEDKIT / REVIVE</button><div id="mobile-actions"><button id="mobile-interact" type="button" disabled>INTERACT</button></div><div class="analog-group analog-right"><button id="mobile-weapon-swap" type="button" aria-label="Tap to swap primary and secondary; hold for melee">SWAP WEAPON</button><div class="analog-base" id="aim-stick" role="group" aria-label="Aim and fire"><div class="analog-ring"></div><div class="analog-knob"></div></div><span class="analog-caption">AIM · AUTO ATTACK</span></div></div><div id="rotate-phone" role="status" aria-live="polite"><div class="rotate-symbol" aria-hidden="true">↻</div><h2>Rotate Your Device</h2><p>Deadzone Protocol is played in landscape mode.</p></div><div id="overlay" style="position:absolute;inset:0;display:flex;align-items:flex-start;justify-content:center;background:#081112df;overflow:auto;padding:14px;box-sizing:border-box"></div></div>
+<div id="playarea" style="position:relative;min-height:0;flex:1;display:flex;justify-content:center;align-items:center;background:#0a1113"><canvas id="rogue-canvas" style="width:100%;height:100%;object-fit:contain;touch-action:none"></canvas><div id="breach-banner" role="alert" aria-live="polite" hidden style="position:absolute;top:8px;left:50%;transform:translateX(-50%);z-index:4;pointer-events:none;max-width:94%;min-width:min(90%,440px);box-sizing:border-box;padding:9px 14px;border-radius:7px;background:#64231eee;border:2px solid #ffac79;text-align:center;color:#fff4da;font-size:clamp(11px,2vw,15px);font-weight:800;box-shadow:0 4px 18px #000a"></div><div id="mobile-sticks" aria-label="Touch analog controls"><div class="analog-group analog-left"><button id="mobile-inventory-team" type="button" aria-label="Tap inventory; hold for team">INVENTORY / TEAM</button><div class="analog-base" id="move-stick" role="group" aria-label="Move"><div class="analog-ring"></div><div class="analog-knob"></div></div><span class="analog-caption">MOVE</span></div><div id="mobile-squad" aria-label="Squad commands"><button type="button" data-squad-order="follow">FOLLOW</button><button type="button" data-squad-order="hold">HOLD</button><button type="button" data-squad-order="focus">FOCUS</button><button type="button" data-squad-order="regroup">REGROUP</button><button type="button" data-squad-order="defensive">DEFEND</button><button type="button" data-squad-order="suppress">SUPPRESS</button></div><button id="mobile-medkit-revive" type="button" aria-label="Tap to use medkit; hold to revive">MEDKIT / REVIVE</button><div id="mobile-actions"><button id="mobile-interact" type="button" disabled>INTERACT</button></div><div class="analog-group analog-right"><button id="mobile-weapon-swap" type="button" aria-label="Tap to swap primary and secondary; hold for melee">SWAP WEAPON</button><div class="analog-base" id="aim-stick" role="group" aria-label="Aim and fire"><div class="analog-ring"></div><div class="analog-knob"></div></div><span class="analog-caption">AIM · AUTO ATTACK</span></div></div><div id="rotate-phone" role="status" aria-live="polite"><div class="rotate-symbol" aria-hidden="true">↻</div><h2>Rotate Your Device</h2><p>Deadzone Protocol is played in landscape mode.</p></div><div id="overlay" style="position:absolute;inset:0;display:flex;align-items:flex-start;justify-content:center;background:#081112df;overflow:auto;padding:14px;box-sizing:border-box"></div></div>
 <footer style="display:flex;flex-wrap:wrap;justify-content:center;gap:6px;padding:8px;background:#152521"><button id="weapon-primary">1 PRIMARY</button><button id="weapon-secondary">2 SIDEARM</button><button id="weapon-melee">3 MELEE</button><button id="heal">MEDKIT (H)</button><button id="inventory">INVENTORY (I)</button><button id="orders">SQUAD: FOLLOW (Q)</button><button id="squad-panel">TEAM</button><button id="revive">HOLD REVIVE (V)</button><button id="moveup">▲</button><button id="moveleft">◀</button><button id="movedown">▼</button><button id="moveright">▶</button><button id="interact" disabled>INTERACT (E)</button></footer>
 <div id="toast" style="position:fixed;left:50%;bottom:78px;transform:translateX(-50%);pointer-events:none;background:#243c37e8;padding:6px 12px;border-radius:6px;color:white;z-index:5"></div></div>`;
 const style=document.createElement('style');style.textContent=`#overlay[hidden]{display:none!important}#overlay article{margin:auto 0}#rogue button{background:#304941;color:white;border:1px solid #879a80;border-radius:5px;padding:9px 12px;font:600 13px system-ui;cursor:pointer;touch-action:none}#rogue button:hover{background:#436354}#rogue button:disabled{opacity:.42;cursor:not-allowed}#overlay article{background:#1a2d2b;border:1px solid #8f9c82;border-radius:10px;padding:22px;max-width:560px;width:min(100%,560px);box-sizing:border-box;box-shadow:0 15px 60px #0009}#overlay h1{font-size:24px;margin:0 0 8px}#overlay h2{font-size:18px;margin:14px 0 8px}#overlay p{color:#c7d1c8;line-height:1.5}#overlay .shop{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px}#overlay .shop button{text-align:left;min-height:66px}#overlay .menurow{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}#overlay label{display:block;margin:8px 0}#overlay select{padding:8px;background:#1c3030;color:white;border:1px solid #7b9385}`;document.head.append(style);
@@ -732,7 +733,7 @@ function setOrder(order:SquadOrder){
  if(order==='regroup')run.focusTarget=null;
  notice('SQUAD ORDER: '+orderLabel(order));save();
 }
-function changeOrder(){if(!run||run.stage!=='fight'||paused)return;const orders:SquadOrder[]=['follow','hold','focus','regroup','defensive'];setOrder(orders[(orders.indexOf(run.squadOrder??'follow')+1)%orders.length])}
+function changeOrder(){if(!run||run.stage!=='fight'||paused)return;const orders:SquadOrder[]=['follow','hold','focus','regroup','defensive','suppress'];setOrder(orders[(orders.indexOf(run.squadOrder??'follow')+1)%orders.length])}
 function hurtPlayer(amount:number){if(!run||run.playerDead||(run.playerDowned??0)>0)return;gameAudio.playUI('warning');const hit=incomingDamage(amount,run.armor);run.armor=hit.armor;run.hp=Math.max(0,run.hp-hit.hpDamage);run.waveHit=true;if(run.hp<=0){run.playerDowned=PLAYER_BLEEDOUT;run.reloadSlot=null;run.reloadTimer=0;notice('PLAYER DOWN — TEAMMATES CAN REVIVE YOU!')} }
 function hurtAlly(a:Ally,amount:number){if(a.dead||a.downed>0)return;gameAudio.playUI('warning');let value=Math.max(0,amount);const armorAbsorb=Math.min(a.armor,value);a.armor-=armorAbsorb;value-=armorAbsorb;applyLethalDamage(a,value,ALLY_BLEEDOUT);if(a.downed>0)notice(a.name+' DOWN — REVIVE BEFORE BLEED-OUT')}
 function rescueAction(dt:number,manual=false){if(!run||paused)return;const r=run,p=r.player;
@@ -759,12 +760,13 @@ function squadUpdate(dt:number){if(!run||!plan)return;const r=run,p=r.player,ord
    }continue;
   }
   a.reviveProgress=0;
-  let destination={x:p.x,y:p.y},speed=2.35;
-  if(order==='hold')destination=a.anchor;
-  else if(order==='focus'&&r.focusTarget!==null&&r.focusTarget!==undefined){const target=r.enemies[r.focusTarget];if(target?.alive)destination={x:target.x,y:target.y}}
-  else if(order==='defensive'){destination={x:p.x-.5,y:p.y+.4}}
-  else if(order==='regroup')speed=3.05;
-  const separation=order==='hold'?.4:order==='focus'?3:order==='defensive'?1:1.45;
+  const squadIndex=r.allies.indexOf(a);
+  let destination=formationDestination(order,p,aim,squadIndex,r.allies.length,a.anchor),speed=2.35;
+  if(order==='regroup')speed=3.05;
+  if(order==='focus'&&r.focusTarget!==null&&r.focusTarget!==undefined){
+   const target=r.enemies[r.focusTarget];if(target?.alive)destination={x:target.x,y:target.y};
+  }
+  const separation=order==='hold'?.4:order==='focus'?3:order==='suppress'?.52:order==='defensive'?.55:.6;
   const d=Math.hypot(destination.x-a.x,destination.y-a.y);
   if(d>separation){const direct=canSee(a.x,a.y,destination.x,destination.y),field=direct?null:distanceField(plan.map,destination),wp=field?nextZombieWaypoint(plan.map,field,a):destination,len=Math.hypot(wp.x-a.x,wp.y-a.y)||1;moveSquadmate(a,(wp.x-a.x)/len,(wp.y-a.y)/len,dt*speed)}
   if(a.role==='medic'&&a.abilityCooldown===0){const candidates=[{hp:r.hp,maxHp:100,x:p.x,y:p.y,isPlayer:true},...r.allies.filter(b=>!b.dead&&b.downed<=0).map(b=>({hp:b.hp,maxHp:b.maxHp,x:b.x,y:b.y,isPlayer:false,ally:b}))].filter(v=>v.hp<v.maxHp-10&&Math.hypot(v.x-a.x,v.y-a.y)<4);
@@ -772,8 +774,9 @@ function squadUpdate(dt:number){if(!run||!plan)return;const r=run,p=r.player,ord
   if(a.role==='engineer'&&a.abilityCooldown===0){const enemy=aliveEnemies.find(e=>Math.hypot(e.x-a.x,e.y-a.y)<3.2);if(enemy){for(const z of aliveEnemies.filter(e=>Math.hypot(e.x-enemy.x,e.y-enemy.y)<1.5))strikeZombie(z,1+a.gearTier,unit(z.x-a.x,z.y-a.y));a.abilityCooldown=13;notice('ENGINEER TRAP TRIGGERED')}
    else if(a.armor<CLASS_INFO.engineer.armor&&r.armor<80&&Math.hypot(a.x-p.x,a.y-p.y)<3){r.armor=Math.min(100,r.armor+8+a.gearTier*2);a.abilityCooldown=14;notice('ENGINEER ARMOR REPAIR')}}
   if(!shooting||a.cooldown>0)continue;
-  const closest=aliveEnemies.filter(e=>canSee(a.x,a.y,e.x,e.y)).sort((x,y)=>Math.hypot(x.x-a.x,x.y-a.y)-Math.hypot(y.x-a.x,y.y-a.y))[0];
-  const target=order==='focus'&&r.focusTarget!==null&&r.focusTarget!==undefined&&r.enemies[r.focusTarget]?.alive?r.enemies[r.focusTarget]:closest;
+  const visible=aliveEnemies.filter(e=>canSee(a.x,a.y,e.x,e.y));
+  const focused=r.focusTarget!==null&&r.focusTarget!==undefined?r.enemies[r.focusTarget]:null;
+  const target=pickTacticalTarget(order,a,p,visible,focused?.alive?focused:null);
   if(!target)continue;
   const distance=Math.hypot(target.x-a.x,target.y-a.y);
   // Close enemies are handled with equipped melee weapons. When ammunition is
@@ -802,12 +805,17 @@ function squadUpdate(dt:number){if(!run||!plan)return;const r=run,p=r.player,ord
   const damage=Math.max(.5,classDamage(a.role,weapon.tier)*(effectiveStats(weapon).damage/weaponDefs[CLASS_INFO[a.role].model].damage));
   for(const hit of trace.hits){
    const struck=hit.target;strikeZombie(struck,damage,dir);
-   if(a.role==='heavy')for(const other of aliveEnemies)if(other!==struck&&Math.hypot(other.x-struck.x,other.y-struck.y)<1.2)other.suppressed=2.4;
+   if(a.role==='heavy'||order==='suppress'){
+    struck.suppressed=Math.max(struck.suppressed??0,order==='suppress'?2.7:2.4);
+    for(const other of aliveEnemies)
+     if(other!==struck&&Math.hypot(other.x-struck.x,other.y-struck.y)<(order==='suppress'?1.5:1.2))
+      other.suppressed=Math.max(other.suppressed??0,order==='suppress'?1.9:2.4);
+   }
    if(a.role==='scout'){struck.scoutMarked=3.5;struck.aggro=5}
   }
   combatFx.push(...makeAttackFx(weapon.model,a.x,a.y,dir.x,dir.y,reach,[trace.distance],weaponFlashAllowed(weapon)));
   if(combatFx.length>120)combatFx.splice(0,combatFx.length-120);
-  a.cooldown=classFireDelay(a.role)*Math.max(.7,effectiveStats(weapon).rate/weaponDefs[CLASS_INFO[a.role].model].rate);
+  a.cooldown=classFireDelay(a.role)*Math.max(.7,effectiveStats(weapon).rate/weaponDefs[CLASS_INFO[a.role].model].rate)*(order==='suppress'?.85:1);
   a.magReserve--;
   shellEffects.push(ejectCasing(a.x,a.y,dir.x,dir.y,Math.floor(r.waveSeconds??0)*7+r.allies.indexOf(a)));
   if(!r.noiseEvent||r.noiseEvent.radius<7)r.noiseEvent={x:a.x,y:a.y,radius:a.role==='heavy'?14:9,ttl:1.6};
