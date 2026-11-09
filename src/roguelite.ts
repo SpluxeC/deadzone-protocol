@@ -1116,7 +1116,7 @@ function draw(){
  const banner=document.querySelector<HTMLElement>('#breach-banner')!;
  banner.hidden=!r.breachEvent||performance.now()>=breachBannerUntil;
  if(r.breachEvent)banner.textContent='Wave incoming, protect the breach while its sealed · '+Math.ceil(r.breachEvent.remaining)+'s';
- stats.textContent='WAVE '+r.wave+' · BREACHES SEALED '+(r.sealedHoles??[]).length+'/'+REQUIRED_SEALS;
+ stats.textContent='WAVE '+r.wave+' · Breaches Sealed '+(r.sealedHoles??[]).length+'/'+REQUIRED_SEALS;
  document.querySelector<HTMLButtonElement>('#orders')!.textContent='SQUAD: '+order+' (Q)';
  document.querySelectorAll<HTMLButtonElement>('#mobile-squad [data-squad-order]').forEach(button=>{
   const selected=button.dataset.squadOrder===(r.squadOrder??'follow');
