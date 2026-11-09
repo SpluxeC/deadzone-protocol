@@ -2,9 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {weaponDefs,type WeaponId} from './equipmentArmory.ts';
 import {weaponSignature,isMelee,clampVolume,gameAudio} from './gameAudio.ts';
-test('all 26 weapons have their own original shot or melee sound profile',()=>{
+test('all 25 weapons have their own original shot or melee sound profile',()=>{
  const weapons=Object.keys(weaponDefs) as WeaponId[];
- assert.equal(weapons.length,26);
+ assert.equal(weapons.length,25);
  const signatures=new Set<string>();
  for(const id of weapons){
   const s=weaponSignature(id);
