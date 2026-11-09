@@ -105,8 +105,7 @@ class GameAudio{
   if(lowpass){const lp=c.createBiquadFilter();lp.type='lowpass';lp.frequency.value=lowpass;final.connect(lp);final=lp}
   final.connect(master);
   this.active++;
-  gain.addEventListener('ended',()=>{}, {once:true});
-  // Count completed sources using their onended callbacks instead.
+  // Count completed sources using their onended callbacks.
   return {gain,end:start+seconds+.01};
  }
  private tone(freq:number,duration:number,volume:number,opts:{type?:OscillatorType;endFreq?:number;delay?:number;highpass?:number;lowpass?:number}={}):void{
