@@ -151,7 +151,7 @@ async function runScenario(touch){
  assert.ok(toolbarTop&&supplyBottom&&toolbarTop.y<supplyBottom.y,'Armory actions must sit above supplies');
  assert.equal(await page.locator('#refill-all-armory').count(),1);
  assert.equal(await page.locator('#reroll-buy').count(),0,'manual Armory reroll removed');
- assert.match(await page.locator('#refill-all-armory').innerText(),/^Refill Squad Ammo\\s*·\\s*\\d+ CR$/);
+ assert.match(await page.locator('#refill-all-armory').innerText(),/^Refill Squad Ammo\s*·\s*\d+ CR$/);
 
  if(touch){
   assert.equal(await page.locator('.armory-screen [data-mobile-tab]').count(),2,'Armory should have two mobile categories');
@@ -222,7 +222,7 @@ async function runScenario(touch){
  await tap('#shop-squad');
  await checkWiring(page,label+' squad management');
  assert.equal(await page.locator('#squad-refill').count(),1);
- assert.match(await page.locator('#squad-refill').innerText(),/^Refill Squad Ammo\\s*·\\s*\\d+ CR$/);
+ assert.match(await page.locator('#squad-refill').innerText(),/^Refill Squad Ammo\s*·\s*\d+ CR$/);
 
  assert.equal(await page.locator('[id^="sq-slot-secondary-"]').count()>0,true,'NPC sidearm selector present');
  assert.equal(await page.locator('[id^="sq-slot-melee-"]').count()>0,true,'NPC melee selector present');
