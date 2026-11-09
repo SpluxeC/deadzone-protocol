@@ -104,9 +104,21 @@ async function runScenario(touch){
  const toggle=page.locator('#audio-toggle'),volume=page.locator('#audio-volume');
  assert.equal(await volume.count(),1);
  assert.equal(await toggle.getAttribute('aria-pressed'),'true');
+ assert.match(await toggle.innerText(),/ENABLE SOUND/);
+ await action(page,'#audio-toggle',touch);
+ await page.waitForFunction(()=>document.querySelector('#audio-status')?.textContent==='READY');
+ assert.equal(await toggle.getAttribute('data-audio-status'),'ready','mobile gesture must really start running audio');
+ const before=await page.evaluate(async()=>{const {gameAudio}=await import('/src/gameAudio.ts');return gameAudio.playbackCount});
+ await action(page,'#audio-test',touch);
+ await page.waitForFunction(async previous=>{
+  const {gameAudio}=await import('/src/gameAudio.ts');
+  return gameAudio.playbackCount>previous;
+ },before,{timeout:8000});
+ assert.equal(await page.locator('#audio-status').innerText(),'READY','test audio remains enabled');
  await action(page,'#audio-toggle',touch);
  assert.equal(await toggle.getAttribute('aria-pressed'),'false','mute button turns sound off');
  await action(page,'#audio-toggle',touch);
+ await page.waitForFunction(()=>document.querySelector('#audio-status')?.textContent==='READY');
  assert.equal(await toggle.getAttribute('aria-pressed'),'true','sound can be unmuted');
  await volume.evaluate(el=>{el.value='35';el.dispatchEvent(new Event('input',{bubbles:true}))});
  assert.equal(await volume.inputValue(),'35');
