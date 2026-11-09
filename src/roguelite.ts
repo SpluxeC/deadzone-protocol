@@ -39,24 +39,50 @@ const style=document.createElement('style');style.textContent=`#overlay[hidden]{
 const canvas=document.querySelector<HTMLCanvasElement>('#rogue-canvas')!,ctx=canvas.getContext('2d')!,overlay=document.querySelector<HTMLDivElement>('#overlay')!,toastEl=document.querySelector<HTMLDivElement>('#toast')!;
 /** Always reachable on mobile and desktop without adding another scroll area. */
 document.querySelector<HTMLElement>('#rogue')!.insertAdjacentHTML('beforeend',
- '<div id="audio-dock" role="group" aria-label="Game audio settings"><button id="audio-toggle" type="button" aria-label="Mute game audio">SOUND ON</button><label for="audio-volume" class="audio-volume-label">VOL</label><input id="audio-volume" type="range" min="0" max="100" step="1" aria-label="Game sound volume"></div>');
+ '<div id="audio-dock" role="group" aria-label="Game audio settings"><button id="audio-toggle" type="button" aria-label="Enable game audio">ENABLE SOUND</button><button id="audio-test" type="button" aria-label="Play test sound">TEST</button><label for="audio-volume" class="audio-volume-label">VOL</label><input id="audio-volume" type="range" min="0" max="100" step="1" aria-label="Game sound volume"><small id="audio-status" role="status" aria-live="polite"></small></div>');
 const audioToggle=document.querySelector<HTMLButtonElement>('#audio-toggle')!;
+const audioTest=document.querySelector<HTMLButtonElement>('#audio-test')!;
 const audioVolume=document.querySelector<HTMLInputElement>('#audio-volume')!;
+const audioStatus=document.querySelector<HTMLElement>('#audio-status')!;
 function updateAudioControls(){
- audioToggle.textContent=gameAudio.muted?'SOUND OFF':'SOUND ON';
- audioToggle.setAttribute('aria-label',gameAudio.muted?'Unmute game audio':'Mute game audio');
- audioToggle.setAttribute('aria-pressed',String(!gameAudio.muted));
+ const status=gameAudio.status;
+ const disabled=gameAudio.muted;
+ audioToggle.textContent=disabled?'SOUND OFF':status==='ready'?'SOUND ON':status==='starting'?'STARTING…':status==='unavailable'?'AUDIO BLOCKED':'ENABLE SOUND';
+ audioToggle.setAttribute('aria-label',disabled?'Unmute game audio':status==='ready'?'Mute game audio':'Enable game audio');
+ audioToggle.setAttribute('aria-pressed',String(!disabled));
+ audioToggle.dataset.audioStatus=status;
  audioVolume.value=String(Math.round(gameAudio.volume*100));
+ audioStatus.textContent=status==='ready'?(disabled?'MUTED':'READY'):status==='unavailable'?'BROWSER BLOCKED':status==='starting'?'CONNECTING':'TAP ENABLE';
+ audioTest.disabled=status==='unavailable';
 }
+gameAudio.onStatusChange(updateAudioControls);
 updateAudioControls();
-audioToggle.onclick=()=>{gameAudio.unlock();gameAudio.toggle();updateAudioControls()};
-audioVolume.oninput=()=>{gameAudio.unlock();gameAudio.setVolume(Number(audioVolume.value)/100);updateAudioControls()};
-document.addEventListener('pointerdown',()=>gameAudio.unlock(),{capture:true,passive:true});
-document.addEventListener('keydown',()=>gameAudio.unlock(),{capture:true});
+audioToggle.onclick=()=>{
+ if(gameAudio.muted){gameAudio.setMuted(false);void gameAudio.unlock().then(ok=>{if(ok)gameAudio.playUI('confirm');updateAudioControls()});}
+ else if(gameAudio.status!=='ready'){void gameAudio.unlock().then(ok=>{if(ok)gameAudio.playUI('success');updateAudioControls()});}
+ else{gameAudio.setMuted(true)}
+ updateAudioControls();
+};
+audioTest.onclick=()=>{
+ void gameAudio.testSound().then(ok=>{
+  updateAudioControls();
+  if(!ok){audioStatus.textContent='TAP ENABLE AGAIN';}
+ });
+};
+audioVolume.oninput=()=>{gameAudio.setVolume(Number(audioVolume.value)/100);void gameAudio.unlock();updateAudioControls()};
+function resumeAudioFromGesture(){
+ const wasReady=gameAudio.status==='ready';
+ void gameAudio.unlock().then(ok=>{if(ok&&!wasReady&&!gameAudio.muted)gameAudio.playUI('confirm');updateAudioControls()});
+}
+document.addEventListener('pointerdown',resumeAudioFromGesture,{capture:true,passive:true});
+document.addEventListener('touchstart',resumeAudioFromGesture,{capture:true,passive:true});
+document.addEventListener('keydown',resumeAudioFromGesture,{capture:true});
 document.addEventListener('click',event=>{
  const button=(event.target as Element|null)?.closest('button');
- if(button instanceof HTMLButtonElement&&!button.disabled&&button!==audioToggle)gameAudio.playUI('tap');
+ if(button instanceof HTMLButtonElement&&!button.disabled&&button!==audioToggle&&button!==audioTest)gameAudio.playUI('tap');
 },true);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&gameAudio.status!=='locked')void gameAudio.unlock()});
+window.addEventListener('pageshow',()=>{if(gameAudio.status!=='locked')void gameAudio.unlock()});
 
 /** Protect the gameplay surface from iOS/Android text selection, callouts, and drag highlights.
  * The overlay remains interactive so menu dropdowns and buttons continue working.
