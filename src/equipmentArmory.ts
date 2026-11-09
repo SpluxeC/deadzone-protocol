@@ -209,5 +209,28 @@ export function crateLoot(seed:number,wave:number,container:number,kind:'supply'
  const model=modModels[Math.floor(random()*modModels.length)];
  return newMod(model,rarityForWave(wave,random()),'crate-mod-'+wave+'-'+container);
 }
+/** Deterministic expanded crate supplies. Gun crates stay exclusively weapons;
+ * these rewards are instant-use field supplies, not additional bag item kinds.
+ */
+export type SupplyReward=
+ |{kind:'credits';amount:number}
+ |{kind:'ammo';type:AmmoType;amount:number}
+ |{kind:'medkit';amount:1}
+ |{kind:'armor';amount:number}
+ |{kind:'fieldHeal';amount:number}
+ |{kind:'squadAmmo';amount:number};
+export function supplyReward(seed:number,wave:number,container:number):SupplyReward{
+ const random=seeded(seed^Math.imul(wave+7,0x85ebca6b)^Math.imul(container+37,0x9e3779b1));
+ const roll=random(),depth=Math.max(1,wave);
+ if(roll<.22)return {kind:'credits',amount:65+depth*6+Math.floor(random()*75)};
+ if(roll<.49){
+  const type=ammoTypes[Math.floor(random()*ammoTypes.length)];
+  return {kind:'ammo',type,amount:ammoPack[type].count+Math.floor(random()*Math.max(1,ammoPack[type].count*.45))};
+ }
+ if(roll<.64)return {kind:'medkit',amount:1};
+ if(roll<.80)return {kind:'armor',amount:24+Math.floor(random()*22)};
+ if(roll<.91)return {kind:'squadAmmo',amount:45+Math.floor(random()*66)};
+ return {kind:'fieldHeal',amount:20+Math.floor(random()*24)};
+}
 export function advanceOfferPrice(rerolls:number):number{return 100+rerolls*75}
 export function backpackUpgradePrice(capacity:number):number{return capacity>=24?Infinity:200+Math.floor((capacity-12)/4)*150}
