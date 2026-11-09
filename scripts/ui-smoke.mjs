@@ -103,6 +103,20 @@ async function runScenario(touch){
  await tap('#new-run');
  await tap('#launch-run');
  if(touch){
+  const hudMetrics=await page.evaluate(()=>{
+   const header=document.querySelector('#rogue > header');
+   const hud=document.querySelector('#combat-hud');
+   const credits=document.querySelector('#hud-credits');
+   const box=header?.getBoundingClientRect();
+   return {display:header?getComputedStyle(header).display:'none',
+    height:box?.height??0,width:box?.width??0,top:box?.top??-1,
+    hudVisible:!!hud&&getComputedStyle(hud).display!=='none',
+    creditVisible:!!credits&&credits.getBoundingClientRect().height>0};
+  });
+  assert.equal(hudMetrics.display,'flex','mobile HUD must use an unclipped flex layout');
+  assert.ok(hudMetrics.height>=36&&hudMetrics.height<=48,'mobile HUD must be visible and compact: '+JSON.stringify(hudMetrics));
+  assert.ok(hudMetrics.hudVisible&&hudMetrics.creditVisible,'HUD and in-run credits must be visible on mobile');
+
   console.log(label,'checking mobile controls');
   await tap('#mobile-inventory-team');
   await checkWiring(page,label+' live inventory');
@@ -126,6 +140,12 @@ async function runScenario(touch){
  const supplyBottom=await page.locator('.armory-screen .armory-columns').boundingBox();
  assert.ok(toolbarTop&&supplyBottom&&toolbarTop.y<supplyBottom.y,'Armory actions must sit above supplies');
  assert.equal(await page.locator('#refill-all-armory').count(),1);
+ const creditsLabel=page.locator('.armory-screen .management-credits');
+ assert.equal(await creditsLabel.count(),1);
+ const creditsBox=await creditsLabel.boundingBox();
+ assert.ok(creditsBox&&creditsBox.width>40&&creditsBox.height>15,'Armory credit balance must be visible');
+ assert.match(await creditsLabel.innerText(),/CREDITS/);
+
 
  // Exercise every available Armory/inventory/squad button separately, restoring
  // a known valid save between taps so purchases and destructive actions cannot
