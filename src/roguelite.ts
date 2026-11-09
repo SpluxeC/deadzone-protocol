@@ -39,7 +39,7 @@ const style=document.createElement('style');style.textContent=`#overlay[hidden]{
 const canvas=document.querySelector<HTMLCanvasElement>('#rogue-canvas')!,ctx=canvas.getContext('2d')!,overlay=document.querySelector<HTMLDivElement>('#overlay')!,toastEl=document.querySelector<HTMLDivElement>('#toast')!;
 /** Always reachable on mobile and desktop without adding another scroll area. */
 document.querySelector<HTMLElement>('#rogue')!.insertAdjacentHTML('beforeend',
- '<div id="audio-dock" role="group" aria-label="Game audio settings"><button id="audio-toggle" type="button" aria-label="Mute game audio">SOUND ON</button><label for="audio-volume" class="audio-volume-label">VOL</label><input id="audio-volume" type="range" min="0" max="100" step="5" aria-label="Game sound volume"></div>');
+ '<div id="audio-dock" role="group" aria-label="Game audio settings"><button id="audio-toggle" type="button" aria-label="Mute game audio">SOUND ON</button><label for="audio-volume" class="audio-volume-label">VOL</label><input id="audio-volume" type="range" min="0" max="100" step="1" aria-label="Game sound volume"></div>');
 const audioToggle=document.querySelector<HTMLButtonElement>('#audio-toggle')!;
 const audioVolume=document.querySelector<HTMLInputElement>('#audio-volume')!;
 function updateAudioControls(){
