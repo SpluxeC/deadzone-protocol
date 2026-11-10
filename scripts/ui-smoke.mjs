@@ -109,8 +109,9 @@ async function runScenario(touch){
  const toggle=page.locator('#audio-toggle'),volume=page.locator('#audio-volume');
  assert.equal(await volume.count(),1);
  assert.equal(await toggle.getAttribute('aria-pressed'),'true');
- assert.match(await toggle.innerText(),/ENABLE SOUND/);
- await action(page,'#audio-toggle',touch);
+ // Tapping Settings itself can unlock Web Audio on mobile, so avoid
+ // immediately muting an already-active context by toggling a second time.
+ if((await toggle.getAttribute('data-audio-status'))!=='ready')await action(page,'#audio-toggle',touch);
  await page.waitForFunction(()=>document.querySelector('#audio-status')?.textContent==='READY');
  assert.equal(await toggle.getAttribute('data-audio-status'),'ready','mobile gesture must really start running audio');
  const before=await page.evaluate(async()=>{const {gameAudio}=await import('/src/gameAudio.ts');return gameAudio.playbackCount});
