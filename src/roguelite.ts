@@ -41,6 +41,7 @@ const canvas=document.querySelector<HTMLCanvasElement>('#rogue-canvas')!,ctx=can
 /** Audio controls live inside Settings, never over the gameplay HUD or joysticks. */
 document.querySelector<HTMLElement>('#rogue')!.insertAdjacentHTML('beforeend',
  '<div id="audio-dock" role="group" aria-label="Game audio settings"><button id="audio-toggle" type="button" aria-label="Enable game audio">ENABLE SOUND</button><button id="audio-test" type="button" aria-label="Play test sound">TEST</button><label for="audio-volume" class="audio-volume-label">VOL</label><input id="audio-volume" type="range" min="0" max="100" step="1" aria-label="Game sound volume"><small id="audio-status" role="status" aria-live="polite"></small></div>');
+const audioDock=document.querySelector<HTMLElement>('#audio-dock')!;
 const audioToggle=document.querySelector<HTMLButtonElement>('#audio-toggle')!;
 const audioTest=document.querySelector<HTMLButtonElement>('#audio-test')!;
 const audioVolume=document.querySelector<HTMLInputElement>('#audio-volume')!;
