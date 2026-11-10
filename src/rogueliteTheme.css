@@ -1315,3 +1315,9 @@
  }
  #rogue #overlay .settings-actions button{min-height:35px!important;padding:6px 8px!important}
 }
+
+/* Resuming gameplay must hide the Settings overlay even when its DOM remains
+ * mounted. This selector intentionally outranks the visible Settings layout. */
+#rogue #overlay[hidden]:has(> .settings-screen){
+ display:none!important;visibility:hidden!important;pointer-events:none!important
+}
