@@ -1219,3 +1219,99 @@
  #rogue #audio-dock{top:3px!important}
  #rogue:has(#overlay[hidden]) #audio-dock{top:41px!important}
 }
+
+/* Settings owns sound controls and Save/Menu: never float over gameplay. */
+#rogue > #audio-dock{display:none!important}
+#rogue #overlay:has(> .settings-screen){
+ overflow:hidden!important;
+ display:flex!important;align-items:center!important;justify-content:center!important;
+ padding:clamp(5px,1.7vw,18px)!important;
+}
+#rogue #overlay > article.settings-screen{
+ position:relative;z-index:3;box-sizing:border-box;
+ display:flex;flex-direction:column;justify-content:center;
+ gap:clamp(10px,2.3vh,21px);
+ width:min(480px,100%);height:auto;max-height:100%;
+ min-height:0;min-width:0;overflow:hidden;
+ padding:clamp(13px,2.6vw,29px);
+ border:1px solid #779b83;border-radius:12px;
+ background:linear-gradient(145deg,#1b3431f5,#0b1e22f7);
+ box-shadow:0 16px 48px #000a;
+}
+#rogue #overlay .settings-heading{display:flex;flex-direction:column;gap:4px}
+#rogue #overlay .settings-heading .settings-eyebrow{
+ color:#b0d4b7;font:800 10px/1.2 system-ui;letter-spacing:.14em
+}
+#rogue #overlay .settings-heading h1{
+ font:900 clamp(22px,3vw,36px)/1 system-ui!important;
+ margin:0!important;color:#f0f4ea
+}
+#rogue #overlay .settings-heading p,
+#rogue #overlay .settings-audio p{
+ margin:0!important;color:#c9dbce;font:500 12px/1.35 system-ui
+}
+#rogue #overlay .settings-audio{
+ display:flex;flex-direction:column;gap:7px;min-height:0;
+ padding:clamp(10px,2vw,17px);border:1px solid #638272;
+ border-radius:8px;background:#0b2023d9
+}
+#rogue #overlay .settings-audio h2{
+ margin:0!important;font:850 14px/1.2 system-ui!important;
+ letter-spacing:.09em;color:#e8f2e9
+}
+#rogue #overlay .settings-audio #settings-audio-container{min-width:0}
+#rogue #overlay .settings-audio #audio-dock{
+ position:static!important;inset:auto!important;z-index:auto!important;
+ display:flex!important;flex-wrap:wrap!important;align-items:center;
+ gap:8px!important;max-width:100%!important;
+ background:transparent!important;box-shadow:none!important;
+ backdrop-filter:none!important;border:0!important;
+ padding:5px 0!important;
+}
+#rogue #overlay .settings-audio #audio-dock button{
+ min-height:37px!important;padding:8px 12px!important;
+ font-size:12px!important;touch-action:manipulation
+}
+#rogue #overlay .settings-audio #audio-dock input[type="range"]{
+ width:min(125px,34vw)!important;max-width:34vw!important;
+ min-height:35px!important;touch-action:pan-x
+}
+#rogue #overlay .settings-audio #audio-dock .audio-volume-label{
+ display:inline!important;font-size:10px!important
+}
+#rogue #overlay .settings-audio #audio-dock #audio-status{
+ display:inline!important;font-size:10px!important;color:#bcdcc8
+}
+#rogue #overlay .settings-actions{
+ display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px
+}
+#rogue #overlay .settings-actions button{
+ min-height:43px!important;padding:9px 12px!important;
+ font-weight:800!important;white-space:normal!important
+}
+#rogue #overlay .settings-actions button:only-child{grid-column:1/-1}
+#rogue #overlay #settings-save-menu{
+ background:#704434!important;border-color:#b98165!important;color:#f8eee3!important
+}
+/* Four compact main-menu actions remain two rows, not three, on phones. */
+#rogue #overlay .main-menu-screen #upgrades{grid-column:auto!important}
+#rogue #overlay .main-menu-screen #main-settings{grid-column:auto!important}
+@media (pointer:coarse), (max-width:780px), (max-height:480px){
+ #rogue #overlay:has(> .settings-screen){padding:5px!important}
+ #rogue #overlay > article.settings-screen{
+  width:min(520px,100%);padding:clamp(9px,2.5vw,16px)!important;
+  gap:clamp(5px,1.3vh,10px)!important
+ }
+ #rogue #overlay .settings-heading h1{font-size:clamp(21px,6vh,30px)!important}
+ #rogue #overlay .settings-heading p,
+ #rogue #overlay .settings-audio p{font-size:10px!important}
+ #rogue #overlay .settings-audio{gap:4px;padding:8px!important}
+ #rogue #overlay .settings-audio #audio-dock{padding:1px 0!important;gap:5px!important}
+ #rogue #overlay .settings-audio #audio-dock button{
+  min-height:30px!important;padding:5px 8px!important;font-size:10px!important
+ }
+ #rogue #overlay .settings-audio #audio-dock input[type="range"]{
+  width:90px!important;max-width:17vw!important;min-height:30px!important
+ }
+ #rogue #overlay .settings-actions button{min-height:35px!important;padding:6px 8px!important}
+}
