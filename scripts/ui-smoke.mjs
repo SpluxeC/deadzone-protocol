@@ -147,8 +147,9 @@ async function runScenario(touch){
    overlayScroll:overlay?.scrollHeight??0,overlayHeight:overlay?.clientHeight??0};
  });
  if(touch){
-  assert.ok(settingsMetrics.height<=innerHeight+1,'mobile Settings must fit screen height');
-  assert.ok(settingsMetrics.width<=innerWidth+1,'mobile Settings must fit screen width');
+  const viewport=page.viewportSize();
+  assert.ok(settingsMetrics.height<=(viewport?.height??0)+1,'mobile Settings must fit screen height');
+  assert.ok(settingsMetrics.width<=(viewport?.width??0)+1,'mobile Settings must fit screen width');
   assert.ok(settingsMetrics.scrollHeight<=settingsMetrics.clientHeight+2,'Settings cannot require scrolling');
   assert.ok(settingsMetrics.overlayScroll<=settingsMetrics.overlayHeight+2,'Settings overlay cannot scroll');
  }
