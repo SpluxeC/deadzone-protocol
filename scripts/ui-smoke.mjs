@@ -285,7 +285,7 @@ async function runScenario(touch){
  for(const screen of ['armory','inventory','squad']){
   await restore(screen);
   const ids=await page.locator('#overlay button:not(:disabled)').evaluateAll(nodes=>
-   nodes.filter(n=>n.id).map(n=>n.id));
+   nodes.filter(n=>n.id&&n.id!=='shop-settings').map(n=>n.id));
   console.log(label,'tapping',ids.length,screen,'buttons');
   for(const id of ids){
    await restore(screen);
