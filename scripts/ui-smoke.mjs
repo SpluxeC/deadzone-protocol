@@ -99,8 +99,13 @@ async function runScenario(touch){
  await page.goto(origin);
  await page.waitForFunction(()=>document.documentElement.dataset.deadzoneReady==='true');
  await checkWiring(page,label+' main menu');
- const audioDock=page.locator('#audio-dock');
- assert.equal(await audioDock.count(),1,'audio settings must appear in main menu');
+ assert.equal(await page.locator('#main-settings').count(),1,'main menu must open Settings');
+ assert.equal(await page.locator('#rogue > #audio-dock').isVisible(),false,'sound controls must not float over menus');
+ await tap('#main-settings');
+ await checkWiring(page,label+' settings from main menu');
+ assert.equal(await page.locator('#settings-save-menu').count(),0,'no Save/Menu when no run is active');
+ const audioDock=page.locator('#settings-audio-container #audio-dock');
+ assert.equal(await audioDock.count(),1,'audio settings must be inside Settings');
  const toggle=page.locator('#audio-toggle'),volume=page.locator('#audio-volume');
  assert.equal(await volume.count(),1);
  assert.equal(await toggle.getAttribute('aria-pressed'),'true');
@@ -126,12 +131,29 @@ async function runScenario(touch){
   {volume:.35,muted:false},'master volume and mute state persist');
  await page.reload();
  await page.waitForFunction(()=>document.documentElement.dataset.deadzoneReady==='true');
+ assert.equal(await page.locator('#rogue > #audio-dock').isVisible(),false,'sound controls hidden until Settings opens');
+ await tap('#main-settings');
  assert.equal(await page.locator('#audio-volume').inputValue(),'35','saved sound setting restored on reload');
  assert.equal(await page.locator('#audio-toggle').getAttribute('aria-pressed'),'true','unmuted state restored');
 
  const dockBox=await audioDock.boundingBox();
- assert.ok(dockBox&&dockBox.width>75&&dockBox.height>20,'audio controls must remain visible');
-
+ assert.ok(dockBox&&dockBox.width>75&&dockBox.height>20,'audio controls must remain visible inside Settings');
+ const settingsMetrics=await page.evaluate(()=>{
+  const panel=document.querySelector('.settings-screen'),overlay=document.querySelector('#overlay');
+  const b=panel?.getBoundingClientRect();
+  return {height:b?.height??0,width:b?.width??0,
+   scrollHeight:panel?.scrollHeight??0,clientHeight:panel?.clientHeight??0,
+   overlayScroll:overlay?.scrollHeight??0,overlayHeight:overlay?.clientHeight??0};
+ });
+ if(touch){
+  assert.ok(settingsMetrics.height<=innerHeight+1,'mobile Settings must fit screen height');
+  assert.ok(settingsMetrics.width<=innerWidth+1,'mobile Settings must fit screen width');
+  assert.ok(settingsMetrics.scrollHeight<=settingsMetrics.clientHeight+2,'Settings cannot require scrolling');
+  assert.ok(settingsMetrics.overlayScroll<=settingsMetrics.overlayHeight+2,'Settings overlay cannot scroll');
+ }
+ await tap('#settings-back');
+ await checkWiring(page,label+' returned from Settings');
+ assert.equal(await page.locator('#settings-audio-container #audio-dock').count(),0,'audio controls restored safely after closing Settings');
  assert.equal(await page.locator('#build-version').count(),0,'main menu must have no version banner');
  assert.equal(await page.locator('#menu-cinematic').count(),1,'the animated outbreak scene must exist');
  const layered=await page.evaluate(()=>{
@@ -318,11 +340,23 @@ async function runScenario(touch){
  await page.locator('#extraction-continue').waitFor({state:'visible'});
  await checkWiring(page,label+' wave report');
  await tap('#extraction-continue');
- await tap('#save-menu');
+ await tap('#shop-settings');
+ assert.equal(await page.locator('#settings-save-menu').count(),1,'Save/Menu moved into Settings');
+ assert.equal(await page.locator('#settings-audio-container #audio-dock').count(),1,'sound options available from Armory settings');
+ await tap('#settings-back');
+ assert.equal(await page.locator('.armory-screen').count(),1,'Settings back returns to Armory');
+ await tap('#shop-settings');
+ await tap('#settings-save-menu');
  await checkWiring(page,label+' returned main menu');
  await tap('#continue-run');
  await tap('#descend');
  await tap('#menu');
+ assert.equal(await page.locator('.settings-screen').count(),1,'top-bar Settings opens without leaving run');
+ assert.equal(await page.locator('#settings-save-menu').count(),1,'Save/Menu available from gameplay settings');
+ await tap('#settings-back');
+ assert.equal(await page.locator('#overlay').isVisible(),false,'Resume returns to unpaused game');
+ await tap('#menu');
+ await tap('#settings-save-menu');
  await tap('#continue-run');
  // Test cashout and end-of-run buttons from a fresh extraction.
  await setupExtraction(page);
