@@ -673,6 +673,59 @@
  #rogue #overlay .squad-management .menurow button{padding:5px 6px!important;font-size:10px!important}
 }
 
+/* Supply inventory moved into the Armory. The generic mobile rule above
+   hides header ammo reserves, but must not hide the Armory's owned stock. */
+#rogue #overlay .armory-owned-supplies{
+ display:block;
+ flex:none;
+ min-width:0;
+ margin:6px 0 12px;
+ padding:10px;
+ border:1px solid #668878;
+ border-radius:8px;
+ background:#102a27;
+}
+#rogue #overlay .armory-owned-supplies h3{
+ margin:0 0 5px;
+ color:#e5f4d7;
+ font-size:12px;
+ letter-spacing:.08em;
+}
+#rogue #overlay .armory-owned-supplies p{margin:0 0 8px}
+#rogue #overlay .armory-owned-supplies .armory-reserves{
+ display:flex!important;
+ flex-wrap:wrap;
+ align-items:center;
+ gap:7px;
+ padding:7px;
+}
+#rogue #overlay .armory-owned-supplies .armory-reserves span{
+ white-space:nowrap;
+}
+#rogue #overlay .armory-owned-supplies .menurow{
+ margin-top:8px;
+}
+#rogue #overlay .armory-owned-supplies .menurow button{
+ min-height:30px;
+ font-size:10px;
+}
+@media (pointer:coarse), (max-width:780px){
+ #rogue #overlay .armory-owned-supplies{
+  padding:7px;
+  margin:5px 0 8px;
+ }
+ #rogue #overlay .armory-owned-supplies .armory-reserves{
+  display:grid!important;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:5px;
+  font-size:10px;
+ }
+ #rogue #overlay .armory-owned-supplies .armory-reserves span{
+  min-width:0;
+  white-space:normal;
+ }
+}
+
 /* Mobile HUD visibility repair: one actual flex row, not a clipped two-row grid. */
 #rogue #overlay .management-heading{
  display:flex;align-items:center;justify-content:space-between;gap:8px;
