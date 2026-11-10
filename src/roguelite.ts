@@ -32,13 +32,13 @@ type Run={wave:number;credits:number;hp:number;armor:number;mag:number;reserve:n
 type Profile=ProfileV5;
 const root=document.querySelector<HTMLDivElement>('#app')!;
 root.innerHTML=`<div id="rogue" style="height:100dvh;display:flex;flex-direction:column;background:#0c1416;color:#eaf0eb;font:14px system-ui;overflow:hidden">
-<header><strong class="game-title">DEADZONE <span style="color:#f18567">PROTOCOL</span></strong><div id="combat-hud" aria-label="Survivor status"><span id="stats" class="top-stat">WAVE 1</span><div class="hud-meter" aria-label="Health"><span>HP</span><div><i id="hud-hp"></i></div><b id="hud-hp-text">100</b></div><div class="hud-meter" aria-label="Armor"><span>ARM</span><div><i id="hud-armor"></i></div><b id="hud-armor-text">50</b></div><span class="top-stat" id="hud-weapon">CARBINE · 30/90</span><span class="top-stat" id="hud-team">SQUAD 0/4</span><span class="top-stat" id="hud-credits">₡0</span></div><button id="menu" type="button">MENU</button></header>
+<header><strong class="game-title">DEADZONE <span style="color:#f18567">PROTOCOL</span></strong><div id="combat-hud" aria-label="Survivor status"><span id="stats" class="top-stat">WAVE 1</span><div class="hud-meter" aria-label="Health"><span>HP</span><div><i id="hud-hp"></i></div><b id="hud-hp-text">100</b></div><div class="hud-meter" aria-label="Armor"><span>ARM</span><div><i id="hud-armor"></i></div><b id="hud-armor-text">50</b></div><span class="top-stat" id="hud-weapon">CARBINE · 30/90</span><span class="top-stat" id="hud-team">SQUAD 0/4</span><span class="top-stat" id="hud-credits">₡0</span></div><button id="menu" type="button">SETTINGS</button></header>
 <div id="playarea" style="position:relative;min-height:0;flex:1;display:flex;justify-content:center;align-items:center;background:#0a1113"><canvas id="rogue-canvas" style="width:100%;height:100%;object-fit:contain;touch-action:none"></canvas><div id="breach-banner" role="alert" aria-live="polite" hidden style="position:absolute;top:8px;left:50%;transform:translateX(-50%);z-index:4;pointer-events:none;max-width:94%;min-width:min(90%,440px);box-sizing:border-box;padding:9px 14px;border-radius:7px;background:#64231eee;border:2px solid #ffac79;text-align:center;color:#fff4da;font-size:clamp(11px,2vw,15px);font-weight:800;box-shadow:0 4px 18px #000a"></div><div id="mobile-sticks" aria-label="Touch analog controls"><div class="analog-group analog-left"><button id="mobile-inventory-team" type="button" aria-label="Tap inventory; hold for team">INVENTORY / TEAM</button><div class="analog-base" id="move-stick" role="group" aria-label="Move"><div class="analog-ring"></div><div class="analog-knob"></div></div><span class="analog-caption">MOVE</span></div><div id="mobile-squad" aria-label="Squad commands"><button type="button" data-squad-order="follow">FOLLOW</button><button type="button" data-squad-order="hold">HOLD</button><button type="button" data-squad-order="focus">FOCUS</button><button type="button" data-squad-order="regroup">REGROUP</button><button type="button" data-squad-order="defensive">DEFEND</button><button type="button" data-squad-order="suppress">SUPPRESS</button></div><button id="mobile-medkit-revive" type="button" aria-label="Tap to use medkit; hold to revive">MEDKIT / REVIVE</button><div id="mobile-actions"><button id="mobile-interact" type="button" disabled>INTERACT</button></div><div class="analog-group analog-right"><button id="mobile-weapon-swap" type="button" aria-label="Tap to swap primary and secondary; hold for melee">SWAP WEAPON</button><div class="analog-base" id="aim-stick" role="group" aria-label="Aim and fire"><div class="analog-ring"></div><div class="analog-knob"></div></div><span class="analog-caption">AIM · AUTO ATTACK</span></div></div><div id="rotate-phone" role="status" aria-live="polite"><div class="rotate-symbol" aria-hidden="true">↻</div><h2>Rotate Your Device</h2><p>Deadzone Protocol is played in landscape mode.</p></div><div id="overlay" style="position:absolute;inset:0;display:flex;align-items:flex-start;justify-content:center;background:#081112df;overflow:auto;padding:14px;box-sizing:border-box"></div></div>
 <footer style="display:flex;flex-wrap:wrap;justify-content:center;gap:6px;padding:8px;background:#152521"><button id="weapon-primary">1 PRIMARY</button><button id="weapon-secondary">2 SIDEARM</button><button id="weapon-melee">3 MELEE</button><button id="heal">MEDKIT (H)</button><button id="inventory">INVENTORY (I)</button><button id="orders">SQUAD: FOLLOW (Q)</button><button id="squad-panel">TEAM</button><button id="revive">HOLD REVIVE (V)</button><button id="moveup">▲</button><button id="moveleft">◀</button><button id="movedown">▼</button><button id="moveright">▶</button><button id="interact" disabled>INTERACT (E)</button></footer>
 <div id="toast" style="position:fixed;left:50%;bottom:78px;transform:translateX(-50%);pointer-events:none;background:#243c37e8;padding:6px 12px;border-radius:6px;color:white;z-index:5"></div></div>`;
 const style=document.createElement('style');style.textContent=`#overlay[hidden]{display:none!important}#overlay article{margin:auto 0}#rogue button{background:#304941;color:white;border:1px solid #879a80;border-radius:5px;padding:9px 12px;font:600 13px system-ui;cursor:pointer;touch-action:none}#rogue button:hover{background:#436354}#rogue button:disabled{opacity:.42;cursor:not-allowed}#overlay article{background:#1a2d2b;border:1px solid #8f9c82;border-radius:10px;padding:22px;max-width:560px;width:min(100%,560px);box-sizing:border-box;box-shadow:0 15px 60px #0009}#overlay h1{font-size:24px;margin:0 0 8px}#overlay h2{font-size:18px;margin:14px 0 8px}#overlay p{color:#c7d1c8;line-height:1.5}#overlay .shop{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px}#overlay .shop button{text-align:left;min-height:66px}#overlay .menurow{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}#overlay label{display:block;margin:8px 0}#overlay select{padding:8px;background:#1c3030;color:white;border:1px solid #7b9385}`;document.head.append(style);
 const canvas=document.querySelector<HTMLCanvasElement>('#rogue-canvas')!,ctx=canvas.getContext('2d')!,overlay=document.querySelector<HTMLDivElement>('#overlay')!,toastEl=document.querySelector<HTMLDivElement>('#toast')!;
-/** Always reachable on mobile and desktop without adding another scroll area. */
+/** Audio controls live inside Settings, never over the gameplay HUD or joysticks. */
 document.querySelector<HTMLElement>('#rogue')!.insertAdjacentHTML('beforeend',
  '<div id="audio-dock" role="group" aria-label="Game audio settings"><button id="audio-toggle" type="button" aria-label="Enable game audio">ENABLE SOUND</button><button id="audio-test" type="button" aria-label="Play test sound">TEST</button><label for="audio-volume" class="audio-volume-label">VOL</label><input id="audio-volume" type="range" min="0" max="100" step="1" aria-label="Game sound volume"><small id="audio-status" role="status" aria-live="polite"></small></div>');
 const audioToggle=document.querySelector<HTMLButtonElement>('#audio-toggle')!;
@@ -160,6 +160,31 @@ function loadRun(){try{const r=JSON.parse(localStorage.getItem(store('run'))||'n
  const p=nearestWalkable(plan.map,enemy);enemy.x=p.x;enemy.y=p.y;enemy.kind??=enemy.boss?'boss':'shambler';if(enemy.boss&&enemy.alive&&enemy.maxHp<zombieStats('boss').hp){const fraction=enemy.maxHp>0?enemy.hp/enemy.maxHp:1;enemy.maxHp=zombieStats('boss').hp;enemy.hp=Math.max(1,enemy.maxHp*fraction)}enemy.attack??=0;enemy.windup??=0;enemy.phase??=0;enemy.aggro??=0;enemy.suppressed??=0;enemy.scoutMarked??=0;enemy.stagger??=0;enemy.hitFlash??=0;enemy.searchClock??=0;enemy.lastKnown??=null;enemy.alertMode??='idle';}return true}catch{return false}}
 /** One cinematic backdrop shared by the menu, loadout and upgrade screens. */
 function menuBackdrop():string{return '<div class="menu-cinematic-backdrop" aria-hidden="true"><canvas id="menu-cinematic"></canvas><span class="menu-scene-badge">CAM 04 · CONTAINMENT WING</span><span class="menu-scene-corner">● SIGNAL ACTIVE</span></div>'}
+/** Reuse the existing bound sound controls in a compact, accessible Settings
+ * screen. Move the actual DOM nodes instead of cloning, so volume/mute keep
+ * working on iOS and stored preferences survive all screen transitions.
+ */
+function showSettings(returnTo?:()=>void){
+ const back=returnTo??(run?.stage==='shop'?shop:()=>{
+  if(run?.stage==='fight'){paused=false;overlay.hidden=true}
+  else menu();
+ });
+ paused=true;overlay.hidden=false;resetAnalogs();
+ overlay.innerHTML=`<article class="settings-screen" aria-label="Game settings">
+  <div class="settings-heading"><span class="settings-eyebrow">DEADZONE PROTOCOL / OPTIONS</span><h1>SETTINGS</h1><p>Adjust sound and manage your current run.</p></div>
+  <section class="settings-audio" aria-label="Sound options"><h2>SOUND</h2><p>Enable audio, test playback, or change volume.</p><div id="settings-audio-container"></div></section>
+  <nav class="settings-actions" aria-label="Settings actions">
+   <button type="button" id="settings-back">${run?'RESUME / BACK':'BACK TO MAIN MENU'}</button>
+   ${run?'<button type="button" id="settings-save-menu">SAVE / MENU</button>':''}
+  </nav>
+ </article>`;
+ overlay.querySelector('#settings-audio-container')!.appendChild(audioDock);
+ updateAudioControls();
+ const leave=()=>{root.appendChild(audioDock);back()};
+ overlay.querySelector<HTMLButtonElement>('#settings-back')!.onclick=leave;
+ const saveButton=overlay.querySelector<HTMLButtonElement>('#settings-save-menu');
+ if(saveButton)saveButton.onclick=()=>{root.appendChild(audioDock);save();menu()};
+}
 function menu(){
  gameAudio.stopBreach();combatFx=[];bloodFx=[];lootPopups=[];paused=true;overlay.hidden=false;
  overlay.innerHTML=menuBackdrop()+`<article class="main-menu-screen" aria-label="Deadzone Protocol main menu">
@@ -175,6 +200,7 @@ function menu(){
     <button id="continue-run" class="menu-continue">CONTINUE RUN</button>
     <button id="new-run" class="menu-deploy">NEW RUN</button>
     <button id="upgrades" class="menu-upgrades">PERMANENT UNLOCKS</button>
+    <button id="main-settings" class="menu-upgrades">SETTINGS</button>
    </nav>
    <div class="menu-footer-note">SECURE YOUR SQUAD · HOLD YOUR GROUND</div>
   </div>
@@ -184,6 +210,7 @@ sel.onchange=()=>{slot=Number(sel.value);run=null;plan=null;refresh()};
 overlay.querySelector<HTMLButtonElement>('#continue-run')!.onclick=()=>{if(!loadRun()){notice('No valid run found');return}paused=false;if(run!.stage==='shop')shop();else overlay.hidden=true};
 overlay.querySelector<HTMLButtonElement>('#new-run')!.onclick=()=>{if(localStorage.getItem(store('run'))&&!confirm('Start a new run? Current run progress will be lost.'))return;preRun()};
 overlay.querySelector<HTMLButtonElement>('#upgrades')!.onclick=()=>permanentShop();
+overlay.querySelector<HTMLButtonElement>('#main-settings')!.onclick=()=>showSettings(menu);
 }
 function permanentShop(section='Core Bonuses'){loadProfile();paused=true;overlay.hidden=false;
  const groups=['Core Bonuses',...new Set(Object.values(unlocks).map(x=>x.group)),'Achievements'];
@@ -614,7 +641,7 @@ function shop(){if(!run)return;
   return `<button class="armory-item ${offer.kind==='recruit'?'':rarityClass(offer.tier)}" id="offer-${i}" title="${description}">${gearIcon(offer.kind==='recruit'?'armor':offer.model)}<span class="armory-item-copy"><b>${name} ${offer.kind==='recruit'?'':' · '+rarityName(offer.tier)}</b>${description?'<em class="armory-item-description">'+description+'</em>':''}<small>${offer.price} credits</small></span></button>`;
  }).join('');
  const bag=inventorySummary(r);
- overlay.innerHTML=`<article class="armory-screen"><div class="armory-top"><div class="management-heading"><h1>ARMORY · WAVE ${r.wave} COMPLETE</h1><strong class="management-credits" aria-label="Available credits">₡${r.credits.toLocaleString()} CREDITS</strong></div><nav class="management-toolbar" aria-label="Armory actions"><button id="shop-inventory">INVENTORY (${bag})</button><button id="shop-squad">SQUAD</button><button id="refill-all-armory">Refill Squad Ammo · ${squadAmmoRefillPrice(r.allies)} CR</button><button id="descend">NEXT WAVE ${r.wave+1}</button><button id="save-menu">SAVE / MENU</button></nav>${armoryStatus(r)}</div>
+ overlay.innerHTML=`<article class="armory-screen"><div class="armory-top"><div class="management-heading"><h1>ARMORY · WAVE ${r.wave} COMPLETE</h1><strong class="management-credits" aria-label="Available credits">₡${r.credits.toLocaleString()} CREDITS</strong></div><nav class="management-toolbar" aria-label="Armory actions"><button id="shop-inventory">INVENTORY (${bag})</button><button id="shop-squad">SQUAD</button><button id="refill-all-armory">Refill Squad Ammo · ${squadAmmoRefillPrice(r.allies)} CR</button><button id="descend">NEXT WAVE ${r.wave+1}</button><button id="shop-settings">SETTINGS</button></nav>${armoryStatus(r)}</div>
  ${mobileTabStrip([{id:'supplies',label:'SUPPLIES'},{id:'offers',label:'WEAPONS & RECRUITS'}],armoryMobileTab)}<div class="armory-columns"><section data-mobile-panel="supplies" class="armory-section armory-supplies"><h2>Essential Supplies — Always Available</h2><div class="shop">${ammoButtons}<button class="armory-item" id="med-buy">${gearIcon("medkit")}<span class="armory-item-copy"><b>Medkit +1</b><small>200 credits</small></span></button><button class="armory-item" id="heal-buy">${gearIcon("medkit")}<span class="armory-item-copy"><b>Heal +35 HP</b><small>175 credits</small></span></button><button class="armory-item" id="armor-buy">${gearIcon("armor")}<span class="armory-item-copy"><b>Armor +40</b><small>220 credits</small></span></button><button class="armory-item" id="pack-buy">${gearIcon("armor")}<span class="armory-item-copy"><b>Backpack +4 slots</b><small>${backpackUpgradePrice(eq.capacity)} credits · max 24</small></span></button></div>
  </section><section data-mobile-panel="offers" class="armory-section armory-offers"><h2>Rotating Armory Offers</h2><p>Higher rarities become more common in later waves. Gear enters your backpack; use Inventory to equip, upgrade, attach or sell it.</p><div class="shop">${offerButtons}</div></section></div>
  </article>`;
@@ -637,7 +664,7 @@ function shop(){if(!run)return;
  refillArmory.onclick=()=>{const price=squadAmmoRefillPrice(r.allies);if(price===0||r.credits<price)return;r.credits-=price;const amount=refillSquadAmmo(r.allies);notice('SQUAD REARMED · +'+amount+' ROUNDS · -'+price+' CR');save();shop()};
  overlay.querySelector<HTMLButtonElement>('#shop-inventory')!.onclick=()=>{inventoryScroll=null;inventory()};overlay.querySelector<HTMLButtonElement>('#shop-squad')!.onclick=squadPanel;
  overlay.querySelector<HTMLButtonElement>('#descend')!.onclick=()=>{if(!run)return;gameAudio.playElevator('travel');run.wave++;run.seed=(run.seed^Math.imul(run.wave,0x9e3779b1))>>>0;buildFloor(run.seed,run.wave);overlay.hidden=true;paused=false;notice('WAVE '+run.wave+' · Find the elevator before the endless horde catches you')};
- overlay.querySelector<HTMLButtonElement>('#save-menu')!.onclick=()=>{save();menu()};
+ overlay.querySelector<HTMLButtonElement>('#shop-settings')!.onclick=()=>showSettings(shop);
 }
 function inventory(){if(!run)return;paused=true;overlay.hidden=false;
  const r=run,eq=ensureEquipment(r),atShop=r.stage==='shop';
@@ -1173,7 +1200,7 @@ function draw(){
  document.querySelector('#hud-team')!.textContent='SQUAD '+r.allies.length+'/4'+(r.playerDowned?' · DOWN '+Math.ceil(r.playerDowned)+'s':'');
 }
 function frame(now:number){const dt=Math.min(.05,(now-last)/1000);last=now;update(dt);draw();const menuCanvas=overlay.hidden?null:overlay.querySelector<HTMLCanvasElement>('#menu-cinematic');if(menuCanvas)renderMenuCinematic(menuCanvas,now,window.matchMedia('(prefers-reduced-motion: reduce)').matches);if(noticeUntil<now)toastEl.textContent='';requestAnimationFrame(frame)}
-window.addEventListener('keydown',e=>{if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code))e.preventDefault();keys.add(e.code);if(e.repeat)return;if(e.code==='Digit1')equip('primary');if(e.code==='Digit2')equip('secondary');if(e.code==='Digit3')equip('melee');if(e.code==='KeyR')reload();if(e.code==='KeyH')heal();if(e.code==='KeyI'&&run&&run.stage==='fight')inventory();if(e.code==='KeyQ')changeOrder();if(e.code==='KeyT')squadPanel();if(e.code==='KeyE')interact();if(e.code==='Escape')menu()});window.addEventListener('keyup',e=>keys.delete(e.code));window.addEventListener('blur',()=>{keys.clear();mouseAimActive=false;touch.clear();resetAnalogs()});document.addEventListener('visibilitychange',()=>{if(document.hidden)resetAnalogs()});
+window.addEventListener('keydown',e=>{if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code))e.preventDefault();keys.add(e.code);if(e.repeat)return;if(e.code==='Digit1')equip('primary');if(e.code==='Digit2')equip('secondary');if(e.code==='Digit3')equip('melee');if(e.code==='KeyR')reload();if(e.code==='KeyH')heal();if(e.code==='KeyI'&&run&&run.stage==='fight')inventory();if(e.code==='KeyQ')changeOrder();if(e.code==='KeyT')squadPanel();if(e.code==='KeyE')interact();if(e.code==='Escape'){if(overlay.querySelector('.settings-screen'))overlay.querySelector<HTMLButtonElement>('#settings-back')?.click();else if(overlay.hidden)showSettings();else if(run?.stage==='shop')showSettings(shop);else if(run?.stage==='fight')showSettings();else menu()}});window.addEventListener('keyup',e=>keys.delete(e.code));window.addEventListener('blur',()=>{keys.clear();mouseAimActive=false;touch.clear();resetAnalogs()});document.addEventListener('visibilitychange',()=>{if(document.hidden)resetAnalogs()});
 /** Independent pointer capture lets both thumbs move and aim at once. */
 function resetAnalogs(){moveAnalog=zeroStick();aimAnalog=zeroStick();document.querySelectorAll<HTMLElement>('.analog-knob').forEach(node=>{node.style.transform='translate(-50%,-50%)'})}
 function bindAnalog(id:string,update:(v:StickVector)=>void){
@@ -1240,7 +1267,7 @@ function endCanvasTouch(e:PointerEvent){
 }
 canvas.addEventListener('pointerup',endCanvasTouch);canvas.addEventListener('pointercancel',endCanvasTouch);
 function click(id:string,fn:()=>void){document.querySelector<HTMLButtonElement>('#'+id)!.onclick=fn}
-click('heal',heal);click('inventory',inventory);click('orders',changeOrder);click('squad-panel',squadPanel);click('interact',interact);click('menu',menu);click('weapon-primary',()=>equip('primary'));click('weapon-secondary',()=>equip('secondary'));click('weapon-melee',()=>equip('melee'));
+click('heal',heal);click('inventory',inventory);click('orders',changeOrder);click('squad-panel',squadPanel);click('interact',interact);click('menu',()=>showSettings());click('weapon-primary',()=>equip('primary'));click('weapon-secondary',()=>equip('secondary'));click('weapon-melee',()=>equip('melee'));
 // Use independent pointerdown actions so a held movement/aim pointer never blocks buttons.
 function bindMobileAction(id:string,fn:()=>void){
  const button=document.querySelector<HTMLButtonElement>('#'+id)!;
