@@ -49,7 +49,7 @@ export function sealHole(credits:number,sealed:readonly number[],index:number,co
 }
 
 export const BREACH_DURATION=25;
-export const BREACH_SEAL_RADIUS=10;
+export const BREACH_SEAL_RADIUS=6;
 /** Compare player and breach centers in world tiles, not screen pixels. */
 export const withinBreachRadius=(player:{x:number;y:number},hole:{x:number;y:number}):boolean=>Math.hypot(player.x-hole.x,player.y-hole.y)<=BREACH_SEAL_RADIUS;
 export const REQUIRED_SEALS=3;
