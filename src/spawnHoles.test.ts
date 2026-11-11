@@ -56,12 +56,12 @@ test('25-second sealing charges once and only completes after defense timer',()=
  assert.equal(extra,5,'five additional spawn requests across the defense');
  assert.equal(advanceBreachEvent(started.event,10).spawnCount,2,'large frame resumes do not skip scheduled waves');
 });
-test('leaving the 10-tile breach radius pauses sealing and spawn milestones',()=>{
- assert.equal(BREACH_SEAL_RADIUS,10);
+test('leaving the 6-tile breach radius pauses sealing and spawn milestones',()=>{
+ assert.equal(BREACH_SEAL_RADIUS,6);
  const hole={x:20,y:20};
- assert.equal(withinBreachRadius({x:30,y:20},hole),true);
- assert.equal(withinBreachRadius({x:30.01,y:20},hole),false);
- assert.equal(withinBreachRadius({x:26,y:28},hole),true);
+ assert.equal(withinBreachRadius({x:26,y:20},hole),true);
+ assert.equal(withinBreachRadius({x:26.01,y:20},hole),false);
+ assert.equal(withinBreachRadius({x:23.6,y:24.8},hole),true);
  const start=startBreachEvent(500,[],0,3,null)!;
  const first=advanceBreachEvent(start.event,4,true);
  assert.equal(first.event?.remaining,21);
