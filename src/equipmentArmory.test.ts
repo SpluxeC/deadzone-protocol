@@ -25,14 +25,18 @@ test('class-specific restrictions and separate ammo families',()=>{
  assert.equal(new Set(Object.values(weaponDefs).map(w=>w.ammo).filter(Boolean)).size,5);
  assert.equal(ammoTypes.length,5);
 });
-test('backpack slots count loose gear, ammo stacks and medkits, without exceeding capacity',()=>{
- const ammo=emptyAmmo(),bag=[newWeapon('pistol',1,'p')];
- assert.equal(usedSlots(bag,ammo,2),2);
- const added=addAmmo(ammo,'rifle',120,bag,2,4);assert.equal(added,120);
- assert.equal(usedSlots(bag,ammo,2),4);
- assert.equal(canAddItem(bag,ammo,2,4),false);
- assert.equal(addAmmo(ammo,'shotgun',18,bag,2,4),0);
- ammo.rifle=0;assert.equal(usedSlots(bag,ammo,2),2);
+test('only loose backpack gear consumes capacity; equipped gear and supplies do not',()=>{
+ const ammo=emptyAmmo(),bag=[newWeapon('pistol',1,'p'),newMod('extended',1,'mod')];
+ const equipped=bag.shift()!;
+ assert.equal(usedSlots(bag,ammo,2),1,'equipping removes one occupied backpack slot');
+ assert.equal(addAmmo(ammo,'rifle',120,bag,2,4),120);
+ assert.equal(usedSlots(bag,ammo,2),1,'ammo reserves do not occupy gear slots');
+ assert.equal(usedSlots(bag,ammo,99),1,'medkits do not occupy gear slots');
+ assert.equal(canAddItem(bag,ammo,2,2),true);
+ bag.push(equipped);
+ assert.equal(usedSlots(bag,ammo,2),2,'unequipped gear takes a backpack slot');
+ assert.equal(canAddItem(bag,ammo,2,2),false);
+ assert.equal(addAmmo(ammo,'shotgun',18,bag,2,2),18,'ammo storage is independent of a full backpack');
  assert.equal(ammoStack.light,90);
  assert.equal(backpackUpgradePrice(24),Infinity);
  assert.ok(backpackUpgradePrice(12)<backpackUpgradePrice(20));
