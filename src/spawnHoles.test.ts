@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {generateDungeon} from './dungeon.ts';
 import {makeWave} from './rogueliteRules.ts';
-import {spawnHoles,openHoleIndices,sealHole,canSealHole,SEAL_COST,startBreachEvent,advanceBreachEvent,canExtract,REQUIRED_SEALS,BREACH_DURATION} from './spawnHoles.ts';
+import {spawnHoles,openHoleIndices,sealHole,canSealHole,SEAL_COST,startBreachEvent,advanceBreachEvent,canExtract,REQUIRED_SEALS,BREACH_DURATION,BREACH_SEAL_RADIUS,withinBreachRadius} from './spawnHoles.ts';
 
 test('spawn holes occupy walkable, separated ground and never overlap major landmarks',()=>{
  for(const wave of [1,5,15]){
@@ -55,6 +55,21 @@ test('25-second sealing charges once and only completes after defense timer',()=
  extra+=final.spawnCount;
  assert.equal(extra,5,'five additional spawn requests across the defense');
  assert.equal(advanceBreachEvent(started.event,10).spawnCount,2,'large frame resumes do not skip scheduled waves');
+});
+test('leaving the 10-tile breach radius pauses sealing and spawn milestones',()=>{
+ assert.equal(BREACH_SEAL_RADIUS,10);
+ const hole={x:20,y:20};
+ assert.equal(withinBreachRadius({x:30,y:20},hole),true);
+ assert.equal(withinBreachRadius({x:30.01,y:20},hole),false);
+ assert.equal(withinBreachRadius({x:26,y:28},hole),true);
+ const start=startBreachEvent(500,[],0,3,null)!;
+ const first=advanceBreachEvent(start.event,4,true);
+ assert.equal(first.event?.remaining,21);
+ const paused=advanceBreachEvent(first.event!,50,false);
+ assert.deepEqual(paused,{event:first.event,completed:false,spawnCount:0});
+ const resumed=advanceBreachEvent(paused.event!,3,true);
+ assert.equal(resumed.event?.remaining,18);
+ assert.equal(resumed.spawnCount,1);
 });
 test('elevator requires three distinct completed holes with no active seal',()=>{
  assert.equal(canExtract([0,1],null),false);
