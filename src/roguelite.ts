@@ -22,7 +22,7 @@ import {normalizeStick,stickKnob,type StickVector} from './mobileControls';
 import {walkableTile,canOccupy,nearestWalkable} from './tileCollision';
 import {squadMove,spacedSquadPosition} from './squadMovement';
 import {formationDestination,pickTacticalTarget} from './squadCommandAI';
-import {spawnHoles,openHoleIndices,startBreachEvent,advanceBreachEvent,canExtract,SEAL_COST,BREACH_DURATION,REQUIRED_SEALS,drawSpawnHole,type BreachEvent} from './spawnHoles';
+import {spawnHoles,openHoleIndices,startBreachEvent,advanceBreachEvent,canExtract,SEAL_COST,BREACH_DURATION,BREACH_SEAL_RADIUS,withinBreachRadius,REQUIRED_SEALS,drawSpawnHole,type BreachEvent} from './spawnHoles';
 import './rogueliteTheme.css';
 import './style.css';
 
@@ -549,11 +549,13 @@ function alertBreach(hole:{x:number;y:number}){
 function updateBreach(dt:number){
  if(!run||!plan||!run.breachEvent){gameAudio.stopBreach();return}
  const event=run.breachEvent,hole=spawnHoles(plan)[event.index];
- gameAudio.syncBreach(run.wave+':'+event.index);gameAudio.tickBreach();
- if(!hole){run.breachEvent=null;save();return}
- const next=advanceBreachEvent(event,dt);
- // Keep the loud sealing machinery audible throughout the countdown.
- alertBreach(hole);
+ if(!hole){gameAudio.stopBreach();run.breachEvent=null;save();return}
+ const inRange=withinBreachRadius(run.player,hole);
+ if(inRange){gameAudio.syncBreach(run.wave+':'+event.index);gameAudio.tickBreach();}
+ else gameAudio.stopBreach();
+ const next=advanceBreachEvent(event,dt,inRange);
+ // Sealing machinery and its scheduled zombie waves pause outside the radius.
+ if(inRange)alertBreach(hole);
  if(next.spawnCount>0)gameAudio.playBreach('wave');
  for(let i=0;i<next.spawnCount;i++){
   const active=run.enemies.reduce((count,e)=>count+(e.alive?1:0),0);
@@ -1075,15 +1077,23 @@ function draw(){
   if(r.breachEvent?.index===i){
    const progress=1-r.breachEvent.remaining/BREACH_DURATION;
    const cx=v.ox+hole.x*v.tile,cy=v.oy+hole.y*v.tile;
-   ctx.save();ctx.strokeStyle='#f3ab67';ctx.lineWidth=Math.max(3,v.tile*.09);
+   const inRange=withinBreachRadius(r.player,hole);
+   ctx.save();
+   // Visible 10-tile defense boundary, rendered in world space.
+   ctx.strokeStyle=inRange?'rgba(135,232,176,.6)':'rgba(255,153,99,.85)';
+   ctx.lineWidth=Math.max(1.5,v.tile*.055);
+   ctx.setLineDash([v.tile*.28,v.tile*.18]);
+   ctx.beginPath();ctx.arc(cx,cy,v.tile*BREACH_SEAL_RADIUS,0,Math.PI*2);ctx.stroke();
+   ctx.setLineDash([]);
+   ctx.strokeStyle=inRange?'#f3ab67':'#ff936a';ctx.lineWidth=Math.max(3,v.tile*.09);
    ctx.beginPath();ctx.arc(cx,cy,v.tile*.64,-Math.PI/2,-Math.PI/2+2*Math.PI*progress);ctx.stroke();
    ctx.fillStyle='#ffdc9b';ctx.textAlign='center';ctx.font='bold '+Math.max(12,v.tile*.38)+'px system-ui';
-   ctx.fillText(Math.ceil(r.breachEvent.remaining)+'s',cx,cy-v.tile*.74);ctx.restore();
+   ctx.fillText(inRange?Math.ceil(r.breachEvent.remaining)+'s':'PAUSED · '+Math.ceil(r.breachEvent.remaining)+'s',cx,cy-v.tile*.74);ctx.restore();
   }
   if(!sealed&&Math.hypot(r.player.x-hole.x,r.player.y-hole.y)<2.65){
    const px=v.ox+hole.x*v.tile,py=v.oy+(hole.y-.74)*v.tile;
    ctx.save();ctx.textAlign='center';ctx.font='bold '+Math.max(11,v.tile*.29)+'px system-ui';
-   ctx.strokeStyle='#06100c';ctx.lineWidth=4;const label=r.breachEvent?.index===i?'PROTECT BREACH':r.breachEvent?'DEFEND ACTIVE BREACH':r.credits>=SEAL_COST?'SEAL HOLE · 200':'NEED 200 CREDITS';
+   ctx.strokeStyle='#06100c';ctx.lineWidth=4;const label=r.breachEvent?.index===i?'STAY WITHIN 10 TILES':r.breachEvent?'DEFEND ACTIVE BREACH':r.credits>=SEAL_COST?'SEAL HOLE · 200':'NEED 200 CREDITS';
    ctx.strokeText(label,px,py);ctx.fillStyle=r.credits>=SEAL_COST?'#bdf6c0':'#f3c28e';ctx.fillText(label,px,py);
    ctx.restore();
   }
@@ -1178,7 +1188,9 @@ function draw(){
  banner.hidden=!showBanner;
  banner.style.opacity=showBanner?String(Math.max(0,Math.min(1,fadeRemaining/800))):'0';
  if(r.breachEvent)banner.textContent='Wave incoming, protect the breach while its sealed · '+Math.ceil(r.breachEvent.remaining)+'s';
- stats.textContent='WAVE '+r.wave+' · Breaches Sealed '+(r.sealedHoles??[]).length+'/'+REQUIRED_SEALS;
+ const activeBreach=r.breachEvent&&plan?spawnHoles(plan)[r.breachEvent.index]:null;
+ const breachPaused=!!(r.breachEvent&&activeBreach&&!withinBreachRadius(r.player,activeBreach));
+ stats.textContent='WAVE '+r.wave+' · Breaches Sealed '+(r.sealedHoles??[]).length+'/'+REQUIRED_SEALS+(breachPaused?' · SEAL PAUSED — RETURN WITHIN 10 TILES':'');
  document.querySelector<HTMLButtonElement>('#orders')!.textContent='SQUAD: '+order+' (Q)';
  document.querySelectorAll<HTMLButtonElement>('#mobile-squad [data-squad-order]').forEach(button=>{
   const selected=button.dataset.squadOrder===(r.squadOrder??'follow');
