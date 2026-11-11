@@ -49,6 +49,9 @@ export function sealHole(credits:number,sealed:readonly number[],index:number,co
 }
 
 export const BREACH_DURATION=25;
+export const BREACH_SEAL_RADIUS=10;
+/** Compare player and breach centers in world tiles, not screen pixels. */
+export const withinBreachRadius=(player:{x:number;y:number},hole:{x:number;y:number}):boolean=>Math.hypot(player.x-hole.x,player.y-hole.y)<=BREACH_SEAL_RADIUS;
 export const REQUIRED_SEALS=3;
 export const BREACH_WAVE_TIMES=[3,7,11,15,20] as const;
 /** A single loud sealing operation may run at once; no second charge is possible mid-event. */
@@ -57,7 +60,8 @@ export function startBreachEvent(credits:number,sealed:readonly number[],index:n
  if(active||!canSealHole(credits,sealed,index,count))return null;
  return {credits:credits-SEAL_COST,event:{index,remaining:BREACH_DURATION,waveSpawned:0}};
 }
-export function advanceBreachEvent(event:BreachEvent,dt:number):{event:BreachEvent|null;completed:boolean;spawnCount:number}{
+export function advanceBreachEvent(event:BreachEvent,dt:number,playerInRange=true):{event:BreachEvent|null;completed:boolean;spawnCount:number}{
+ if(!playerInRange)return {event,completed:false,spawnCount:0};
  const previous=BREACH_DURATION-Math.max(0,Math.min(BREACH_DURATION,event.remaining));
  const remaining=Math.max(0,event.remaining-Math.max(0,dt));
  const elapsed=BREACH_DURATION-remaining;
