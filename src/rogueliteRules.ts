@@ -23,8 +23,8 @@ export function makeWave(seed:number,wave:number,layoutVersion:LayoutVersion=3):
  const spawnPoints=pool.filter((_,i)=>i%Math.max(1,Math.floor(pool.length/targetCount))===0).slice(0,targetCount);
  return {wave:n,map,total,initial,reinforcements:total-initial,boss:n%5===0,spawnPoints:spawnPoints.length?spawnPoints:[map.extraction]};
 }
-/** Standard zombies always award 10 credits; boss payouts remain unchanged. */
-export function killPayout(wave:number,boss=false):number{return boss?180+wave*12:10}
+/** Fixed credits per kill, independent of wave difficulty. */
+export function killPayout(_wave:number,boss=false):number{return boss?100:6}
 export function clearPayout(wave:number):number{return 90+Math.max(1,wave)*25+(wave%5===0?250:0)}
 export function canExit(total:number,spawned:number,killed:number):boolean{return spawned>=total&&killed>=total}
 export function permanentPayout(clearedWaves:number,bosses:number):number{return Math.max(0,clearedWaves)*4+Math.max(0,bosses)*20}
