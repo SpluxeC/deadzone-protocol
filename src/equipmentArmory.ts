@@ -146,15 +146,17 @@ export function effectiveStats(weapon:Weapon):{damage:number;capacity:number;rat
  }
  return {damage,capacity,rate:Math.max(.07,rate),range,reload:Math.max(0,reload),accuracy,noise};
 }
-export function usedSlots(bag:Gear[],ammo:AmmoBank,medkits:number):number{
- return bag.length+ammoTypes.reduce((n,t)=>n+Math.ceil(Math.max(0,ammo[t]||0)/ammoStack[t]),0)+Math.ceil(Math.max(0,medkits)/3);
+/** Backpack space is occupied only by loose gear actually stored in the bag.
+ * Equipped weapons/mods, reserve ammo, and medkits use separate storage. */
+export function usedSlots(bag:Gear[],_ammo:AmmoBank,_medkits:number):number{
+ return bag.length;
 }
 export function canAddItem(bag:Gear[],ammo:AmmoBank,medkits:number,capacity:number):boolean{return usedSlots(bag,ammo,medkits)+1<=capacity}
-export function addAmmo(ammo:AmmoBank,type:AmmoType,count:number,bag:Gear[],medkits:number,capacity:number):number{
- const current=Math.max(0,ammo[type]||0),free=Math.max(0,capacity-usedSlots(bag,ammo,medkits));
- const allowed=current===0?free*ammoStack[type]:Math.ceil(current/ammoStack[type])*ammoStack[type]-current+free*ammoStack[type];
- const added=Math.max(0,Math.min(Math.max(0,count),allowed));
- ammo[type]=current+added;return added;
+/** Ammo reserves no longer compete with gear backpack slots. */
+export function addAmmo(ammo:AmmoBank,type:AmmoType,count:number,_bag:Gear[],_medkits:number,_capacity:number):number{
+ const added=Math.max(0,Math.floor(count));
+ ammo[type]=Math.max(0,ammo[type]||0)+added;
+ return added;
 }
 export function rarityForWave(wave:number,roll:number):Tier{
  const tier=Math.min(6,1+Math.floor((Math.max(1,wave)-1)/5));
