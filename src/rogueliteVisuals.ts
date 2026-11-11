@@ -60,7 +60,7 @@ export function renderDungeon(ctx:CanvasRenderingContext2D,map:DungeonLayout,v:V
   }else if(open){
    ctx.fillStyle=r<.12?'#263430':r<.45?'#293a37':r<.72?'#283633':'#2e3d39';
    ctx.fillRect(px,py,Math.ceil(t)+1,Math.ceil(t)+1);
-   ctx.strokeStyle='rgba(143,166,153,.11)';ctx.lineWidth=Math.max(.6,t*.023);ctx.strokeRect(px+.5,py+.5,t-.5,t-.5);
+   // Floor tile outlines are intentionally hidden; collision and map geometry still use tiles.
    if(r>.78){ctx.strokeStyle='rgba(19,28,27,.44)';ctx.lineWidth=t*.047;ctx.beginPath();ctx.moveTo(px+t*.2,py+t*.32);ctx.lineTo(px+t*.48,py+t*.45);ctx.lineTo(px+t*.41,py+t*.64);ctx.stroke()}
    else if(r<.18){ctx.fillStyle='#526356';ctx.globalAlpha=.24;ctx.fillRect(px+t*.24,py+t*.74,t*.13,t*.06);ctx.fillRect(px+t*.68,py+t*.23,t*.1,t*.04);ctx.globalAlpha=1}
    if((x*7+y*11+wave)%31===0){ctx.fillStyle='rgba(111,61,50,.22)';ctx.beginPath();ctx.ellipse(px+t*.5,py+t*.58,t*.31,t*.12,-.4,0,Math.PI*2);ctx.fill()}
