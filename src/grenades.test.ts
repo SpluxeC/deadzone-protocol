@@ -33,3 +33,16 @@ test('explosive damage is stronger at center and frag exceeds impact',()=>{
  assert.ok(blastDamage('frag',3)>blastDamage('impact',3));
  assert.equal(blastDamage('frag',3.01),0);
 });
+
+test('grenade travel is capped at six tiles in every direction',()=>{
+ for(const type of GRENADE_TYPES){
+  for(const [dx,dy] of [[1,0],[0,1],[1,1],[-1,-1]]){
+   const grenade=throwGrenade(type,10,10,dx,dy);
+   for(let tick=0;tick<80&&!grenade.fired;tick++){
+    advanceGrenade(grenade,.05,()=>true);
+    assert.ok(Math.hypot(grenade.x-10,grenade.y-10)<=6+1e-9,
+     type+' should not travel beyond six tiles');
+   }
+  }
+ }
+});
