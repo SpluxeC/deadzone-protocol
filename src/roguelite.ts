@@ -293,7 +293,7 @@ function grenadeBlast(g:GrenadeFlight){
  for(const z of run.enemies){const d=Math.hypot(z.x-g.x,z.y-g.y);
   if(!z.alive||d>(g.type==='stun'?4:3)||!canSee(g.x,g.y,z.x,z.y))continue;
   if(g.type==='stun'){z.stagger=Math.max(z.stagger??0,z.boss?1:4);continue}
-  strikeZombie(z,blastDamage(g.type,d),unit(z.x-g.x,z.y-g.y));
+  strikeZombie(z,blastDamage(g.type,d),unit(z.x-g.x,z.y-g.y),false,true);
   if(z.alive){const power=z.boss?.1:z.kind==='armored'?2.5:7;
    z.knockVx=(z.x-g.x)/(d||1)*power;z.knockVy=(z.y-g.y)/(d||1)*power;
    z.knockdown=Math.max(z.knockdown??0,z.boss?0:z.kind==='armored'?.8:2)}
@@ -382,9 +382,9 @@ function weakPointHit(enemy:Unit,origin:{x:number;y:number},direction:{x:number;
  return along>0&&Math.abs(dx*direction.y-dy*direction.x)<.12;
 }
 /** Visual-only impact blood on enemies struck by bullets or melee. */
-function strikeZombie(enemy:Unit,damage:number,direction:{x:number;y:number},melee=false){
+function strikeZombie(enemy:Unit,damage:number,direction:{x:number;y:number},melee=false,explosive=false){
  if(!enemy.alive||!plan)return;
- if(enemy.boss||enemy.kind==='armored'){enemy.armorIntegrity??=enemy.boss?120:38;enemy.armorIntegrity=Math.max(0,enemy.armorIntegrity-damage*(melee?.4:1));damage*=enemy.armorIntegrity>0?(enemy.boss?.6:.7):1.3;if(enemy.kind==='armored'&&enemy.armorIntegrity>0)damage=Math.min(damage,Math.max(0,enemy.hp-1));}
+ if(enemy.boss||enemy.kind==='armored'){enemy.armorIntegrity??=enemy.boss?120:38;enemy.armorIntegrity=Math.max(0,enemy.armorIntegrity-damage*(melee?.4:1));damage*=explosive&&enemy.boss?1:enemy.armorIntegrity>0?(enemy.boss?.6:.7):1.3;if(enemy.kind==='armored'&&enemy.armorIntegrity>0)damage=Math.min(damage,Math.max(0,enemy.hp-1));}
  enemy.hp-=damage;
  if(enemy.hp>0)gameAudio.playZombie(enemy.kind??'shambler','hurt',run?Math.hypot(enemy.x-run.player.x,enemy.y-run.player.y):0);
  const reaction=hitReaction(enemy.kind??'shambler',damage,melee);
@@ -898,7 +898,7 @@ function squadUpdate(dt:number){if(!run||!plan)return;const r=run,p=r.player,ord
  const available=r.allies.filter(a=>!a.dead&&a.downed<=0&&shouldRevive(order,a.role));
  for(const target of casualties){
   const candidates=available.filter(a=>!rescueAssignments.has(a.id)).sort((a,b)=>{
-   const score=(v:Ally)=>Math.hypot(v.x-target.x,v.y-target.y)+(v.role==='medic'?-1:0)+aliveEnemies.filter(e=>Math.hypot(e.x-v.x,e.y-v.y)<2).length*2;
+   const score=(v:Ally)=>Math.hypot(v.x-target.x,v.y-target.y)+(v.role==='medic'?-1:0)+(v.reviveTarget===(target===p?'player':(target as Ally).id)?-3:0)+aliveEnemies.filter(e=>Math.hypot(e.x-v.x,e.y-v.y)<2).length*2;
    return score(a)-score(b);
   });
   const safe=candidates.find(a=>aliveEnemies.filter(e=>Math.hypot(e.x-a.x,e.y-a.y)<2).length<2);
