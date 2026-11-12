@@ -309,7 +309,8 @@ function tickGrenades(dt:number){
    Math.hypot(enemy.x-oldX,enemy.y-oldY)<1.2);
   if(hitZombie){g.fired=true;grenadeBlast(g)}
   else if(step.detonate)grenadeBlast(g);
-  if(g.type==='lure'&&g.fired&&g.active>0)run.noiseEvent={x:g.x,y:g.y,radius:12,ttl:.35};
+  if(g.type==='lure'&&g.fired&&g.active>0&&Math.floor(g.active*2)!==Math.floor((g.active+dt)*2))gameAudio.playGrenade('lure',Math.hypot(g.x-run.player.x,g.y-run.player.y));
+  if(g.type==='lure'&&step.ended)for(const enemy of run.enemies){if(enemy.alive&&enemy.lastKnown&&Math.hypot(enemy.lastKnown.x-g.x,enemy.lastKnown.y-g.y)<.5){enemy.aggro=0;enemy.lastKnown=null;enemy.searchClock=0}}
  }
  grenadeFlights=grenadeFlights.filter(g=>g.type==='lure'?(!g.fired||g.active>0):!g.fired);
  grenadeBursts=grenadeBursts.filter(b=>(b.age+=dt)<1);
@@ -1091,7 +1092,13 @@ for(const e of run.enemies){if(!e.alive)continue;
  e.suppressed=Math.max(0,(e.suppressed??0)-dt);e.scoutMarked=Math.max(0,(e.scoutMarked??0)-dt);const stats=zombieStats(e.kind??(e.boss?'boss':'shambler'));if(e.boss&&e.hp<e.maxHp*.5&&e.phase!==2){e.phase=2;notice(bossIdentity(run.wave).name+' · SECOND PHASE!');if(!e.summoned){e.summoned=true;for(let k=0;k<3;k++)spawnOne(false,false)}}
  const sight=Math.hypot(e.x-p.x,e.y-p.y);
  const vision=sight<1.5||(sight<(e.kind==='runner'?10:e.boss?17:7.5)&&canSee(e.x,e.y,p.x,p.y));
- const senses=senseZombie({kind:e.kind??'shambler',position:e,player:p,canSeePlayer:vision,noise:run.noiseEvent,lastKnown:e.lastKnown,memory:e.aggro??0,searchClock:e.searchClock??0,spawnIndex:run.enemies.indexOf(e)},dt);
+ const closestThreat=Math.min(Math.hypot(e.x-p.x,e.y-p.y),...run.allies.filter(a=>!a.dead&&a.downed<=0).map(a=>Math.hypot(e.x-a.x,e.y-a.y)));
+  const activeLures=grenadeFlights.filter(g=>g.type==='lure'&&g.fired&&g.active>0&&Math.hypot(g.x-e.x,g.y-e.y)<=12);
+  activeLures.sort((a,b)=>Math.hypot(a.x-e.x,a.y-e.y)-Math.hypot(b.x-e.x,b.y-e.y));
+  const lure=activeLures[0];
+  const lured=!!lure&&closestThreat>1.6&&(!e.boss||((run.wave+run.enemies.indexOf(e))%3===0));
+  const lureNoise=lured?{x:lure!.x,y:lure!.y,radius:12,ttl:.35}:null;
+  const senses=senseZombie({kind:e.kind??'shambler',position:e,player:p,canSeePlayer:vision&&!lured,noise:lureNoise??run.noiseEvent,lastKnown:e.lastKnown,memory:e.aggro??0,searchClock:e.searchClock??0,spawnIndex:run.enemies.indexOf(e)},dt);
  e.aggro=senses.memory;e.lastKnown=senses.lastKnown;e.searchClock=senses.searchClock;e.alertMode=senses.mode;
  e.attack=Math.max(0,e.attack-dt);
  if((e.emerging??0)>0)continue;
