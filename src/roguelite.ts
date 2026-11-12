@@ -1247,7 +1247,34 @@ function draw(){
  ctx.save();if(fog)clipToExplored(ctx,m,v,fog);
  drawBloodFx(ctx,v,bloodFx,'ground');
  drawCasings(ctx,v,shellEffects);
- for(const b of grenadeBursts){ctx.save();ctx.globalAlpha=Math.max(0,.4-b.age*.4);ctx.fillStyle=b.type==='stun'?'#ffffff':b.type==='lure'?'#ff6539':'#ffae38';ctx.beginPath();ctx.arc(v.ox+b.x*v.tile,v.oy+b.y*v.tile,Math.min(3*v.tile,b.age*15*v.tile),0,Math.PI*2);ctx.fill();ctx.restore()}
+ for(const b of grenadeBursts){
+  const px=v.ox+b.x*v.tile,py=v.oy+b.y*v.tile,explosive=b.type==='frag'||b.type==='impact';
+  const maxRadius=(b.type==='lure'?12:b.type==='stun'?4:3)*v.tile;
+  const t=b.age;
+  ctx.save();
+  if(explosive){
+   ctx.fillStyle='#151412';ctx.globalAlpha=Math.max(0,.34-t*.14);
+   ctx.beginPath();ctx.ellipse(px,py,1.15*v.tile,.76*v.tile,0,0,Math.PI*2);ctx.fill();
+  }
+  ctx.globalAlpha=Math.max(0,(explosive?.92:.72)*(1-t));
+  ctx.strokeStyle=b.type==='stun'?'#f8ffff':b.type==='lure'?'#f27c56':'#ffbc73';
+  ctx.lineWidth=Math.max(2,v.tile*(.17-t*.1));
+  ctx.beginPath();ctx.arc(px,py,Math.min(maxRadius,t*maxRadius*5),0,Math.PI*2);ctx.stroke();
+  if(t<.45&&b.type!=='lure'){
+   ctx.globalAlpha=Math.max(0,(1-t/.45)*(b.type==='stun'?.82:.6));
+   ctx.fillStyle=b.type==='stun'?'#ffffff':'#ffc76a';
+   ctx.beginPath();ctx.arc(px,py,Math.max(0,(.8-t)*v.tile),0,Math.PI*2);ctx.fill();
+  }
+  if(explosive)for(let k=0;k<22;k++){
+   const angle=k*2.399963+Math.floor(b.x*7+b.y*13)*.17;
+   const travel=t*(1.2+(k%5)*.25)*v.tile;
+   const x=px+Math.cos(angle)*travel,y=py+Math.sin(angle)*travel*.72;
+   ctx.globalAlpha=Math.max(0,(1-t)*.64);
+   ctx.fillStyle=k%4===0?'#ec9c52':k%3===0?'#747573':'#454b4a';
+   ctx.beginPath();ctx.arc(x,y,v.tile*(.055+(k%4)*.025+t*.15),0,Math.PI*2);ctx.fill();
+  }
+  ctx.restore();
+ }
  for(const g of grenadeFlights){ctx.save();ctx.fillStyle=g.type==='lure'?'#fa5c43':g.type==='stun'?'#f5ffff':'#657a63';ctx.beginPath();ctx.arc(v.ox+g.x*v.tile,v.oy+(g.y-g.altitude)*v.tile,v.tile*.16,0,Math.PI*2);ctx.fill();ctx.restore()}
  for(const fx of bossEffects){if(fx.death)drawBossDeath(ctx,v,fx.kind,fx.x,fx.y,fx.heading??0,fx.age);else drawBossImpact(ctx,v,fx.kind,fx.x,fx.y,fx.age)}
  ctx.restore();
