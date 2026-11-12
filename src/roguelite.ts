@@ -288,8 +288,12 @@ function tickGrenades(dt:number){
  if(!run||!plan)return;
  run.grenadeCooldown=Math.max(0,(run.grenadeCooldown??0)-dt);
  for(const g of grenadeFlights){
-  const step=advanceGrenade(g,dt,(x,y)=>canOccupy(plan!.map,x,y));
-  if(step.detonate)grenadeBlast(g);
+  const oldX=g.x,oldY=g.y,step=advanceGrenade(g,dt,(x,y)=>canOccupy(plan!.map,x,y));
+  const hitZombie=g.type==='impact'&&!g.fired&&run.enemies.some(enemy=>enemy.alive&&
+   Math.hypot(enemy.x-g.x,enemy.y-g.y)<.5&&
+   Math.hypot(enemy.x-oldX,enemy.y-oldY)<1.2);
+  if(hitZombie){g.fired=true;grenadeBlast(g)}
+  else if(step.detonate)grenadeBlast(g);
   if(g.type==='lure'&&g.fired&&g.active>0)run.noiseEvent={x:g.x,y:g.y,radius:12,ttl:.35};
  }
  grenadeFlights=grenadeFlights.filter(g=>g.type==='lure'?(!g.fired||g.active>0):!g.fired);
@@ -364,7 +368,7 @@ function weakPointHit(enemy:Unit,origin:{x:number;y:number},direction:{x:number;
 /** Visual-only impact blood on enemies struck by bullets or melee. */
 function strikeZombie(enemy:Unit,damage:number,direction:{x:number;y:number},melee=false){
  if(!enemy.alive||!plan)return;
- if(enemy.boss||enemy.kind==='armored'){enemy.armorIntegrity??=enemy.boss?120:38;enemy.armorIntegrity=Math.max(0,enemy.armorIntegrity-damage*(melee?.4:1));damage*=enemy.armorIntegrity>0?(enemy.boss?.6:.7):1.3;}
+ if(enemy.boss||enemy.kind==='armored'){enemy.armorIntegrity??=enemy.boss?120:38;enemy.armorIntegrity=Math.max(0,enemy.armorIntegrity-damage*(melee?.4:1));damage*=enemy.armorIntegrity>0?(enemy.boss?.6:.7):1.3;if(enemy.kind==='armored'&&enemy.armorIntegrity>0)damage=Math.min(damage,Math.max(0,enemy.hp-1));}
  enemy.hp-=damage;
  if(enemy.hp>0)gameAudio.playZombie(enemy.kind??'shambler','hurt',run?Math.hypot(enemy.x-run.player.x,enemy.y-run.player.y):0);
  const reaction=hitReaction(enemy.kind??'shambler',damage,melee);
