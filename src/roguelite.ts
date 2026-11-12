@@ -1336,7 +1336,7 @@ function bindMobileAction(id:string,fn:()=>void){
  // Keyboard accessibility without a duplicate synthetic touch click.
  button.addEventListener('click',e=>{if(e.detail===0&&!button.disabled)fn()});
 }
-bindMobileAction('mobile-interact',interact);for(const b of document.querySelectorAll<HTMLButtonElement>('[data-grenade]')){const type=b.dataset.grenade as GrenadeType;b.addEventListener('pointerdown',e=>{if(e.button!==0||b.disabled)return;e.preventDefault();e.stopPropagation();throwSelectedGrenade(type)});b.addEventListener('click',e=>{if(e.detail===0&&!b.disabled)throwSelectedGrenade(type)})}
+bindMobileAction('mobile-interact',interact);for(const b of Array.from(document.querySelectorAll<HTMLButtonElement>('[data-grenade]'))){const type=b.dataset.grenade as GrenadeType;b.addEventListener('pointerdown',e=>{if(e.button!==0||b.disabled)return;e.preventDefault();e.stopPropagation();throwSelectedGrenade(type)});b.addEventListener('click',e=>{if(e.detail===0&&!b.disabled)throwSelectedGrenade(type)})}
 document.querySelectorAll<HTMLButtonElement>('#mobile-squad [data-squad-order]').forEach(button=>{
  const order=button.dataset.squadOrder as SquadOrder;
  button.addEventListener('pointerdown',e=>{if(e.button!==0)return;e.preventDefault();e.stopPropagation();setOrder(order)});
