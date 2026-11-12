@@ -830,19 +830,22 @@ function rescueAction(dt:number,manual=false){if(!run||paused)return;const r=run
 }
 function treatSquadmate(a:Ally,dt:number):'none'|'self'|'other'{
  if(!run||a.dead||a.downed>0)return 'none';
- const danger=run.enemies.some(e=>e.alive&&Math.hypot(e.x-a.x,e.y-a.y)<2.5);
- const patients=run.allies.filter(b=>!b.dead&&b.downed<=0&&b.hp/b.maxHp<.5).sort((x,y)=>x.hp/x.maxHp-y.hp/y.maxHp);
- const patient=patients.find(b=>b===a)||patients.find(b=>Math.hypot(b.x-a.x,b.y-a.y)<1.45);
- if(!patient||!a.medkits||danger){a.medicalProgress=0;a.medicalTarget=null;return 'none'}
- const self=patient===a;
- if(a.medicalTarget!==patient.id){a.medicalTarget=patient.id;a.medicalProgress=0}
+ const enemies=run.enemies.filter(e=>e.alive&&Math.hypot(e.x-a.x,e.y-a.y)<2.5);
+ const allies=run.allies.filter(b=>!b.dead&&b.downed<=0&&b.hp/b.maxHp<.5);
+ const wounded=[...allies.map(b=>({id:b.id,x:b.x,y:b.y,hp:b.hp,maxHp:b.maxHp,patient:b as Ally|null})),
+  ...(run.hp<50&&(run.playerDowned??0)===0?[{id:'player',x:run.player.x,y:run.player.y,hp:run.hp,maxHp:100,patient:null}]:[])];
+ wounded.sort((p,q)=>p.hp/p.maxHp-q.hp/q.maxHp);
+ const candidate=wounded.find(b=>Math.hypot(b.x-a.x,b.y-a.y)<1.45);
+ if(!candidate||a.medkits<=0||enemies.length>0){a.medicalProgress=0;a.medicalTarget=null;return 'none'}
+ if(a.medicalTarget!==candidate.id){a.medicalTarget=candidate.id;a.medicalProgress=0}
  a.medicalProgress+=dt;
  if(a.medicalProgress>=(a.role==='medic'?3:6)){
-  patient.hp=Math.min(patient.maxHp,patient.hp+patient.maxHp*(a.role==='medic'?.6:.4));
-  a.medkits--;a.medicalProgress=0;a.medicalTarget=null;
-  notice(a.name+' · MEDKIT ADMINISTERED');
+  const healing=candidate.maxHp*(a.role==='medic'?.6:.4);
+  if(candidate.patient)candidate.patient.hp=Math.min(candidate.maxHp,candidate.patient.hp+healing);
+  else run.hp=Math.min(100,run.hp+healing);
+  a.medkits--;a.medicalProgress=0;a.medicalTarget=null;notice(a.name+' · MEDKIT ADMINISTERED');
  }
- return self?'self':'other';
+ return candidate.id===a.id?'self':'other';
 }
 function squadUpdate(dt:number){if(!run||!plan)return;const r=run,p=r.player,order=r.squadOrder??'follow',aliveEnemies=r.enemies.filter(e=>e.alive);
  squadClock+=dt;const shooting=squadClock>.14;if(shooting)squadClock=0;
