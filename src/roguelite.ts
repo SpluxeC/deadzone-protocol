@@ -452,7 +452,9 @@ function search(targetIndex?:number){
    model='ammo';label=ammoLabels[reward.type]+' +'+added;notice('Supply crate: '+label);
   }else if(reward.kind==='medkit'){
    if(usedSlots(eq.bag,eq.ammo,run.medkits+1)>eq.capacity){notice('BACKPACK FULL — cannot carry medkit');return}
-   run.medkits++;model='medkit';label='MEDKIT +1';notice('Supply crate: '+label);
+   const recipient=squadMedicalRecipient(run);
+    if(recipient){recipient.medkits++;model='medkit';label=recipient.name+' · MEDKIT +1';notice('Supply crate: '+label)}
+    else{run.medkits++;model='medkit';label='MEDKIT +1';notice('Supply crate: '+label)}
   }else if(reward.kind==='armor'){
    const added=Math.min(reward.amount,100-run.armor);
    run.armor+=added;model='armor';label='ARMOR +'+added;notice('FIELD ARMOR PLATES · +'+added+' ARMOR');
@@ -673,6 +675,11 @@ function wireMobilePanels(screen:HTMLElement,selected:string,saveChoice:(tab:str
   button.onclick=()=>activate(button.dataset.mobileTab!);
  activate(selected);
 }
+function squadMedCapacity(a:Ally){return a.role==='medic'?4:2}
+function squadMedicalRecipient(r:Run):Ally|null{
+ return [...r.allies].filter(a=>!a.dead&&a.medkits<squadMedCapacity(a))
+  .sort((a,b)=>a.medkits/squadMedCapacity(a)-b.medkits/squadMedCapacity(b))[0]??null;
+}
 function shop(){if(!run)return;
  paused=true;overlay.hidden=false;const r=run,eq=ensureEquipment(r);const baseOffers=armoryOffers(r.seed,r.wave,eq.rerolls);
  const offers=baseOffers.filter(o=>o.kind!=='recruit'||eligibleRecruit(profile,o.model as keyof typeof CLASS_INFO));
@@ -688,7 +695,7 @@ function shop(){if(!run)return;
  const bag=inventorySummary(r);
  const ownedSupplies='<div class="armory-owned-supplies" role="group" aria-label="Current ammo and medical supplies"><h3>YOUR AMMO &amp; MEDS</h3><p>Check your reserves before purchasing more supplies.</p><div class="armory-reserves">'+ammoTypes.map(type=>'<span>'+ammoLabels[type]+': <b>'+eq.ammo[type]+'</b></span>').join('')+'<span>Medkits: <b>'+r.medkits+'</b></span></div><div class="menurow">'+ammoTypes.filter(type=>eq.ammo[type]>0).map(type=>'<button id="sell-ammo-'+type+'">SELL '+ammoLabels[type]+' '+Math.min(ammoStack[type],eq.ammo[type])+'</button>').join('')+(r.medkits>0?'<button id="sell-med">SELL 1 MEDKIT</button>':'')+'</div></div>';
  overlay.innerHTML=`<article class="armory-screen"><div class="armory-top"><div class="management-heading"><h1>ARMORY · WAVE ${r.wave} COMPLETE</h1><strong class="management-credits" aria-label="Available credits">₡${r.credits.toLocaleString()} CREDITS</strong></div><nav class="management-toolbar" aria-label="Armory actions"><button id="shop-inventory">INVENTORY (${bag})</button><button id="shop-squad">SQUAD</button><button id="refill-all-armory">Refill Squad Ammo · ${squadAmmoRefillPrice(r.allies)} CR</button><button id="descend">NEXT WAVE ${r.wave+1}</button><button id="shop-settings">SETTINGS</button></nav>${armoryStatus(r)}</div>
- ${mobileTabStrip([{id:'supplies',label:'SUPPLIES'},{id:'offers',label:'WEAPONS & RECRUITS'}],armoryMobileTab)}<div class="armory-columns"><section data-mobile-panel="supplies" class="armory-section armory-supplies"><h2>Essential Supplies — Always Available</h2>${ownedSupplies}<div class="shop">${ammoButtons}${grenadeButtons}<button class="armory-item" id="med-buy">${gearIcon("medkit")}<span class="armory-item-copy"><b>Medkit +1</b><small>200 credits</small></span></button><button class="armory-item" id="heal-buy">${gearIcon("medkit")}<span class="armory-item-copy"><b>Heal +35 HP</b><small>175 credits</small></span></button><button class="armory-item" id="armor-buy">${gearIcon("armor")}<span class="armory-item-copy"><b>Armor +40</b><small>220 credits</small></span></button><button class="armory-item" id="pack-buy">${gearIcon("armor")}<span class="armory-item-copy"><b>Backpack +4 slots</b><small>${backpackUpgradePrice(eq.capacity)} credits · max 24</small></span></button></div>
+ ${mobileTabStrip([{id:'supplies',label:'SUPPLIES'},{id:'offers',label:'WEAPONS & RECRUITS'}],armoryMobileTab)}<div class="armory-columns"><section data-mobile-panel="supplies" class="armory-section armory-supplies"><h2>Essential Supplies — Always Available</h2>${ownedSupplies}<div class="shop">${ammoButtons}${grenadeButtons}<button class="armory-item" id="squad-med-buy">${gearIcon("medkit")}<span class="armory-item-copy"><b>Squad Medkit +1</b><small>200 credits · automatic assignment</small></span></button><button class="armory-item" id="med-buy">${gearIcon("medkit")}<span class="armory-item-copy"><b>Medkit +1</b><small>200 credits</small></span></button><button class="armory-item" id="heal-buy">${gearIcon("medkit")}<span class="armory-item-copy"><b>Heal +35 HP</b><small>175 credits</small></span></button><button class="armory-item" id="armor-buy">${gearIcon("armor")}<span class="armory-item-copy"><b>Armor +40</b><small>220 credits</small></span></button><button class="armory-item" id="pack-buy">${gearIcon("armor")}<span class="armory-item-copy"><b>Backpack +4 slots</b><small>${backpackUpgradePrice(eq.capacity)} credits · max 24</small></span></button></div>
  </section><section data-mobile-panel="offers" class="armory-section armory-offers"><h2>Rotating Armory Offers</h2><p>Higher rarities become more common in later waves. Gear enters your backpack; use Inventory to equip, upgrade, attach or sell it.</p><div class="shop">${offerButtons}</div></section></div>
  </article>`;
  wireMobilePanels(overlay.querySelector<HTMLElement>('.armory-screen')!,armoryMobileTab,id=>{armoryMobileTab=id});
@@ -703,6 +710,7 @@ function shop(){if(!run)return;
   };
  }
  if(r.medkits>0)overlay.querySelector<HTMLButtonElement>('#sell-med')!.onclick=()=>{r.medkits--;r.credits+=45;save();shop()};
+ bind('squad-med-buy',200,()=>{const recipient=squadMedicalRecipient(r);if(!recipient)return false;recipient.medkits++;return true},!!squadMedicalRecipient(r));
  bind('med-buy',200,()=>{if(usedSlots(eq.bag,eq.ammo,r.medkits+1)>eq.capacity){notice('BACKPACK FULL');return false}r.medkits++;return true});
  bind('heal-buy',175,()=>{r.hp=Math.min(100,r.hp+35);return true},r.hp<100);
  bind('armor-buy',220,()=>{r.armor=Math.min(100,r.armor+40);return true},r.armor<100);
