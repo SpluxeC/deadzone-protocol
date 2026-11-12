@@ -239,6 +239,23 @@ class GameAudio{
   // The closing bolt is slightly heavier at the end of the timed reload.
   if(complete)this.burst(.045,.07,{delay:.08,highpass:640,lowpass:3200});
  }
+ playGrenade(type:'frag'|'impact'|'stun'|'lure',distance=0):void{
+  if(!this.canPlay('grenade-'+type,type==='lure'?.3:.06))return;
+  // Original synthesized layered impulses avoid missing external files on mobile.
+  if(type==='frag'||type==='impact'){
+   this.burst(type==='frag'?.42:.24,type==='frag'?.68:.46,{lowpass:1800});
+   this.burst(.11,.31,{highpass:400,lowpass:6500,delay:.015});
+   this.tone(type==='frag'?68:94,type==='frag'?.38:.25,.19,{type:'sawtooth',endFreq:33});
+   this.burst(.13,.14,{highpass:1250,lowpass:7800,delay:.1});
+  }else if(type==='stun'){
+   this.burst(.14,.61,{highpass:800,lowpass:11500});
+   this.tone(1900,.22,.065,{type:'sine',endFreq:2450,delay:.08});
+  }else{
+   this.tone(590,.12,.11,{type:'square',endFreq:840});
+   this.tone(890,.12,.075,{type:'sine',endFreq:520,delay:.17});
+  }
+  void distance;
+ }
  playUI(id:UiSound):void{
   if(!this.canPlay('ui-'+id,id==='tap'?.045:.09))return;
   // Tactile switch clicks, soft magnetic relay contacts and subdued emergency
