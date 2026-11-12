@@ -865,6 +865,11 @@ function treatSquadmate(a:Ally,dt:number):'none'|'self'|'other'{
 function squadUpdate(dt:number){if(!run||!plan)return;const r=run,p=r.player,order=r.squadOrder??'follow',aliveEnemies=r.enemies.filter(e=>e.alive);
  squadClock+=dt;const shooting=squadClock>.14;if(shooting)squadClock=0;
  // Assign a single rescuer to each casualty; split rescues only while defensible.
+ const movement={x:(keys.has('KeyD')||keys.has('ArrowRight')?1:0)-(keys.has('KeyA')||keys.has('ArrowLeft')?1:0)+moveAnalog.x,y:(keys.has('KeyS')||keys.has('ArrowDown')?1:0)-(keys.has('KeyW')||keys.has('ArrowUp')?1:0)+moveAnalog.y};
+ const nearestThreat=aliveEnemies.reduce((best,e)=>Math.hypot(e.x-p.x,e.y-p.y)<Math.hypot(best?.x??1e6,best?.y??1e6)?e:best,null as Unit|null);
+ const retreating=!!nearestThreat&&Math.hypot(nearestThreat.x-p.x,nearestThreat.y-p.y)<7&&
+  movement.x*(p.x-nearestThreat.x)+movement.y*(p.y-nearestThreat.y)>0.55;
+ const tacticalMode:SquadOrder=retreating?'regroup':aliveEnemies.some(e=>Math.hypot(e.x-p.x,e.y-p.y)<4.5)?'defensive':'follow';
  const rescueAssignments=new Map<string,Ally|{x:number;y:number}>();
  const casualties:(Ally|{x:number;y:number})[]=[];
  if((r.playerDowned??0)>0)casualties.push(p);
@@ -897,12 +902,12 @@ function squadUpdate(dt:number){if(!run||!plan)return;const r=run,p=r.player,ord
   a.reviveProgress=0;
   const treatment=treatSquadmate(a,dt);if(treatment==='other')continue;
   const squadIndex=r.allies.indexOf(a);
-  let destination=formationDestination(order,p,aim,squadIndex,r.allies.length,a.anchor),speed=2.35;
-  if(order==='regroup')speed=3.05;
+  let destination=formationDestination(order==='hold'||order==='focus'?order:tacticalMode,p,aim,squadIndex,r.allies.length,a.anchor),speed=2.35;
+  if(order==='regroup'||retreating)speed=3.05;
   if(order==='focus'&&r.focusTarget!==null&&r.focusTarget!==undefined){
    const target=r.enemies[r.focusTarget];if(target?.alive)destination={x:target.x,y:target.y};
   }
-  const separation=order==='hold'?.4:order==='focus'?3:order==='suppress'?.52:order==='defensive'?.55:.6;
+  const separation=order==='hold'?.4:order==='focus'?3:retreating?.7:order==='suppress'?.52:order==='defensive'?.55:.6;
   if(treatment==='self')speed*=.35;
   const d=Math.hypot(destination.x-a.x,destination.y-a.y);
   if(d>separation){const direct=canSee(a.x,a.y,destination.x,destination.y),field=direct?null:distanceField(plan.map,destination),wp=field?nextZombieWaypoint(plan.map,field,a):destination,len=Math.hypot(wp.x-a.x,wp.y-a.y)||1;moveSquadmate(a,(wp.x-a.x)/len,(wp.y-a.y)/len,dt*speed)}
@@ -913,7 +918,18 @@ function squadUpdate(dt:number){if(!run||!plan)return;const r=run,p=r.player,ord
   if(a.magReserve<20){const donor=r.allies.find(b=>b!==a&&!b.dead&&b.magReserve>90&&Math.hypot(b.x-a.x,b.y-a.y)<1.45);if(donor){donor.magReserve-=40;a.magReserve+=40}}
   const visible=aliveEnemies.filter(e=>canSee(a.x,a.y,e.x,e.y));
   const focused=r.focusTarget!==null&&r.focusTarget!==undefined?r.enemies[r.focusTarget]:null;
-  const target=pickTacticalTarget(order,a,p,visible,focused?.alive?focused:null);
+  const tacticalTargets=[...visible].sort((one,two)=>{
+    const score=(enemy:Unit)=>{
+     const d=Math.hypot(enemy.x-a.x,enemy.y-a.y),playerThreat=Math.hypot(enemy.x-p.x,enemy.y-p.y);
+     const armor=enemy.boss||enemy.kind==='armored',exposed=(enemy.armorIntegrity??1)<=0;
+     if(a.role==='heavy'||a.role==='engineer')return d-(armor?3.2:0)-((enemy.boss??false)?1:0);
+     if(a.role==='scout')return d-(exposed?4.2:0)-(enemy.scoutMarked?2:0);
+     if(a.role==='medic')return playerThreat*.8+d*.35;
+     return d*.55+playerThreat*.45;
+    };
+    return score(one)-score(two);
+   });
+   const target=order==='focus'?pickTacticalTarget(order,a,p,visible,focused?.alive?focused:null):tacticalTargets[0]??null;
   if(!target)continue;
   const distance=Math.hypot(target.x-a.x,target.y-a.y);
   // Close enemies are handled with equipped melee weapons. When ammunition is
