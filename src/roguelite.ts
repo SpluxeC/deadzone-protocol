@@ -353,6 +353,13 @@ function swapFirearm(){
  else if(ensureEquipment(run).loadout.primary)equip('primary');
  else if(ensureEquipment(run).loadout.secondary)equip('secondary');
 }
+/** Weak points are geometry, not HUD highlights: precision along the exposed head line. */
+function weakPointHit(enemy:Unit,origin:{x:number;y:number},direction:{x:number;y:number}):boolean{
+ if(!(enemy.boss||enemy.kind==='armored')||(enemy.armorIntegrity??1)>0)return false;
+ const hx=enemy.x,hy=enemy.y-.18,dx=hx-origin.x,dy=hy-origin.y;
+ const along=dx*direction.x+dy*direction.y;
+ return along>0&&Math.abs(dx*direction.y-dy*direction.x)<.12;
+}
 /** Visual-only impact blood on enemies struck by bullets or melee. */
 function strikeZombie(enemy:Unit,damage:number,direction:{x:number;y:number},melee=false){
  if(!enemy.alive||!plan)return;
@@ -402,7 +409,7 @@ function shoot(){
    if(!trace.hits.length&&trace.distance<handling.range-.12&&shellEffects.length<90)shellEffects.push(ejectCasing(p.x+dir.x*trace.distance,p.y+dir.y*trace.distance,dir.x,dir.y,i+run.kills, 'spark'));
    // A shotgun shell shares damage across its pellets; every pellet uses its own hit ray.
    const damage=handling.damage/profile.count;
-   for(const hit of trace.hits)strikeZombie(hit.target,damage,dir)
+   for(const hit of trace.hits)strikeZombie(hit.target,damage*(weakPointHit(hit.target,p,dir)?2:1),dir)
   }
   combatFx.push(...makeAttackFx(w.model,p.x,p.y,facing.x,facing.y,handling.range,distances,weaponFlashAllowed(w)));
  }
@@ -912,7 +919,8 @@ function squadUpdate(dt:number){if(!run||!plan)return;const r=run,p=r.player,ord
   const weapon=squadWeapon(a),melee=a.activeSlot==='melee';
   const reach=melee?1.45:Math.min(classRange(a.role),effectiveStats(weapon).range);
   if(distance>reach||!canSee(a.x,a.y,target.x,target.y)||friendlyFireLane(a,target,[r.player,...r.allies.filter(b=>b!==a&&!b.dead&&b.downed<=0)],melee?.25:.42))continue;
-  const dir=unit(target.x-a.x,target.y-a.y);
+  const aimY=(target.armorIntegrity??1)<=0&&(target.boss||target.kind==='armored')?target.y-.18:target.y;
+   const dir=unit(target.x-a.x,aimY-a.y);
   if(melee){
    gameAudio.playWeapon(weapon.model,{distance:Math.hypot(a.x-p.x,a.y-p.y)});
    const damage=Math.max(1.4,effectiveStats(weapon).damage*(1+.12*(a.gearTier-1)));
@@ -926,7 +934,7 @@ function squadUpdate(dt:number){if(!run||!plan)return;const r=run,p=r.player,ord
   const trace=traceBullet(plan.map,a,dir,reach,aliveEnemies,penetrationFor(weapon.model));
   const damage=Math.max(.5,classDamage(a.role,weapon.tier)*(effectiveStats(weapon).damage/weaponDefs[CLASS_INFO[a.role].model].damage));
   for(const hit of trace.hits){
-   const struck=hit.target;strikeZombie(struck,damage,dir);
+   const struck=hit.target;strikeZombie(struck,damage*(weakPointHit(struck,a,dir)?2:1),dir);
    if(a.role==='heavy'||order==='suppress'){
     struck.suppressed=Math.max(struck.suppressed??0,order==='suppress'?2.7:2.4);
     for(const other of aliveEnemies)
@@ -994,7 +1002,10 @@ shotCooldown=Math.max(0,shotCooldown-dt);noiseClock=Math.max(0,noiseClock-dt);if
  const p=run.player;let dx=0,dy=0;if(keys.has('KeyW')||keys.has('ArrowUp')||touch.has('up'))dy--;if(keys.has('KeyS')||keys.has('ArrowDown')||touch.has('down'))dy++;if(keys.has('KeyA')||keys.has('ArrowLeft')||touch.has('left'))dx--;if(keys.has('KeyD')||keys.has('ArrowRight')||touch.has('right'))dx++;const len=Math.hypot(dx,dy);if((run.playerDowned??0)===0){if(len)moveUnit(p,dx/len,dy/len,dt*(keys.has('ShiftLeft')?4:3));else if(moveAnalog.magnitude>0)moveUnit(p,moveAnalog.x,moveAnalog.y,dt*3)}
 rescueAction(dt,keys.has('KeyV')||touch.has('revive'));
 if((run.playerDowned??0)===0)triggerFloorEvents();
-if(aimAnalog.magnitude>0){aim={x:aimAnalog.x/aimAnalog.magnitude,y:aimAnalog.y/aimAnalog.magnitude}}
+if(aimAnalog.magnitude>0){aim={x:aimAnalog.x/aimAnalog.magnitude,y:aimAnalog.y/aimAnalog.magnitude};
+ const target=run.enemies.filter(e=>e.alive&&(e.boss||e.kind==='armored')&&(e.armorIntegrity??1)<=0&&canSee(p.x,p.y,e.x,e.y)).find(e=>{const d=Math.hypot(e.x-p.x,e.y-.18-p.y);return d<9&&Math.abs((e.x-p.x)*aim.y-(e.y-.18-p.y)*aim.x)/Math.max(.01,d)<.17});
+ if(target){const v=unit(target.x-p.x,target.y-.18-p.y);aim=unit(aim.x*.75+v.x*.25,aim.y*.75+v.y*.25)}
+}
 else if(mouseAimActive&&canvas.width>0&&canvas.height>0){
  // Recalculate against the current player position; a stationary cursor still aims
  // at the same screen point while the character moves and the camera follows.
