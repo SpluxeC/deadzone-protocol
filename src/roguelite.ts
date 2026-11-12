@@ -846,14 +846,27 @@ function treatSquadmate(a:Ally,dt:number):'none'|'self'|'other'{
 }
 function squadUpdate(dt:number){if(!run||!plan)return;const r=run,p=r.player,order=r.squadOrder??'follow',aliveEnemies=r.enemies.filter(e=>e.alive);
  squadClock+=dt;const shooting=squadClock>.14;if(shooting)squadClock=0;
+ // Assign a single rescuer to each casualty; split rescues only while defensible.
+ const rescueAssignments=new Map<string,Ally|{x:number;y:number}>();
+ const casualties:(Ally|{x:number;y:number})[]=[];
+ if((r.playerDowned??0)>0)casualties.push(p);
+ casualties.push(...r.allies.filter(b=>!b.dead&&b.downed>0).sort((a,b)=>(a.role==='medic'?-1:0)-(b.role==='medic'?-1:0)));
+ const available=r.allies.filter(a=>!a.dead&&a.downed<=0&&shouldRevive(order,a.role));
+ for(const target of casualties){
+  const candidates=available.filter(a=>!rescueAssignments.has(a.id)).sort((a,b)=>{
+   const score=(v:Ally)=>Math.hypot(v.x-target.x,v.y-target.y)+(v.role==='medic'?-1:0)+aliveEnemies.filter(e=>Math.hypot(e.x-v.x,e.y-v.y)<2).length*2;
+   return score(a)-score(b);
+  });
+  const safe=candidates.find(a=>aliveEnemies.filter(e=>Math.hypot(e.x-a.x,e.y-a.y)<2).length<2);
+  if(safe){rescueAssignments.set(safe.id,target);if(aliveEnemies.length>4)break}
+ }
  for(const a of r.allies){
   if(a.dead)continue;
   if(a.medkits===0){const donor=r.allies.find(b=>b!==a&&!b.dead&&b.medkits>1&&Math.hypot(b.x-a.x,b.y-a.y)<1.45);if(donor){donor.medkits--;a.medkits++}}
   if(a.downed>0){if(bleed(a,dt))notice(a.name+' LOST — REPLACE AT ARMORY');continue}
   a.cooldown=Math.max(0,a.cooldown-dt);a.abilityCooldown=Math.max(0,a.abilityCooldown-dt);
-  let rescue:Ally|{x:number;y:number}|null=null;
-  if((r.playerDowned??0)>0&&shouldRevive(order,a.role))rescue=p;
-  else if(shouldRevive(order,a.role))rescue=r.allies.filter(b=>b!==a&&!b.dead&&b.downed>0).sort((x,y)=>Math.hypot(x.x-a.x,x.y-a.y)-Math.hypot(y.x-a.x,y.y-a.y))[0]??null;
+  let rescue:Ally|{x:number;y:number}|null=rescueAssignments.get(a.id)??null;
+  if(rescue&&aliveEnemies.some(e=>Math.hypot(e.x-a.x,e.y-a.y)<1.7)){a.reviveProgress=0;rescue=null}
   if(rescue){const dist=Math.hypot(rescue.x-a.x,rescue.y-a.y);
    if(dist>1.15){a.reviveProgress=0;const vx=(rescue.x-a.x)/dist,vy=(rescue.y-a.y)/dist;moveSquadmate(a,vx,vy,dt*(a.role==='scout'?2.9:2.25));continue}
    a.reviveProgress+=dt;if(a.reviveProgress>=reviveDuration(a.role)){
