@@ -866,7 +866,7 @@ function squadUpdate(dt:number){if(!run||!plan)return;const r=run,p=r.player,ord
  squadClock+=dt;const shooting=squadClock>.14;if(shooting)squadClock=0;
  // Assign a single rescuer to each casualty; split rescues only while defensible.
  const movement={x:(keys.has('KeyD')||keys.has('ArrowRight')?1:0)-(keys.has('KeyA')||keys.has('ArrowLeft')?1:0)+moveAnalog.x,y:(keys.has('KeyS')||keys.has('ArrowDown')?1:0)-(keys.has('KeyW')||keys.has('ArrowUp')?1:0)+moveAnalog.y};
- const nearestThreat=aliveEnemies.reduce((best,e)=>Math.hypot(e.x-p.x,e.y-p.y)<Math.hypot(best?.x??1e6,best?.y??1e6)?e:best,null as Unit|null);
+ const nearestThreat=aliveEnemies.reduce((best,e)=>!best||Math.hypot(e.x-p.x,e.y-p.y)<Math.hypot(best.x-p.x,best.y-p.y)?e:best,null as Unit|null);
  const retreating=!!nearestThreat&&Math.hypot(nearestThreat.x-p.x,nearestThreat.y-p.y)<7&&
   movement.x*(p.x-nearestThreat.x)+movement.y*(p.y-nearestThreat.y)>0.55;
  const tacticalMode:SquadOrder=retreating?'regroup':aliveEnemies.some(e=>Math.hypot(e.x-p.x,e.y-p.y)<4.5)?'defensive':'follow';
