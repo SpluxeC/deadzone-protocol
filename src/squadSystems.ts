@@ -1,6 +1,6 @@
 import {canClassEquip,weaponDefs,newWeapon,type ClassId,type Weapon,type Tier,type WeaponId,type Slot} from './equipmentArmory.ts';
 export type SquadOrder='follow'|'hold'|'focus'|'regroup'|'defensive'|'suppress';
-export type Squadmate={id:string;name:string;role:ClassId;hp:number;maxHp:number;x:number;y:number;cooldown:number;abilityCooldown:number;reviveProgress:number;downed:number;dead:boolean;anchor:{x:number;y:number};weapon:Weapon;secondaryWeapon:Weapon;meleeWeapon:Weapon;activeSlot:Slot;armor:number;armorTier:Tier;gearTier:Tier;magReserve:number;medkits:number;medicalProgress:number;medicalTarget:string|null;}
+export type Squadmate={id:string;name:string;role:ClassId;hp:number;maxHp:number;x:number;y:number;cooldown:number;abilityCooldown:number;reviveProgress:number;downed:number;dead:boolean;anchor:{x:number;y:number};weapon:Weapon;secondaryWeapon:Weapon;meleeWeapon:Weapon;activeSlot:Slot;armor:number;armorTier:Tier;gearTier:Tier;magReserve:number;medkits:number;medicalProgress:number;medicalTarget:string|null;reviveTarget?:string|null;}
 export type Downable={hp:number;downed:number;dead:boolean};
 export const SQUAD_LIMIT=4;
 export const SQUAD_MAX_AMMO=400;
@@ -28,14 +28,14 @@ export const CLASS_INFO:Record<ClassId,{label:string;cost:number;model:WeaponId;
 export const classIds=Object.keys(CLASS_INFO) as ClassId[];
 export function makeSquadmate(role:ClassId,id:string,x:number,y:number,tier:Tier=1):Squadmate{
  const info=CLASS_INFO[role];if(!canClassEquip(role,info.model))throw Error('Invalid class loadout');
- return{id,name:info.label+' '+id.slice(-2),role,hp:100,maxHp:100,x,y,cooldown:0,abilityCooldown:0,reviveProgress:0,downed:0,dead:false,anchor:{x,y},weapon:newWeapon(info.model,tier,id+'-weapon'),secondaryWeapon:newWeapon('pistol',tier,id+'-sidearm'),meleeWeapon:newWeapon('knife',tier,id+'-melee'),activeSlot:'primary',armor:info.armor,armorTier:1,gearTier:1,magReserve:240,medkits:role==='medic'?4:2,medicalProgress:0,medicalTarget:null};
+ return{id,name:info.label+' '+id.slice(-2),role,hp:100,maxHp:100,x,y,cooldown:0,abilityCooldown:0,reviveProgress:0,downed:0,dead:false,anchor:{x,y},weapon:newWeapon(info.model,tier,id+'-weapon'),secondaryWeapon:newWeapon('pistol',tier,id+'-sidearm'),meleeWeapon:newWeapon('knife',tier,id+'-melee'),activeSlot:'primary',armor:info.armor,armorTier:1,gearTier:1,magReserve:240,medkits:role==='medic'?4:2,medicalProgress:0,medicalTarget:null,reviveTarget:null};
 }
 export function migrateSquadmate(v:Partial<Squadmate>&{x:number;y:number;hp:number;name?:string},index:number):Squadmate{
  const role:ClassId=v.role&&classIds.includes(v.role)?v.role:'rifleman';
  const a=makeSquadmate(role,v.id||'legacy-'+index,v.x,v.y,v.weapon?.tier??1);
  return {...a,...v,role,id:a.id,name:v.name||a.name,weapon:v.weapon&&canClassEquip(role,v.weapon.model)?v.weapon:a.weapon,secondaryWeapon:v.secondaryWeapon&&weaponDefs[v.secondaryWeapon.model]?.slot==='secondary'&&canClassEquip(role,v.secondaryWeapon.model)?v.secondaryWeapon:a.secondaryWeapon,meleeWeapon:v.meleeWeapon&&weaponDefs[v.meleeWeapon.model]?.slot==='melee'&&canClassEquip(role,v.meleeWeapon.model)?v.meleeWeapon:a.meleeWeapon,activeSlot:v.activeSlot??'primary',anchor:v.anchor||{x:v.x,y:v.y},
   cooldown:v.cooldown??0,abilityCooldown:v.abilityCooldown??0,reviveProgress:v.reviveProgress??0,downed:v.downed??0,dead:!!v.dead,
-  armor:v.armor??a.armor,armorTier:v.armorTier??1,gearTier:v.gearTier??1,magReserve:Math.min(SQUAD_MAX_AMMO,Math.max(0,v.magReserve??240)),medkits:Math.min(role==='medic'?4:2,Math.max(0,v.medkits??(role==='medic'?4:2))),medicalProgress:v.medicalProgress??0,medicalTarget:v.medicalTarget??null};
+  armor:v.armor??a.armor,armorTier:v.armorTier??1,gearTier:v.gearTier??1,magReserve:Math.min(SQUAD_MAX_AMMO,Math.max(0,v.magReserve??240)),medkits:Math.min(role==='medic'?4:2,Math.max(0,v.medkits??(role==='medic'?4:2))),medicalProgress:v.medicalProgress??0,medicalTarget:v.medicalTarget??null,reviveTarget:v.reviveTarget??null};
 }
 export function applyLethalDamage(v:Downable,damage:number,seconds:number):void{
  if(v.dead||v.downed>0)return;
