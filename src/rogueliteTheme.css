@@ -1374,3 +1374,10 @@
 #rogue #overlay[hidden]:has(> .settings-screen){
  display:none!important;visibility:hidden!important;pointer-events:none!important
 }
+
+/* Player-facing squad commands are replaced by grenade quick throw. The internal AI remains. */
+#rogue footer #orders {display:none!important}
+#rogue #mobile-squad {gap:4px;max-width:min(440px,calc(100% - 235px));z-index:4}
+#rogue #mobile-squad [data-grenade] {flex:1;min-width:0;background:#384743e8;border:1px solid #d4b59a;border-radius:8px;font-weight:800;letter-spacing:.025em}
+#rogue #mobile-squad [data-grenade]:disabled {opacity:.42;filter:grayscale(.6)}
+@media(max-height:430px){#rogue #mobile-squad{max-width:calc(100% - 245px);gap:2px}#rogue #mobile-squad [data-grenade]{font-size:9px!important;padding:4px 3px!important}}
