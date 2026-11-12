@@ -895,6 +895,8 @@ function squadUpdate(dt:number){if(!run||!plan)return;const r=run,p=r.player,ord
   a.cooldown=Math.max(0,a.cooldown-dt);a.abilityCooldown=Math.max(0,a.abilityCooldown-dt);
   let rescue:Ally|{x:number;y:number}|null=rescueAssignments.get(a.id)??null;
   if(rescue&&aliveEnemies.some(e=>Math.hypot(e.x-a.x,e.y-a.y)<1.7)){a.reviveProgress=0;rescue=null}
+  const reviveTarget=rescue?(rescue===p?'player':(rescue as Ally).id):null;
+  if(a.reviveTarget!==reviveTarget){a.reviveProgress=0;a.reviveTarget=reviveTarget}
   if(rescue){const dist=Math.hypot(rescue.x-a.x,rescue.y-a.y);
    if(dist>1.15){a.reviveProgress=0;const vx=(rescue.x-a.x)/dist,vy=(rescue.y-a.y)/dist;moveSquadmate(a,vx,vy,dt*(a.role==='scout'?2.9:2.25));continue}
    a.reviveProgress+=dt;if(a.reviveProgress>=reviveDuration(a.role)){
@@ -906,6 +908,7 @@ function squadUpdate(dt:number){if(!run||!plan)return;const r=run,p=r.player,ord
   }
   a.reviveProgress=0;
   const treatment=treatSquadmate(a,dt);if(treatment==='other')continue;
+  if(r.allies.some(b=>b!==a&&b.medicalTarget===a.id&&b.medicalProgress>0))continue;
   const squadIndex=r.allies.indexOf(a);
   let destination=formationDestination(order==='hold'||order==='focus'?order:tacticalMode,p,aim,squadIndex,r.allies.length,a.anchor),speed=2.35;
   if(order==='regroup'||retreating)speed=3.05;
