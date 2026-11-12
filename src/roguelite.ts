@@ -752,7 +752,7 @@ function inventory(){if(!run)return;paused=true;overlay.hidden=false;
 }
 function squadPanel(){if(!run)return;paused=true;overlay.hidden=false;const r=run,eq=ensureEquipment(r),atShop=r.stage==='shop';
  const cards=r.allies.map((a,i)=>{const eligible=eq.bag.map((item,j)=>item.kind==='weapon'&&canClassEquip(a.role,item.model)?'<button id="sq-equip-'+i+'-'+j+'">EQUIP '+itemName(item)+'</button>':'').join('');
- return `<details class="squad-card" data-squad-index="${i}" open><summary><span><b>${a.name} · ${CLASS_INFO[a.role].label}</b><small>HP ${Math.ceil(a.hp)} · ARM ${Math.ceil(a.armor)} · AMMO ${a.magReserve}/${SQUAD_MAX_AMMO}</small></span><span class="squad-expand-indicator" aria-hidden="true">⌄</span></summary><div class="squad-card-body"><p>HP ${Math.ceil(a.hp)}/${a.maxHp} · ARMOR ${Math.ceil(a.armor)} · ${a.downed>0?'DOWNED '+Math.ceil(a.downed)+'s':'ACTIVE'} · ACTIVE ${a.activeSlot.toUpperCase()} · Gear ${rarityName(a.gearTier)} · AMMO ${a.magReserve}/${SQUAD_MAX_AMMO}<br>${CLASS_INFO[a.role].special}</p><div class="squad-weapons"><small>PRIMARY: ${itemName(a.weapon)} · SECONDARY: ${itemName(a.secondaryWeapon)} · MELEE: ${itemName(a.meleeWeapon)}</small><div class="menurow"><button id="sq-slot-primary-${i}">PRIMARY</button><button id="sq-slot-secondary-${i}">SIDEARM</button><button id="sq-slot-melee-${i}">MELEE</button></div></div><div class="menurow">${atShop?'<button id="sq-heal-'+i+'">HEAL +40 · 175 CR</button><button id="sq-armor-'+i+'">ARMOR +40 · 220 CR</button><button id="sq-ammo-'+i+'">CLASS AMMO +80 · 150 CR</button><button id="sq-up-'+i+'">CLASS GEAR UPGRADE · '+gearUpgradeCost(a)+' CR</button>':''}${eligible}</div></div></details>`}).join('');
+ return `<details class="squad-card" data-squad-index="${i}" open><summary><span><b>${a.name} · ${CLASS_INFO[a.role].label}</b><small>HP ${Math.ceil(a.hp)} · ARM ${Math.ceil(a.armor)} · AMMO ${a.magReserve}/${SQUAD_MAX_AMMO}</small></span><span class="squad-expand-indicator" aria-hidden="true">⌄</span></summary><div class="squad-card-body"><p>HP ${Math.ceil(a.hp)}/${a.maxHp} · ARMOR ${Math.ceil(a.armor)} · ${a.downed>0?'DOWNED '+Math.ceil(a.downed)+'s':'ACTIVE'} · ACTIVE ${a.activeSlot.toUpperCase()} · Gear ${rarityName(a.gearTier)} · AMMO ${a.magReserve}/${SQUAD_MAX_AMMO} · MEDKITS ${a.medkits}/${a.role==='medic'?4:2}<br>${CLASS_INFO[a.role].special}</p><div class="squad-weapons"><small>PRIMARY: ${itemName(a.weapon)} · SECONDARY: ${itemName(a.secondaryWeapon)} · MELEE: ${itemName(a.meleeWeapon)}</small><div class="menurow"><button id="sq-slot-primary-${i}">PRIMARY</button><button id="sq-slot-secondary-${i}">SIDEARM</button><button id="sq-slot-melee-${i}">MELEE</button></div></div><div class="menurow">${atShop?'<button id="sq-heal-'+i+'">HEAL +40 · 175 CR</button><button id="sq-armor-'+i+'">ARMOR +40 · 220 CR</button><button id="sq-ammo-'+i+'">CLASS AMMO +80 · 150 CR</button><button id="sq-up-'+i+'">CLASS GEAR UPGRADE · '+gearUpgradeCost(a)+' CR</button>':''}${eligible}</div></div></details>`}).join('');
  overlay.innerHTML=`<article class="squad-management"><div class="armory-top"><div class="management-heading"><h1>SQUAD MANAGEMENT</h1><strong class="management-credits" aria-label="Available credits">₡${r.credits.toLocaleString()} CREDITS</strong></div><nav class="management-toolbar" aria-label="Squad navigation"><button id="squad-return">${atShop?'BACK TO ARMORY':'RETURN TO GAME'}</button><button id="squad-inventory">INVENTORY</button><button id="squad-refill">Refill Squad Ammo · ${squadAmmoRefillPrice(r.allies)} CR</button></nav></div><p>${r.allies.length}/4 specialists · ${r.credits} credits · Order: ${orderLabel(r.squadOrder??'follow')}</p>${cards||'<p>No living squad members. Recruits appear in the between-wave Armory.</p>'}</article>`;
  const squadCards=Array.from(overlay.querySelectorAll<HTMLDetailsElement>('.squad-card'));
  const compactSquad=window.matchMedia('(pointer:coarse), (max-width:780px)').matches;
@@ -828,10 +828,27 @@ function rescueAction(dt:number,manual=false){if(!run||paused)return;const r=run
   if(manual&&dist<1.55&&(r.playerDowned??0)===0){r.reviveProgress=(r.reviveProgress??0)+dt;if((r.reviveProgress??0)>=3.5){revive(a,28);a.reviveProgress=0;r.reviveProgress=0;notice(a.name+' REVIVED');save()}}}
  if(!manual)r.reviveProgress=0;
 }
+function treatSquadmate(a:Ally,dt:number):'none'|'self'|'other'{
+ if(!run||a.dead||a.downed>0)return 'none';
+ const danger=run.enemies.some(e=>e.alive&&Math.hypot(e.x-a.x,e.y-a.y)<2.5);
+ const patients=run.allies.filter(b=>!b.dead&&b.downed<=0&&b.hp/b.maxHp<.5).sort((x,y)=>x.hp/x.maxHp-y.hp/y.maxHp);
+ const patient=patients.find(b=>b===a)||patients.find(b=>Math.hypot(b.x-a.x,b.y-a.y)<1.45);
+ if(!patient||!a.medkits||danger){a.medicalProgress=0;a.medicalTarget=null;return 'none'}
+ const self=patient===a;
+ if(a.medicalTarget!==patient.id){a.medicalTarget=patient.id;a.medicalProgress=0}
+ a.medicalProgress+=dt;
+ if(a.medicalProgress>=(a.role==='medic'?3:6)){
+  patient.hp=Math.min(patient.maxHp,patient.hp+patient.maxHp*(a.role==='medic'?.6:.4));
+  a.medkits--;a.medicalProgress=0;a.medicalTarget=null;
+  notice(a.name+' · MEDKIT ADMINISTERED');
+ }
+ return self?'self':'other';
+}
 function squadUpdate(dt:number){if(!run||!plan)return;const r=run,p=r.player,order=r.squadOrder??'follow',aliveEnemies=r.enemies.filter(e=>e.alive);
  squadClock+=dt;const shooting=squadClock>.14;if(shooting)squadClock=0;
  for(const a of r.allies){
   if(a.dead)continue;
+  if(a.medkits===0){const donor=r.allies.find(b=>b!==a&&!b.dead&&b.medkits>1&&Math.hypot(b.x-a.x,b.y-a.y)<1.45);if(donor){donor.medkits--;a.medkits++}}
   if(a.downed>0){if(bleed(a,dt))notice(a.name+' LOST — REPLACE AT ARMORY');continue}
   a.cooldown=Math.max(0,a.cooldown-dt);a.abilityCooldown=Math.max(0,a.abilityCooldown-dt);
   let rescue:Ally|{x:number;y:number}|null=null;
@@ -847,6 +864,7 @@ function squadUpdate(dt:number){if(!run||!plan)return;const r=run,p=r.player,ord
    }continue;
   }
   a.reviveProgress=0;
+  const treatment=treatSquadmate(a,dt);if(treatment==='other')continue;
   const squadIndex=r.allies.indexOf(a);
   let destination=formationDestination(order,p,aim,squadIndex,r.allies.length,a.anchor),speed=2.35;
   if(order==='regroup')speed=3.05;
@@ -854,13 +872,14 @@ function squadUpdate(dt:number){if(!run||!plan)return;const r=run,p=r.player,ord
    const target=r.enemies[r.focusTarget];if(target?.alive)destination={x:target.x,y:target.y};
   }
   const separation=order==='hold'?.4:order==='focus'?3:order==='suppress'?.52:order==='defensive'?.55:.6;
+  if(treatment==='self')speed*=.35;
   const d=Math.hypot(destination.x-a.x,destination.y-a.y);
   if(d>separation){const direct=canSee(a.x,a.y,destination.x,destination.y),field=direct?null:distanceField(plan.map,destination),wp=field?nextZombieWaypoint(plan.map,field,a):destination,len=Math.hypot(wp.x-a.x,wp.y-a.y)||1;moveSquadmate(a,(wp.x-a.x)/len,(wp.y-a.y)/len,dt*speed)}
-  if(a.role==='medic'&&a.abilityCooldown===0){const candidates=[{hp:r.hp,maxHp:100,x:p.x,y:p.y,isPlayer:true},...r.allies.filter(b=>!b.dead&&b.downed<=0).map(b=>({hp:b.hp,maxHp:b.maxHp,x:b.x,y:b.y,isPlayer:false,ally:b}))].filter(v=>v.hp<v.maxHp-10&&Math.hypot(v.x-a.x,v.y-a.y)<4);
-   candidates.sort((x,y)=>(x.hp/x.maxHp)-(y.hp/y.maxHp));const injured=candidates[0];if(injured){if(injured.isPlayer&&!(r.playerDowned??0))r.hp=Math.min(100,r.hp+15+a.gearTier*3);else if('ally' in injured&&injured.ally)injured.ally.hp=Math.min(injured.ally.maxHp,injured.ally.hp+15+a.gearTier*3);a.abilityCooldown=11;notice('MEDIC FIELD HEAL')}}
+  /* Medkit-based tactical triage replaces unlimited instant healing. */
   if(a.role==='engineer'&&a.abilityCooldown===0){const enemy=aliveEnemies.find(e=>Math.hypot(e.x-a.x,e.y-a.y)<3.2);if(enemy){for(const z of aliveEnemies.filter(e=>Math.hypot(e.x-enemy.x,e.y-enemy.y)<1.5))strikeZombie(z,1+a.gearTier,unit(z.x-a.x,z.y-a.y));a.abilityCooldown=13;notice('ENGINEER TRAP TRIGGERED')}
    else if(a.armor<CLASS_INFO.engineer.armor&&r.armor<80&&Math.hypot(a.x-p.x,a.y-p.y)<3){r.armor=Math.min(100,r.armor+8+a.gearTier*2);a.abilityCooldown=14;notice('ENGINEER ARMOR REPAIR')}}
   if(!shooting||a.cooldown>0)continue;
+  if(a.magReserve<20){const donor=r.allies.find(b=>b!==a&&!b.dead&&b.magReserve>90&&Math.hypot(b.x-a.x,b.y-a.y)<1.45);if(donor){donor.magReserve-=40;a.magReserve+=40}}
   const visible=aliveEnemies.filter(e=>canSee(a.x,a.y,e.x,e.y));
   const focused=r.focusTarget!==null&&r.focusTarget!==undefined?r.enemies[r.focusTarget]:null;
   const target=pickTacticalTarget(order,a,p,visible,focused?.alive?focused:null);
