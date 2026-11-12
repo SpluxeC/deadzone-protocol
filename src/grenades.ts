@@ -32,11 +32,22 @@ export function advanceGrenade(g:GrenadeFlight,dt:number,walkable:(x:number,y:nu
  if(!g.fired){
   const nx=g.x+g.vx*dt,ny=g.y+g.vy*dt;
   const travel=Math.hypot(nx-g.originX,ny-g.originY);
-  if(travel>8){g.vx=0;g.vy=0;g.altitude=0;}
-  const hitX=!walkable(nx,g.y)||travel>8,hitY=!walkable(g.x,ny)||travel>8;
-  if(g.type==='impact'&&(hitX||hitY)){g.fired=true;return {detonate:true,ended:true}}
-  if(hitX)g.vx*=-.45;else g.x=nx;
-  if(hitY)g.vy*=-.45;else g.y=ny;
+  const rangeReached=travel>=6;
+  // Clamp the position to six tiles before testing collisions, so no frame
+  // can put a grenade beyond its maximum throw distance.
+  const scale=rangeReached?6/travel:1;
+  const tx=g.originX+(nx-g.originX)*scale,ty=g.originY+(ny-g.originY)*scale;
+  const hitX=!walkable(tx,g.y),hitY=!walkable(g.x,ty);
+  if(g.type==='impact'&&(hitX||hitY||rangeReached)){
+   if(!hitX)g.x=tx;
+   if(!hitY)g.y=ty;
+   g.fired=true;return {detonate:true,ended:true};
+  }
+  if(rangeReached&&!hitX&&!hitY){g.x=tx;g.y=ty;g.vx=0;g.vy=0;}
+  else{
+   if(hitX)g.vx*=-.45;else g.x=tx;
+   if(hitY)g.vy*=-.45;else g.y=ty;
+  }
   const drag=Math.pow(.55,dt);g.vx*=drag;g.vy*=drag;
   g.altitude=Math.max(0,Math.sin(Math.min(1,g.age/.72)*Math.PI)*.65);
   if(g.type==='impact'&&g.age>=.72){g.fired=true;return {detonate:true,ended:true}}
