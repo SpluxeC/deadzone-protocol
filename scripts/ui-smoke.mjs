@@ -304,7 +304,7 @@ async function runScenario(touch){
  await tap('#shop-inventory');
  await checkWiring(page,label+' Armory inventory');
  if(touch){
-  assert.equal(await page.locator('.inventory-screen [data-mobile-tab]').count(),3,'Inventory should have three categories');
+  assert.equal(await page.locator('.inventory-screen [data-mobile-tab]').count(),2,'Inventory has equipped and backpack categories');
   const panels=await page.locator('.inventory-screen [data-mobile-panel]').evaluateAll(nodes=>nodes.filter(n=>getComputedStyle(n).display!=='none').length);
   assert.equal(panels,1,'Only one inventory category should be visible on mobile');
  }
