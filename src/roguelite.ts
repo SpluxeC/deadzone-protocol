@@ -1295,6 +1295,22 @@ function draw(){
   else drawSprite(ctx,kind,v,e.x,e.y,{angle:motion.angle+(e.hitFlash??0)*Math.sin(now/23)*.7,stride:motion.phase,motionSpeed:motion.speed,idleTime:now/1000,scale:kind==='bruiser'?1.32:kind==='runner'?.93:1.12,glow:(e.hitFlash??0)>0?'#ef7e65':undefined});
 
   if((e.emerging??0)>0)ctx.restore();
+  // Natural armor wear: fractures and exposed flesh become visible when plating breaks.
+  if((e.boss||e.kind==='armored')&&(e.armorIntegrity??0)<(e.boss?120:38)){
+   const armorRatio=Math.max(0,(e.armorIntegrity??0)/(e.boss?120:38));
+   const px=v.ox+e.x*v.tile,py=v.oy+e.y*v.tile,k=e.boss?1.5:1;
+   ctx.save();ctx.translate(px,py);ctx.lineWidth=Math.max(1,v.tile*.04);ctx.strokeStyle='#15191c';
+   ctx.beginPath();ctx.moveTo(-v.tile*.26*k,-v.tile*.34*k);ctx.lineTo(v.tile*.08*k,-v.tile*.13*k);ctx.lineTo(-v.tile*.06*k,v.tile*.07*k);
+   if(armorRatio<.6){ctx.moveTo(v.tile*.25*k,-v.tile*.24*k);ctx.lineTo(-v.tile*.04*k,-v.tile*.02*k);ctx.lineTo(v.tile*.23*k,v.tile*.22*k)}
+   ctx.stroke();
+   if(armorRatio===0){
+    ctx.fillStyle='#713c38';ctx.strokeStyle='#2b1c20';ctx.lineWidth=Math.max(1,v.tile*.018);
+    ctx.beginPath();ctx.ellipse(0,-v.tile*.18*k,v.tile*.19*k,v.tile*.13*k,-.22,0,Math.PI*2);ctx.fill();ctx.stroke();
+   }else if(armorRatio<.45){
+    ctx.fillStyle='#595a58';ctx.beginPath();ctx.ellipse(v.tile*.12*k,-v.tile*.14*k,v.tile*.12*k,v.tile*.065*k,.4,0,Math.PI*2);ctx.fill();
+   }
+   ctx.restore();
+  }
   if(boss){ctx.save();ctx.textAlign='center';ctx.font='bold '+Math.max(11,v.tile*.4)+'px system-ui';ctx.fillStyle=boss.color;ctx.shadowColor='#000';ctx.shadowBlur=5;ctx.fillText(boss.name,v.ox+e.x*v.tile,v.oy+(e.y-1.42)*v.tile);ctx.restore()}
   if(e.maxHp>2)drawBar(ctx,v,e.x,e.y,e.hp/e.maxHp,boss?.color??'#dc9b83',e.boss?1.3:.78);
   if((e.scoutMarked??0)>0){ctx.strokeStyle='#a4ecfc';ctx.lineWidth=Math.max(2,v.tile*.05);ctx.strokeRect(v.ox+(e.x-.51)*v.tile,v.oy+(e.y-.53)*v.tile,1.02*v.tile,1.02*v.tile)}
