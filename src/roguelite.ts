@@ -159,7 +159,7 @@ function loadRun(){try{const r=JSON.parse(localStorage.getItem(store('run'))||'n
  const occupied=[run.player];
  for(const a of run.allies){const p=nearestWalkable(plan.map,a);const placed=spacedSquadPosition(plan.map,p,occupied);a.x=placed.x;a.y=placed.y;occupied.push(a);}
  ensureEquipment(run);fog=createFog(plan.map,run.explored??[]);for(const enemy of run.enemies){
- const p=nearestWalkable(plan.map,enemy);enemy.x=p.x;enemy.y=p.y;enemy.kind??=enemy.boss?'boss':'shambler';if(enemy.boss&&enemy.alive&&enemy.maxHp<zombieStats('boss').hp){const fraction=enemy.maxHp>0?enemy.hp/enemy.maxHp:1;enemy.maxHp=zombieStats('boss').hp;enemy.hp=Math.max(1,enemy.maxHp*fraction)}enemy.attack??=0;enemy.windup??=0;enemy.phase??=0;enemy.aggro??=0;enemy.suppressed??=0;enemy.scoutMarked??=0;enemy.stagger??=0;enemy.hitFlash??=0;enemy.searchClock??=0;enemy.lastKnown??=null;enemy.alertMode??='idle';}return true}catch{return false}}
+ const p=nearestWalkable(plan.map,enemy);enemy.x=p.x;enemy.y=p.y;enemy.kind??=enemy.boss?'boss':'shambler';if(enemy.boss&&enemy.alive&&enemy.maxHp<zombieStats('boss').hp){const fraction=enemy.maxHp>0?enemy.hp/enemy.maxHp:1;enemy.maxHp=zombieStats('boss').hp;enemy.hp=Math.max(1,enemy.maxHp*fraction)}enemy.armorIntegrity??=enemy.boss?120:enemy.kind==='armored'?38:0;enemy.attack??=0;enemy.windup??=0;enemy.phase??=0;enemy.aggro??=0;enemy.suppressed??=0;enemy.scoutMarked??=0;enemy.stagger??=0;enemy.hitFlash??=0;enemy.searchClock??=0;enemy.lastKnown??=null;enemy.alertMode??='idle';}return true}catch{return false}}
 /** One cinematic backdrop shared by the menu, loadout and upgrade screens. */
 function menuBackdrop():string{return '<div class="menu-cinematic-backdrop" aria-hidden="true"><canvas id="menu-cinematic"></canvas><span class="menu-scene-badge">CAM 04 · CONTAINMENT WING</span><span class="menu-scene-corner">● SIGNAL ACTIVE</span></div>'}
 /** Reuse the existing bound sound controls in a compact, accessible Settings
@@ -327,7 +327,7 @@ function spawnOne(boss=false,initial=false,preferredHole?:number){
  candidates.sort((a,b)=>a.score-b.score);
  const chosen=candidates[0],kind=zombieKind(run.wave,n,boss),stats=zombieStats(kind);
  if(!initial)gameAudio.playZombie(kind,'spawn',Math.hypot(chosen.x-player.x,chosen.y-player.y));
- run.enemies.push({x:chosen.x,y:chosen.y,hp:stats.hp,maxHp:stats.hp,speed:stats.speed,attack:0,boss,alive:true,kind,windup:0,phase:0,aggro:0,suppressed:0,scoutMarked:0,alertMode:'idle',searchClock:0,lastKnown:null,stagger:0,hitFlash:0,emerging:.55});
+ run.enemies.push({armorIntegrity:boss?120:kind==='armored'?38:0,x:chosen.x,y:chosen.y,hp:stats.hp,maxHp:stats.hp,speed:stats.speed,attack:0,boss,alive:true,kind,windup:0,phase:0,aggro:0,suppressed:0,scoutMarked:0,alertMode:'idle',searchClock:0,lastKnown:null,stagger:0,hitFlash:0,emerging:.55});
  run.spawned++;
  return true;
 }
@@ -356,6 +356,7 @@ function swapFirearm(){
 /** Visual-only impact blood on enemies struck by bullets or melee. */
 function strikeZombie(enemy:Unit,damage:number,direction:{x:number;y:number},melee=false){
  if(!enemy.alive||!plan)return;
+ if(enemy.boss||enemy.kind==='armored'){enemy.armorIntegrity??=enemy.boss?120:38;enemy.armorIntegrity=Math.max(0,enemy.armorIntegrity-damage*(melee?.4:1));damage*=enemy.armorIntegrity>0?(enemy.boss?.6:.7):1.3;}
  enemy.hp-=damage;
  if(enemy.hp>0)gameAudio.playZombie(enemy.kind??'shambler','hurt',run?Math.hypot(enemy.x-run.player.x,enemy.y-run.player.y):0);
  const reaction=hitReaction(enemy.kind??'shambler',damage,melee);
@@ -1062,6 +1063,7 @@ for(const e of run.enemies){if(!e.alive)continue;
  }
 }
 bossPulse=Math.max(0,bossPulse-dt);
+if((run.playerDowned??0)>0&&run.allies.every(a=>a.dead||a.downed>0)){run.playerDead=true;death();return}
 if((run.playerDowned??0)>0){run.playerDowned=Math.max(0,(run.playerDowned??0)-dt);if(run.playerDowned===0&&run.hp<=0){run.playerDead=true;death();return}}
 if(performance.now()-lastSave>1200){lastSave=performance.now();save()}
 }
