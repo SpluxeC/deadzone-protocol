@@ -242,8 +242,17 @@ export function drawSprite(ctx:CanvasRenderingContext2D,kind:SpriteKind,v:View,x
  const zombie=['shambler','runner','armored','bruiser','boss'].includes(kind);
  ctx.save();ctx.translate(px,py);
  ctx.globalAlpha=opts?.alpha??1;
- // The ground shadow stays anchored as the upper body bobs and the feet alternate.
- ctx.fillStyle='rgba(0,5,6,.35)';ctx.beginPath();ctx.ellipse(0,sz*.36,sz*.38,sz*.115,0,0,Math.PI*2);ctx.fill();
+ // Layered grounded shadows make the detailed sprites read as solid bodies.
+ if(living){
+  const shadow=ctx.createRadialGradient(sz*.10,sz*.34,sz*.03,sz*.13,sz*.37,sz*.68);
+  shadow.addColorStop(0,'rgba(0,4,7,.44)');
+  shadow.addColorStop(.55,'rgba(0,5,8,.20)');
+  shadow.addColorStop(1,'rgba(0,4,7,0)');
+  ctx.fillStyle=shadow;ctx.beginPath();ctx.ellipse(sz*.12,sz*.34,sz*.64,sz*.36,-.22,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='rgba(0,4,5,.48)';ctx.beginPath();ctx.ellipse(0,sz*.35,sz*.30,sz*.10,0,0,Math.PI*2);ctx.fill();
+ }else{
+  ctx.fillStyle='rgba(0,5,6,.35)';ctx.beginPath();ctx.ellipse(0,sz*.36,sz*.38,sz*.115,0,0,Math.PI*2);ctx.fill();
+ }
  // Humans and infected use the original head-forward transform. For the player,
  // correct the rifle's diagonal angle so the barrel actually faces their aim.
  const rotation=(opts?.angle??0)+(living?Math.PI/2:0)+(opts?.down?Math.PI*.5:0);
