@@ -1,6 +1,7 @@
 import type {DungeonLayout} from './dungeon.ts';
 import type {WeaponId} from './equipmentArmory.ts';
-import {drawHeldWeapon,heldWeaponMuzzle,isMeleeWeapon} from './weaponVisuals.ts';
+import {drawHeldWeapon,heldWeaponMuzzle} from './weaponVisuals.ts';
+import {meleePose} from './meleeCombat.ts';
 import {aimedHand,solveAimArm} from './characterMotion.ts';
 import {drawCharacterLegs} from './characterLegs.ts';
 const spriteUrl=new URL('./assets/deadzone-sprites.svg',import.meta.url).href;
@@ -273,7 +274,7 @@ export function drawLootPopup(ctx:CanvasRenderingContext2D,v:View,x:number,y:num
  ctx.fillText(label,px,py+size*.58,width-8);
  ctx.restore();
 }
-export function drawSprite(ctx:CanvasRenderingContext2D,kind:SpriteKind,v:View,x:number,y:number,opts?:{angle?:number;scale?:number;down?:boolean;alpha?:number;glow?:string;bob?:number;stride?:number;motionSpeed?:number;idleTime?:number;showAim?:boolean;weapon?:WeaponId|null;aimAngle?:number;weaponRecoil?:number;reloadProgress?:number}):void{
+export function drawSprite(ctx:CanvasRenderingContext2D,kind:SpriteKind,v:View,x:number,y:number,opts?:{angle?:number;scale?:number;down?:boolean;alpha?:number;glow?:string;bob?:number;stride?:number;motionSpeed?:number;idleTime?:number;showAim?:boolean;weapon?:WeaponId|null;aimAngle?:number;weaponRecoil?:number;reloadProgress?:number;meleeAttack?:{model:WeaponId;progress:number;angle:number}}):void{
  if(!visible(v,x,y))return;
  const living=['player','rifleman','medic','heavy','scout','engineer','shambler','runner','armored','bruiser','boss'].includes(kind);
  const walking=living&&!opts?.down&&(opts?.motionSpeed??0)>.12;
@@ -335,9 +336,15 @@ export function drawSprite(ctx:CanvasRenderingContext2D,kind:SpriteKind,v:View,x
  if(opts?.weapon&&living&&!zombie&&!opts?.down){
   // Separate two-bone arms are anchored at the upright torso's shoulders.
   // Only hand targets and weapon rotate with aim; elbows bend away from the body.
-  const aimed=opts.aimAngle??0;
-  const left=solveAimArm(-1,aimedHand(.10,-.285,aimed));
-  const right=solveAimArm(1,aimedHand(.16,-.115,aimed));
+  const animated=opts.meleeAttack?meleePose(opts.meleeAttack.model,opts.meleeAttack.progress):null;
+  const aimed=opts.meleeAttack?.angle??opts.aimAngle??0;
+  const weaponHeading=aimed+(animated?.angleOffset??0);
+  const travel=animated?.thrust??0;
+  const offsetX=Math.cos(aimed)*travel,offsetY=Math.sin(aimed)*travel;
+  const support=aimedHand(.10,-.285,weaponHeading);
+  const grip=aimedHand(.16,-.115,weaponHeading);
+  const left=solveAimArm(-1,{x:support.x+offsetX,y:support.y+offsetY});
+  const right=solveAimArm(1,{x:grip.x+offsetX,y:grip.y+offsetY});
   const thickness=kind==='heavy'?.13:.10;
   const sleeve=kind==='medic'?'#929c96':kind==='heavy'?'#4c5557':
    kind==='engineer'?'#70674e':kind==='scout'?'#51624d':'#53615b';
@@ -362,16 +369,10 @@ export function drawSprite(ctx:CanvasRenderingContext2D,kind:SpriteKind,v:View,x
   // During reload the weapon dips slightly and the magazine/charging handle
   // animates, without changing the body's upright pose or the ballistic muzzle.
   const reloading=Math.max(0,Math.min(1,opts.reloadProgress??0));
-  ctx.rotate(aimed+Math.PI/2+(opts.weaponRecoil??0)+Math.sin(reloading*Math.PI)*.16);
-  drawHeldWeapon(ctx,opts.weapon,sz,{reload:reloading,recoil:opts.weaponRecoil, time:opts.idleTime});
-  if(kind==='player'&&opts.showAim&&!isMeleeWeapon(opts.weapon)){
-   const muzzle=heldWeaponMuzzle(opts.weapon,sz);
-   ctx.strokeStyle='rgba(255,231,185,.82)';
-   ctx.lineWidth=Math.max(1,v.tile*.035);
-   ctx.lineCap='round';
-   ctx.beginPath();ctx.moveTo(muzzle.x,muzzle.y);
-   ctx.lineTo(muzzle.x,muzzle.y-v.tile*.95);ctx.stroke();
-  }
+  ctx.translate(offsetX*sz,offsetY*sz);
+  ctx.rotate(weaponHeading+Math.PI/2+(opts.weaponRecoil??0)+Math.sin(reloading*Math.PI)*.16);
+  drawHeldWeapon(ctx,opts.weapon,sz,{reload:reloading,recoil:opts.weaponRecoil,time:opts.idleTime});
+  // No constant muzzle line: only actual bullets and brief muzzle flashes are rendered.
   ctx.restore();
  }
  ctx.restore();
