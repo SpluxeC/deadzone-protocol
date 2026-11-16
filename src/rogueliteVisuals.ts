@@ -1,6 +1,7 @@
 import type {DungeonLayout} from './dungeon.ts';
 import type {WeaponId} from './equipmentArmory.ts';
 import {drawHeldWeapon,heldWeaponMuzzle,isMeleeWeapon} from './weaponVisuals.ts';
+import {weaponRelativeAngle,weaponRigShoulder} from './characterMotion.ts';
 const spriteUrl=new URL('./assets/deadzone-sprites.svg',import.meta.url).href;
 // Optional art pack: when uploaded to public/environment, it loads without a code edit.
 const environmentAtlas=typeof Image==='undefined'?null:new Image();
@@ -231,7 +232,7 @@ export function drawLootPopup(ctx:CanvasRenderingContext2D,v:View,x:number,y:num
  ctx.fillText(label,px,py+size*.58,width-8);
  ctx.restore();
 }
-export function drawSprite(ctx:CanvasRenderingContext2D,kind:SpriteKind,v:View,x:number,y:number,opts?:{angle?:number;scale?:number;down?:boolean;alpha?:number;glow?:string;bob?:number;stride?:number;motionSpeed?:number;idleTime?:number;showAim?:boolean;weapon?:WeaponId|null}):void{
+export function drawSprite(ctx:CanvasRenderingContext2D,kind:SpriteKind,v:View,x:number,y:number,opts?:{angle?:number;scale?:number;down?:boolean;alpha?:number;glow?:string;bob?:number;stride?:number;motionSpeed?:number;idleTime?:number;showAim?:boolean;weapon?:WeaponId|null;aimAngle?:number;weaponRecoil?:number}):void{
  if(!visible(v,x,y))return;
  const living=['player','rifleman','medic','heavy','scout','engineer','shambler','runner','armored','bruiser','boss'].includes(kind);
  const walking=living&&!opts?.down&&(opts?.motionSpeed??0)>.12;
@@ -297,19 +298,42 @@ export function drawSprite(ctx:CanvasRenderingContext2D,kind:SpriteKind,v:View,x
   ctx.fillStyle=kind==='player'?'#dcd0b3':kind==='elevator'?'#61cda0':kind==='crate'?'#b9975d':'#7b9991';
   ctx.beginPath();ctx.arc(0,0,sz*.35,0,Math.PI*2);ctx.fill();
  }
- if(opts?.weapon&&living&&!zombie&&!opts?.down)drawHeldWeapon(ctx,opts.weapon,sz);
- if(kind==='player'&&opts?.showAim&&!opts?.down&&opts?.weapon&&!isMeleeWeapon(opts.weapon)){
-  // Draw in the same local frame as the artwork. The guide begins at the
-  // actual rifle muzzle and extends in the direction the painted barrel points.
-  const muzzle=heldWeaponMuzzle(opts.weapon,sz);
-  const startX=muzzle.x,startY=muzzle.y;
-  ctx.strokeStyle='rgba(255,231,185,.82)';
-  ctx.lineWidth=Math.max(1,v.tile*.035);
-  ctx.lineCap='round';
-  ctx.beginPath();ctx.moveTo(startX,startY);
-  ctx.lineTo(startX,startY-v.tile*.95);
-  ctx.stroke();
+ if(opts?.weapon&&living&&!zombie&&!opts?.down){
+  // Body orientation comes from travel. The arms and weapon have their own
+  // aim transform, so standing still or strafing does not rotate the torso.
+  const aimed=opts.aimAngle??opts.angle??0;
+  const body=opts.angle??0;
+  const relative=weaponRelativeAngle(body,aimed)+(opts.weaponRecoil??0);
+  const left=weaponRigShoulder(-.21,-.135,relative);
+  const right=weaponRigShoulder(.22,-.13,relative);
+  const armWidth=sz*(kind==='heavy'?.145:.115);
+  const sleeve=kind==='medic'?'#959f98':kind==='heavy'?'#51595b':kind==='engineer'?'#746e51':kind==='scout'?'#51634f':'#535f58';
+  ctx.save();ctx.rotate(relative);
+  ctx.lineCap='round';ctx.lineJoin='round';
+  // Support arm leads toward the forestock while the weapon hand grips the receiver.
+  ctx.strokeStyle='#151e21';ctx.lineWidth=armWidth+sz*.045;
+  ctx.beginPath();ctx.moveTo(left.x*sz,left.y*sz);ctx.lineTo(-sz*.15,-sz*.17);ctx.lineTo(sz*.125,-sz*.30);ctx.stroke();
+  ctx.strokeStyle=sleeve;ctx.lineWidth=armWidth;
+  ctx.beginPath();ctx.moveTo(left.x*sz,left.y*sz);ctx.lineTo(-sz*.15,-sz*.17);ctx.lineTo(sz*.125,-sz*.30);ctx.stroke();
+  ctx.strokeStyle='#172326';ctx.lineWidth=armWidth+sz*.045;
+  ctx.beginPath();ctx.moveTo(right.x*sz,right.y*sz);ctx.lineTo(sz*.32,-sz*.04);ctx.lineTo(sz*.16,-sz*.12);ctx.stroke();
+  ctx.strokeStyle=sleeve;ctx.lineWidth=armWidth;
+  ctx.beginPath();ctx.moveTo(right.x*sz,right.y*sz);ctx.lineTo(sz*.32,-sz*.04);ctx.lineTo(sz*.16,-sz*.12);ctx.stroke();
+  ctx.fillStyle='#374039';
+  ctx.beginPath();ctx.ellipse(sz*.125,-sz*.30,sz*.076,sz*.056,-.5,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.ellipse(sz*.16,-sz*.12,sz*.075,sz*.055,0,0,Math.PI*2);ctx.fill();
+  drawHeldWeapon(ctx,opts.weapon,sz);
+  if(kind==='player'&&opts.showAim&&!isMeleeWeapon(opts.weapon)){
+   const muzzle=heldWeaponMuzzle(opts.weapon,sz);
+   ctx.strokeStyle='rgba(255,231,185,.82)';
+   ctx.lineWidth=Math.max(1,v.tile*.035);
+   ctx.lineCap='round';
+   ctx.beginPath();ctx.moveTo(muzzle.x,muzzle.y);
+   ctx.lineTo(muzzle.x,muzzle.y-v.tile*.95);ctx.stroke();
+  }
+  ctx.restore();
  }
+
  ctx.restore();
 }
 export function drawBar(ctx:CanvasRenderingContext2D,v:View,x:number,y:number,ratio:number,color:string,width=.8):void{
