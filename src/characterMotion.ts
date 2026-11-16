@@ -22,3 +22,15 @@ export function nextCharacterMotion(
  const speed=moving?previous.speed*.32+rawSpeed*.68:Math.max(0,previous.speed-dt*9);
  return {x:point.x,y:point.y,angle:nextAngle,phase:previous.phase+Math.min(dist,.35)*10,speed,time:now};
 }
+
+/** Separate the upper-body weapon rig from travel-driven body facing.
+ * Body movement uses nextCharacterMotion; aiming must never steer its angle.
+ */
+export function weaponRelativeAngle(bodyAngle:number,aimAngle:number):number{
+ return wrapAngle(aimAngle-bodyAngle);
+}
+export function weaponRigShoulder(bodyX:number,bodyY:number,relativeAngle:number):MovingPoint{
+ const c=Math.cos(relativeAngle),s=Math.sin(relativeAngle);
+ // Convert a shoulder fixed in the body's frame into the independently aimed arm frame.
+ return {x:bodyX*c+bodyY*s,y:-bodyX*s+bodyY*c};
+}
