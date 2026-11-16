@@ -257,8 +257,16 @@ export function drawSprite(ctx:CanvasRenderingContext2D,kind:SpriteKind,v:View,x
  // correct the rifle's diagonal angle so the barrel actually faces their aim.
  const rotation=(opts?.angle??0)+(living?Math.PI/2:0)+(opts?.down?Math.PI*.5:0);
  ctx.rotate(rotation);
- const bounce=walking?Math.abs(Math.sin(opts?.stride??0))*sz*(zombie?.016:.025):0;
- ctx.translate(0,-bounce+(opts?.bob??0));
+ // Human motion has controlled weight transfer; infected locomotion is uneven.
+ // Heavy units plant their boots, runners have longer airborne strides, and
+ // shamblers drag their weight rather than bouncing in lockstep.
+ const phase=opts?.stride??0;
+ const isRunner=kind==='runner',isShambler=kind==='shambler';
+ const moving=Math.min(1,(opts?.motionSpeed??0)/2.8);
+ const bounce=walking?sz*moving*(isRunner?.035:isShambler?.008:kind==='boss'||kind==='bruiser'?.013:.018)*Math.abs(Math.sin(phase)):0;
+ const sway=walking?sz*moving*(isShambler?.025:isRunner?.014:.008)*Math.sin(phase*.5):0;
+ ctx.translate(sway,-bounce+(opts?.bob??0));
+ if(walking&&zombie)ctx.rotate(Math.sin(phase*.5)*(isShambler?.045:isRunner?.018:.016)*moving);
  if(resting){
   // Subtle breathing and shifting weight, not a full-body rotation.
   const breath=Math.sin((opts?.idleTime??0)*1.8+spriteIndex[kind]*.7);
