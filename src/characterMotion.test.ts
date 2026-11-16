@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {nextCharacterMotion,wrapAngle} from './characterMotion.ts';
+import {nextCharacterMotion,wrapAngle,weaponRelativeAngle,weaponRigShoulder} from './characterMotion.ts';
 
 test('turns take the shortest arc and cannot spin instantly through a direction reversal',()=>{
  const first=nextCharacterMotion(null,{x:0,y:0},1000,Math.PI-.08,3);
@@ -27,4 +27,23 @@ test('stationary characters stop stepping without abrupt pose resets',()=>{
  const c=nextCharacterMotion(b,{x:.07,y:0},1032,Math.PI);
  assert.equal(b.phase,c.phase);
  assert.ok(c.speed<b.speed);
+});
+
+test('body facing is controlled by travel, not right-stick aim while idle',()=>{
+ const a=nextCharacterMotion(null,{x:0,y:0},1000,0);
+ const aimed=nextCharacterMotion(a,{x:0,y:0},1016,Math.PI/2,12);
+ assert.equal(aimed.angle,0);
+ assert.ok(Math.abs(weaponRelativeAngle(aimed.angle,Math.PI/2)-Math.PI/2)<1e-8);
+ const moving=nextCharacterMotion(aimed,{x:0,y:.1},1032,0,12);
+ assert.ok(moving.angle>0);
+ assert.ok(Math.abs(weaponRelativeAngle(moving.angle,Math.PI/2))<Math.PI/2);
+});
+test('weapon-side shoulder remains fixed to the body when weapon aim rotates',()=>{
+ for(const aim of [0,Math.PI/2,Math.PI,-Math.PI/2]){
+  const local=weaponRigShoulder(.22,-.13,aim);
+  const x=local.x*Math.cos(aim)-local.y*Math.sin(aim);
+  const y=local.x*Math.sin(aim)+local.y*Math.cos(aim);
+  assert.ok(Math.abs(x-.22)<1e-8);
+  assert.ok(Math.abs(y+.13)<1e-8);
+ }
 });
