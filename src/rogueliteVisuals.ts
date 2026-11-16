@@ -334,6 +334,11 @@ export function drawSprite(ctx:CanvasRenderingContext2D,kind:SpriteKind,v:View,x
   ctx.beginPath();ctx.arc(0,0,sz*.35,0,Math.PI*2);ctx.fill();
  }
  if(opts?.weapon&&living&&!zombie&&!opts?.down){
+  // Constrain the complete armed-character rig to its local silhouette.
+  // Any stray canvas path or malformed weapon segment cannot draw a screen-long
+  // gray line behind the gun. The forward aim indicator is rendered separately.
+  ctx.save();
+  ctx.beginPath();ctx.arc(0,0,sz*.94,0,Math.PI*2);ctx.clip();
   // Separate two-bone arms are anchored at the upright torso's shoulders.
   // Only hand targets and weapon rotate with aim; elbows bend away from the body.
   const animated=opts.meleeAttack?meleePose(opts.meleeAttack.model,opts.meleeAttack.progress):null;
@@ -372,17 +377,20 @@ export function drawSprite(ctx:CanvasRenderingContext2D,kind:SpriteKind,v:View,x
   ctx.translate(offsetX*sz,offsetY*sz);
   ctx.rotate(weaponHeading+Math.PI/2+(opts.weaponRecoil??0)+Math.sin(reloading*Math.PI)*.16);
   drawHeldWeapon(ctx,opts.weapon,sz,{reload:reloading,recoil:opts.weaponRecoil,time:opts.idleTime});
-  // Restore the short forward aim marker. This is separate from the unwanted
-  // gray stroke that extended rearward from the firearm.
+  ctx.restore(); // weapon orientation
+  ctx.restore(); // local rig clip
+  // Player aim indicator is intentionally outside the rig clip and originates
+  // at the real muzzle. It must never draw backward through the player.
   if(kind==='player'&&opts.showAim&&!isMeleeWeapon(opts.weapon)){
+   ctx.save();ctx.rotate(weaponHeading+Math.PI/2);
    const muzzle=heldWeaponMuzzle(opts.weapon,sz);
    ctx.strokeStyle='rgba(255,231,185,.82)';
    ctx.lineWidth=Math.max(1,v.tile*.035);
    ctx.lineCap='round';
    ctx.beginPath();ctx.moveTo(muzzle.x,muzzle.y);
    ctx.lineTo(muzzle.x,muzzle.y-v.tile*.95);ctx.stroke();
+   ctx.restore();
   }
-  ctx.restore();
  }
  ctx.restore();
 }
