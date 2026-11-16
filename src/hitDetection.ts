@@ -39,9 +39,9 @@ export function traceBullet<T extends TargetCircle>(
  return {hits,distance:hits.length>=maxHits?hits[hits.length-1].distance:wallDistance};
 }
 export function meleeHits<T extends TargetCircle>(
- map:DungeonLayout,origin:Point,direction:Point,range:number,targets:readonly T[],model:'knife'|'axe'
+ map:DungeonLayout,origin:Point,direction:Point,range:number,targets:readonly T[],model:'knife'|'axe',maxTargets=model==='axe'?2:1
 ):Hit<T>[]{
- const dir=unit(direction.x,direction.y),halfAngle=model==='axe'?.92:.75,found:Hit<T>[]=[];
+ const dir=unit(direction.x,direction.y),halfAngle=model==='axe'?.92:.24,found:Hit<T>[]=[];
  for(const target of targets){
   if(!target.alive)continue;
   const dx=target.x-origin.x,dy=target.y-origin.y,dist=Math.hypot(dx,dy),radius=zombieRadius(target);
@@ -52,7 +52,7 @@ export function meleeHits<T extends TargetCircle>(
   found.push({target,distance:Math.max(0,dist-radius),x:target.x,y:target.y});
  }
  found.sort((a,b)=>a.distance-b.distance);
- return found.slice(0,model==='axe'?2:1);
+ return found.slice(0,Math.max(1,Math.floor(maxTargets)));
 }
 export const penetrationFor=(model:WeaponId):number=>weaponDefs[model].penetration??0;
 
@@ -62,6 +62,6 @@ export const penetrationFor=(model:WeaponId):number=>weaponDefs[model].penetrati
 export function aimHasTarget<T extends TargetCircle>(
  map:DungeonLayout,origin:Point,direction:Point,range:number,targets:readonly T[],model:WeaponId
 ):boolean{
- if(model==='knife'||model==='axe')return meleeHits(map,origin,direction,range,targets,model).length>0;
+ if(weaponDefs[model].slot==='melee')return meleeHits(map,origin,direction,range,targets,model==='axe'?'axe':'knife').length>0;
  return traceBullet(map,origin,direction,range,targets,0).hits.length>0;
 }
