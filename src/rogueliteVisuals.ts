@@ -233,7 +233,7 @@ export function drawLootPopup(ctx:CanvasRenderingContext2D,v:View,x:number,y:num
  ctx.fillText(label,px,py+size*.58,width-8);
  ctx.restore();
 }
-export function drawSprite(ctx:CanvasRenderingContext2D,kind:SpriteKind,v:View,x:number,y:number,opts?:{angle?:number;scale?:number;down?:boolean;alpha?:number;glow?:string;bob?:number;stride?:number;motionSpeed?:number;idleTime?:number;showAim?:boolean;weapon?:WeaponId|null;aimAngle?:number;weaponRecoil?:number}):void{
+export function drawSprite(ctx:CanvasRenderingContext2D,kind:SpriteKind,v:View,x:number,y:number,opts?:{angle?:number;scale?:number;down?:boolean;alpha?:number;glow?:string;bob?:number;stride?:number;motionSpeed?:number;idleTime?:number;showAim?:boolean;weapon?:WeaponId|null;aimAngle?:number;weaponRecoil?:number;reloadProgress?:number}):void{
  if(!visible(v,x,y))return;
  const living=['player','rifleman','medic','heavy','scout','engineer','shambler','runner','armored','bruiser','boss'].includes(kind);
  const walking=living&&!opts?.down&&(opts?.motionSpeed??0)>.12;
@@ -319,8 +319,11 @@ export function drawSprite(ctx:CanvasRenderingContext2D,kind:SpriteKind,v:View,x
   };
   strokeArm(left);strokeArm(right);
   ctx.save();
-  ctx.rotate(aimed+Math.PI/2+(opts.weaponRecoil??0));
-  drawHeldWeapon(ctx,opts.weapon,sz);
+  // During reload the weapon dips slightly and the magazine/charging handle
+  // animates, without changing the body's upright pose or the ballistic muzzle.
+  const reloading=Math.max(0,Math.min(1,opts.reloadProgress??0));
+  ctx.rotate(aimed+Math.PI/2+(opts.weaponRecoil??0)+Math.sin(reloading*Math.PI)*.16);
+  drawHeldWeapon(ctx,opts.weapon,sz,{reload:reloading,recoil:opts.weaponRecoil, time:opts.idleTime});
   if(kind==='player'&&opts.showAim&&!isMeleeWeapon(opts.weapon)){
    const muzzle=heldWeaponMuzzle(opts.weapon,sz);
    ctx.strokeStyle='rgba(255,231,185,.82)';
