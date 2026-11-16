@@ -199,9 +199,34 @@ export function drawMilitaryCrate(ctx:CanvasRenderingContext2D,v:View,x:number,y
   ctx.beginPath();ctx.moveTo(-t*.12,top+t*.16);ctx.lineTo(0,top+t*.31);ctx.lineTo(t*.12,top+t*.16);ctx.stroke();
  }
  if(opened){
-  ctx.fillStyle='rgba(9,18,15,.42)';ctx.fillRect(left+t*.1,top+t*.09,w-t*.2,h-t*.18);
-  ctx.strokeStyle='#99a98d';ctx.lineWidth=t*.027;
-  ctx.beginPath();ctx.moveTo(left+t*.15,top+t*.12);ctx.lineTo(left+w-t*.15,top+h-t*.13);ctx.stroke();
+  // The case is visibly open, with an inset foam tray and a hinged raised lid.
+  ctx.fillStyle='#10191b';ctx.fillRect(left+t*.12,top+t*.14,w-t*.24,h-t*.27);
+  ctx.strokeStyle='#71827a';ctx.lineWidth=t*.022;
+  ctx.strokeRect(left+t*.12,top+t*.14,w-t*.24,h-t*.27);
+  ctx.fillStyle='#273331';ctx.fillRect(left+t*.19,top+t*.22,w-t*.38,h-t*.41);
+  if(weapon){
+   // Weapon-shaped foam recess and two separated kit slots, no physical gun pickup.
+   ctx.fillStyle='#0b1215';ctx.fillRect(left+t*.3,top+h*.35,w-t*.6,t*.13);
+   ctx.fillRect(left+t*.29,top+h*.63,w-t*.58,t*.12);
+   ctx.strokeStyle='#52605b';ctx.lineWidth=t*.014;
+   ctx.strokeRect(left+t*.3,top+h*.35,w-t*.6,t*.13);
+  }else{
+   const colors=['#515f56','#8c8067','#4a5754'];
+   for(let i=0;i<3;i++){
+    const bx=left+t*.25+i*(w-t*.50)/3;
+    ctx.fillStyle=colors[i];ctx.fillRect(bx,top+t*.24,(w-t*.56)/3,t*.27);
+    ctx.strokeStyle='#151f20';ctx.lineWidth=t*.017;
+    ctx.strokeRect(bx,top+t*.24,(w-t*.56)/3,t*.27);
+   }
+  }
+  ctx.fillStyle=weapon?'#5d6e67':'#657356';
+  ctx.beginPath();ctx.moveTo(left+t*.05,top+t*.13);
+  ctx.lineTo(left+w-t*.05,top+t*.13);
+  ctx.lineTo(left+w-t*.14,top-t*.36);
+  ctx.lineTo(left+t*.14,top-t*.36);ctx.closePath();ctx.fill();
+  ctx.strokeStyle='#b5bca7';ctx.lineWidth=t*.022;ctx.stroke();
+  ctx.strokeStyle='#273632';ctx.lineWidth=t*.035;
+  ctx.beginPath();ctx.moveTo(left+t*.24,top-t*.24);ctx.lineTo(left+w-t*.24,top-t*.24);ctx.stroke();
  }
  ctx.restore();
 }
@@ -220,10 +245,25 @@ export function drawLootPopup(ctx:CanvasRenderingContext2D,v:View,x:number,y:num
  const px=v.ox+x*t,py=v.oy+(y-.9-p*.4)*t;
  const size=Math.max(23,t*.9),width=Math.max(size+16,Math.min(t*6,Math.max(t*2.5,label.length*t*.22)));
  ctx.save();ctx.globalAlpha=Math.max(0,alpha);
- ctx.fillStyle='rgba(11,25,24,.94)';ctx.strokeStyle='#b2c7a5';ctx.lineWidth=Math.max(1,t*.04);
- ctx.beginPath();ctx.rect(px-width/2,py-size*.55,width,size*1.38);ctx.fill();ctx.stroke();
+ // Soft in-world item halo, glancing highlight and polished equipment card.
+ const halo=ctx.createRadialGradient(px,py,0,px,py,size*1.3);
+ halo.addColorStop(0,'rgba(204,220,180,.23)');
+ halo.addColorStop(1,'rgba(204,220,180,0)');
+ ctx.fillStyle=halo;ctx.beginPath();ctx.arc(px,py,size*1.3,0,Math.PI*2);ctx.fill();
+ const backing=ctx.createLinearGradient(px-width*.5,py-size*.6,px+width*.5,py+size);
+ backing.addColorStop(0,'rgba(58,75,67,.97)');
+ backing.addColorStop(.5,'rgba(14,29,28,.96)');
+ backing.addColorStop(1,'rgba(9,19,21,.95)');
+ ctx.fillStyle=backing;ctx.strokeStyle='#9baea0';ctx.lineWidth=Math.max(1,t*.035);
+ ctx.beginPath();ctx.roundRect(px-width/2,py-size*.55,width,size*1.38,Math.max(3,size*.11));ctx.fill();ctx.stroke();
+ ctx.fillStyle='rgba(206,228,192,.10)';
+ ctx.fillRect(px-width/2+3,py-size*.50,width-6,Math.max(2,size*.10));
  if(lootAtlas&&lootIconsReady&&iconIndex>=0){
-  ctx.drawImage(lootAtlas,iconIndex*64,0,64,64,px-size*.43,py-size*.5,size*.86,size*.86);
+  const scale=.94+Math.sin(Math.min(1,p*6)*Math.PI)*.12;
+  const iconSize=size*.86*scale;
+  ctx.save();ctx.translate(px,py);ctx.rotate((1-p)*-.09);
+  ctx.drawImage(lootAtlas,iconIndex*64,0,64,64,-iconSize*.5,-size*.5,iconSize,iconSize);
+  ctx.restore();
  }else{
   ctx.fillStyle='#b6dcb4';ctx.font='bold '+Math.max(12,size*.58)+'px sans-serif';ctx.textAlign='center';
   ctx.fillText('+',px,py+size*.1);
