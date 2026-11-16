@@ -1,179 +1,450 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1344" height="96" viewBox="0 0 1344 96"><defs><linearGradient id="plate" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#a1b0a2"/><stop offset="1" stop-color="#42544d"/></linearGradient></defs><g transform="translate(0 0)"><g transform=""><ellipse cx="48" cy="82" rx="21" ry="8" fill="#020706" opacity=".55"/>
- <path d="M30 63 L23 80 L34 84 L45 70 M57 67 L65 82 L77 77 L67 62" fill="#65736a" stroke="#0d1718" stroke-width="5" stroke-linejoin="round"/>
- <path d="M34 31 L61 32 L66 68 L52 79 L36 74 L27 65Z" fill="#65736a" stroke="#0d1518" stroke-width="4"/>
- <path d="M29 37 L16 53 L25 62 L38 46 M64 37 L79 51 L69 62 L57 48" fill="#c6aa87" stroke="#10181b" stroke-width="5" stroke-linejoin="round"/>
- <path d="M34 45 L59 42 L64 58 L50 69 L33 60Z" fill="#253f43" opacity=".7"/>
- <path d="M32 48 L65 48 M35 62 L62 62" stroke="#101b1e" stroke-width="3" opacity=".65"/>
- <path d="M39 15 L56 15 Q67 20 66 33 L60 44 Q49 51 35 42 L30 31 Q30 20 39 15Z" fill="#c6aa87" stroke="#102025" stroke-width="4"/>
- <path d="M33 22 Q43 9 57 17 L64 29 L34 31Z" fill="#65736a" stroke="#0c181b" stroke-width="3"/>
- <path d="M35 32 L61 33 M41 35 L45 36 M55 36 L59 34" stroke="#213334" stroke-width="3"/>
- <path d="M39 70 L58 71" stroke="#cad0be" opacity=".45" stroke-width="2"/>
- <path d="M36 53 L52 51" stroke="#dae2d2" stroke-width="2" opacity=".7"/>
- 
- 
- </g></g><g transform="translate(96 0)"><g transform=""><ellipse cx="48" cy="82" rx="21" ry="8" fill="#020706" opacity=".55"/>
- <path d="M30 63 L23 80 L34 84 L45 70 M57 67 L65 82 L77 77 L67 62" fill="#607f86" stroke="#0d1718" stroke-width="5" stroke-linejoin="round"/>
- <path d="M34 31 L61 32 L66 68 L52 79 L36 74 L27 65Z" fill="#607f86" stroke="#0d1518" stroke-width="4"/>
- <path d="M29 37 L16 53 L25 62 L38 46 M64 37 L79 51 L69 62 L57 48" fill="#bd9d7c" stroke="#10181b" stroke-width="5" stroke-linejoin="round"/>
- <path d="M34 45 L59 42 L64 58 L50 69 L33 60Z" fill="#477b89" opacity=".7"/>
- <path d="M32 48 L65 48 M35 62 L62 62" stroke="#101b1e" stroke-width="3" opacity=".65"/>
- <path d="M39 15 L56 15 Q67 20 66 33 L60 44 Q49 51 35 42 L30 31 Q30 20 39 15Z" fill="#bd9d7c" stroke="#102025" stroke-width="4"/>
- <path d="M33 22 Q43 9 57 17 L64 29 L34 31Z" fill="#607f86" stroke="#0c181b" stroke-width="3"/>
- <path d="M35 32 L61 33 M41 35 L45 36 M55 36 L59 34" stroke="#213334" stroke-width="3"/>
- <path d="M39 70 L58 71" stroke="#cad0be" opacity=".45" stroke-width="2"/>
- <path d="M36 53 L52 51" stroke="#dae2d2" stroke-width="2" opacity=".7"/>
- 
- 
- </g></g><g transform="translate(192 0)"><g transform=""><ellipse cx="48" cy="82" rx="21" ry="8" fill="#020706" opacity=".55"/>
- <path d="M30 63 L23 80 L34 84 L45 70 M57 67 L65 82 L77 77 L67 62" fill="#d0cec0" stroke="#0d1718" stroke-width="5" stroke-linejoin="round"/>
- <path d="M34 31 L61 32 L66 68 L52 79 L36 74 L27 65Z" fill="#d0cec0" stroke="#0d1518" stroke-width="4"/>
- <path d="M29 37 L16 53 L25 62 L38 46 M64 37 L79 51 L69 62 L57 48" fill="#c2a38c" stroke="#10181b" stroke-width="5" stroke-linejoin="round"/>
- <path d="M34 45 L59 42 L64 58 L50 69 L33 60Z" fill="#5a8b72" opacity=".7"/>
- <path d="M32 48 L65 48 M35 62 L62 62" stroke="#101b1e" stroke-width="3" opacity=".65"/>
- <path d="M39 15 L56 15 Q67 20 66 33 L60 44 Q49 51 35 42 L30 31 Q30 20 39 15Z" fill="#c2a38c" stroke="#102025" stroke-width="4"/>
- <path d="M33 22 Q43 9 57 17 L64 29 L34 31Z" fill="#d0cec0" stroke="#0c181b" stroke-width="3"/>
- <path d="M35 32 L61 33 M41 35 L45 36 M55 36 L59 34" stroke="#213334" stroke-width="3"/>
- <path d="M39 70 L58 71" stroke="#cad0be" opacity=".45" stroke-width="2"/>
- <path d="M36 53 L52 51" stroke="#dae2d2" stroke-width="2" opacity=".7"/>
- 
- 
- </g></g><g transform="translate(288 0)"><g transform=""><ellipse cx="48" cy="82" rx="21" ry="8" fill="#020706" opacity=".55"/>
- <path d="M30 63 L23 80 L34 84 L45 70 M57 67 L65 82 L77 77 L67 62" fill="#647a83" stroke="#0d1718" stroke-width="5" stroke-linejoin="round"/>
- <path d="M30 34 L64 34 L73 64 L60 77 L34 77 L22 61Z" fill="#647a83" stroke="#091312" stroke-width="4"/>
- <path d="M29 37 L16 53 L25 62 L38 46 M64 37 L79 51 L69 62 L57 48" fill="#c09a7d" stroke="#10181b" stroke-width="5" stroke-linejoin="round"/>
- <path d="M34 45 L59 42 L64 58 L50 69 L33 60Z" fill="#3b5564" opacity=".7"/>
- <path d="M32 48 L65 48 M35 62 L62 62" stroke="#101b1e" stroke-width="3" opacity=".65"/>
- <path d="M39 15 L56 15 Q67 20 66 33 L60 44 Q49 51 35 42 L30 31 Q30 20 39 15Z" fill="#c09a7d" stroke="#102025" stroke-width="4"/>
- <path d="M33 22 Q43 9 57 17 L64 29 L34 31Z" fill="#647a83" stroke="#0c181b" stroke-width="3"/>
- <path d="M35 32 L61 33 M41 35 L45 36 M55 36 L59 34" stroke="#213334" stroke-width="3"/>
- <path d="M39 70 L58 71" stroke="#cad0be" opacity=".45" stroke-width="2"/>
- <path d="M36 53 L52 51" stroke="#dae2d2" stroke-width="2" opacity=".7"/>
- <path d="M28 34L20 42 23 62 34 59 M66 36L78 42 72 62 60 56" fill="#64767a" stroke="#101a20" stroke-width="3"/>
- 
- </g></g><g transform="translate(384 0)"><g transform=""><ellipse cx="48" cy="82" rx="21" ry="8" fill="#020706" opacity=".55"/>
- <path d="M30 63 L23 80 L34 84 L45 70 M57 67 L65 82 L77 77 L67 62" fill="#4d675c" stroke="#0d1718" stroke-width="5" stroke-linejoin="round"/>
- <path d="M34 31 L61 32 L66 68 L52 79 L36 74 L27 65Z" fill="#4d675c" stroke="#0d1518" stroke-width="4"/>
- <path d="M29 37 L16 53 L25 62 L38 46 M64 37 L79 51 L69 62 L57 48" fill="#bba58a" stroke="#10181b" stroke-width="5" stroke-linejoin="round"/>
- <path d="M34 45 L59 42 L64 58 L50 69 L33 60Z" fill="#8c9670" opacity=".7"/>
- <path d="M32 48 L65 48 M35 62 L62 62" stroke="#101b1e" stroke-width="3" opacity=".65"/>
- <path d="M39 15 L56 15 Q67 20 66 33 L60 44 Q49 51 35 42 L30 31 Q30 20 39 15Z" fill="#bba58a" stroke="#102025" stroke-width="4"/>
- <path d="M33 22 Q43 9 57 17 L64 29 L34 31Z" fill="#4d675c" stroke="#0c181b" stroke-width="3"/>
- <path d="M35 32 L61 33 M41 35 L45 36 M55 36 L59 34" stroke="#213334" stroke-width="3"/>
- <path d="M39 70 L58 71" stroke="#cad0be" opacity=".45" stroke-width="2"/>
- <path d="M36 53 L52 51" stroke="#dae2d2" stroke-width="2" opacity=".7"/>
- 
- <path d="M25 22 Q45 1 68 22 L70 44 65 51 Q58 39 32 43Z" fill="#536761" opacity=".7"/>
- </g></g><g transform="translate(480 0)"><g transform=""><ellipse cx="48" cy="82" rx="21" ry="8" fill="#020706" opacity=".55"/>
- <path d="M30 63 L23 80 L34 84 L45 70 M57 67 L65 82 L77 77 L67 62" fill="#8d7861" stroke="#0d1718" stroke-width="5" stroke-linejoin="round"/>
- <path d="M34 31 L61 32 L66 68 L52 79 L36 74 L27 65Z" fill="#8d7861" stroke="#0d1518" stroke-width="4"/>
- <path d="M29 37 L16 53 L25 62 L38 46 M64 37 L79 51 L69 62 L57 48" fill="#b3a086" stroke="#10181b" stroke-width="5" stroke-linejoin="round"/>
- <path d="M34 45 L59 42 L64 58 L50 69 L33 60Z" fill="#bd904f" opacity=".7"/>
- <path d="M32 48 L65 48 M35 62 L62 62" stroke="#101b1e" stroke-width="3" opacity=".65"/>
- <path d="M39 15 L56 15 Q67 20 66 33 L60 44 Q49 51 35 42 L30 31 Q30 20 39 15Z" fill="#b3a086" stroke="#102025" stroke-width="4"/>
- <path d="M33 22 Q43 9 57 17 L64 29 L34 31Z" fill="#8d7861" stroke="#0c181b" stroke-width="3"/>
- <path d="M35 32 L61 33 M41 35 L45 36 M55 36 L59 34" stroke="#213334" stroke-width="3"/>
- <path d="M39 70 L58 71" stroke="#cad0be" opacity=".45" stroke-width="2"/>
- <path d="M36 53 L52 51" stroke="#dae2d2" stroke-width="2" opacity=".7"/>
- 
- 
- </g></g><g transform="translate(576 0)"><g transform=""><g transform=""><ellipse cx="48" cy="82" rx="21" ry="8" fill="#020706" opacity=".55"/>
- <path d="M30 63 L23 80 L34 84 L45 70 M57 67 L65 82 L77 77 L67 62" fill="#4f655d" stroke="#0d1718" stroke-width="5" stroke-linejoin="round"/>
- <path d="M34 31 L61 32 L66 68 L52 79 L36 74 L27 65Z" fill="#4f655d" stroke="#0d1518" stroke-width="4"/>
- <path d="M29 37 L16 53 L25 62 L38 46 M64 37 L79 51 L69 62 L57 48" fill="#859482" stroke="#10181b" stroke-width="5" stroke-linejoin="round"/>
- <path d="M34 45 L59 42 L64 58 L50 69 L33 60Z" fill="#704f4c" opacity=".7"/>
- <path d="M32 48 L65 48 M35 62 L62 62" stroke="#101b1e" stroke-width="3" opacity=".65"/>
- <path d="M39 15 L56 15 Q67 20 66 33 L60 44 Q49 51 35 42 L30 31 Q30 20 39 15Z" fill="#859482" stroke="#102025" stroke-width="4"/>
- <path d="M33 22 Q43 9 57 17 L64 29 L34 31Z" fill="#4f655d" stroke="#0c181b" stroke-width="3"/>
- <path d="M35 32 L61 33 M41 35 L45 36 M55 36 L59 34" stroke="#9b554c" stroke-width="3"/>
- <path d="M39 70 L58 71" stroke="#cad0be" opacity=".45" stroke-width="2"/>
- 
- <path d="M36 53 L52 51" stroke="#dae2d2" stroke-width="2" opacity=".7"/>
- 
- 
- </g>
- <path d="M35 27L42 33 52 28 62 35" stroke="#b84e43" stroke-width="3" fill="none" opacity=".8"/>
- <path d="M41 40 L44 42 M55 42 L59 40" stroke="#eb9976" stroke-width="3"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="1344" height="96" viewBox="0 0 1344 96"><defs>
+<linearGradient id="armor" x1="0" y1="0" x2=".85" y2="1"><stop stop-color="#9ea8a1"/><stop offset=".3" stop-color="#5c6a63"/><stop offset=".65" stop-color="#394b48"/><stop offset="1" stop-color="#1e292c"/></linearGradient>
+<linearGradient id="cloth" x1="0" y1="0" x2=".95" y2="1"><stop stop-color="#687369"/><stop offset=".45" stop-color="#3b4a47"/><stop offset="1" stop-color="#1c292b"/></linearGradient>
+<linearGradient id="blackplate" x1="0" y1="0" x2=".8" y2="1"><stop stop-color="#6a7675"/><stop offset=".45" stop-color="#384447"/><stop offset="1" stop-color="#182229"/></linearGradient>
+<linearGradient id="helmet" x1="0" y1="0" x2=".7" y2="1"><stop stop-color="#90978b"/><stop offset=".37" stop-color="#555f59"/><stop offset="1" stop-color="#283434"/></linearGradient>
+<linearGradient id="skin" x1="0" y1="0" x2=".7" y2="1"><stop stop-color="#c8aa89"/><stop offset=".5" stop-color="#9a7965"/><stop offset="1" stop-color="#67564e"/></linearGradient>
+<linearGradient id="rot" x1="0" y1="0" x2=".85" y2="1"><stop stop-color="#bba89b"/><stop offset=".4" stop-color="#796b62"/><stop offset="1" stop-color="#473c3c"/></linearGradient>
+<linearGradient id="bloody" x1="0" y1="0" x2=".7" y2="1"><stop stop-color="#c47b6d"/><stop offset=".5" stop-color="#78413d"/><stop offset="1" stop-color="#40272e"/></linearGradient>
+<linearGradient id="rust" x1="0" y1="0" x2=".9" y2="1"><stop stop-color="#a68b78"/><stop offset=".45" stop-color="#6b625c"/><stop offset="1" stop-color="#313639"/></linearGradient>
+<radialGradient id="shine"><stop stop-color="#d2c4a4" stop-opacity=".34"/><stop offset="1" stop-color="#c1b39c" stop-opacity="0"/></radialGradient>
+</defs><g transform="translate(0 0)"><g transform="translate(48 47) scale(1) translate(-48 -47)">
+ <ellipse cx="49" cy="82" rx="22" ry="8" fill="#030909" stroke="#0d1718" stroke-width="1"/>
+ <!-- tactical boots and articulated trouser legs -->
+ <path d="M33 60L26 77 32 84 42 82 46 65Z" fill="#464f4b" stroke="#172125" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M52 65L60 82 70 84 75 77 65 60Z" fill="#464f4b" stroke="#172125" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <rect x="24" y="73" width="14" height="10" rx="4" fill="#222b29" stroke="#111c1d" stroke-width="2"/><rect x="60" y="73" width="14" height="10" rx="4" fill="#222b29" stroke="#111c1d" stroke-width="2"/>
+ <path d="M29 69L40 69 M59 69L69 69" fill="none" stroke="#b4a18b" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <!-- big survival backpack -->
+ <rect x="29" y="37" width="38" height="34" rx="8" fill="#171e20" stroke="#111719" stroke-width="3"/>
+ <rect x="33" y="40" width="30" height="29" rx="5" fill="#766e5b" stroke="#171b1b" stroke-width="2"/>
+ <path d="M33 44L63 44M33 64L63 64" fill="none" stroke="#242b29" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+ <rect x="40" y="65" width="17" height="8" rx="3" fill="#766e5b" stroke="#1b2223" stroke-width="2"/>
+ <!-- hands, shoulders, arm guards -->
+ <path d="M33 32Q18 29 16 45L16 60Q23 66 29 58L37 43Z" fill="#464f4b" stroke="#172125" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M62 31Q78 29 81 44L82 59Q73 65 68 58L59 44Z" fill="#464f4b" stroke="#172125" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M20 47L27 49L29 59L21 60Z" fill="url(#blackplate)" stroke="#151c1e" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M70 48L78 46L79 57L72 60Z" fill="url(#blackplate)" stroke="#161d1f" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <ellipse cx="22" cy="57" rx="5" ry="5" fill="#49443c" stroke="#1c2222" stroke-width="2"/><ellipse cx="75" cy="58" rx="5" ry="5" fill="#49443c" stroke="#1c2222" stroke-width="2"/>
+ <rect x="19" y="35" width="11" height="11" rx="3" fill="url(#armor)" stroke="#172021" stroke-width="2"/><rect x="67" y="35" width="11" height="11" rx="3" fill="url(#armor)" stroke="#172021" stroke-width="2"/>
+ <!-- torso ballistic carrier and webbing -->
+ <path d="M34 30Q47 25 62 30L68 60 59 71 36 71 28 59Z" fill="#464f4b" stroke="#172125" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M35 38L60 38L65 58L58 66L38 66L32 58Z" fill="url(#blackplate)" stroke="#121b20" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M33 38L41 33L43 60L35 61 M62 38L55 33L53 60L62 61" fill="none" stroke="#b4a18b" stroke-width="3.3" stroke-linejoin="round" stroke-linecap="round"/>
+ <rect x="38" y="44" width="8" height="10" rx="1" fill="#766e5b" stroke="#191f22" stroke-width="1.3"/><rect x="47" y="44" width="8" height="10" rx="1" fill="#766e5b" stroke="#191f22" stroke-width="1.3"/>
+ <rect x="38" y="55" width="17" height="6" rx="1" fill="#343f3a" stroke="#101c1f" stroke-width="1"/>
+ <path d="M34 62L61 62M40 69L56 69" fill="none" stroke="#b4a18b" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <!-- helmet/head seen from above -->
+ <ellipse cx="48" cy="25" rx="17" ry="17" fill="url(#helmet)" stroke="#151e22" stroke-width="3"/>
+ <ellipse cx="45" cy="21" rx="12" ry="10" fill="url(#shine)" stroke="none" stroke-width="1"/>
+ <path d="M33 24Q46 9 63 23L62 30Q46 36 34 29Z" fill="#697269" stroke="#1b2424" stroke-width="2.7" stroke-linejoin="round" stroke-linecap="round"/>
+ <rect x="42" y="15" width="12" height="7" rx="2" fill="#3a4443" stroke="#172123" stroke-width="1.6"/>
+ <path d="M31 23L31 34 37 38M65 23L65 34 59 38" fill="none" stroke="#171e21" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+ <rect x="28" y="25" width="7" height="12" rx="3" fill="#303d40" stroke="#11191c" stroke-width="2"/><rect x="62" y="25" width="7" height="12" rx="3" fill="#303d40" stroke="#11191c" stroke-width="2"/>
+ <path d="M39 31Q49 35 57 31" fill="none" stroke="#101b20" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <!-- detail cues, distinct silhouette by class -->
  
  
  
- </g></g><g transform="translate(672 0)"><g transform=""><g transform=""><ellipse cx="48" cy="82" rx="21" ry="8" fill="#020706" opacity=".55"/>
- <path d="M30 63 L23 80 L34 84 L45 70 M57 67 L65 82 L77 77 L67 62" fill="#4f655d" stroke="#0d1718" stroke-width="5" stroke-linejoin="round"/>
- <path d="M34 31 L61 32 L66 68 L52 79 L36 74 L27 65Z" fill="#4f655d" stroke="#0d1518" stroke-width="4"/>
- <path d="M29 37 L16 53 L25 62 L38 46 M64 37 L79 51 L69 62 L57 48" fill="#8b836b" stroke="#10181b" stroke-width="5" stroke-linejoin="round"/>
- <path d="M34 45 L59 42 L64 58 L50 69 L33 60Z" fill="#9b5547" opacity=".7"/>
- <path d="M32 48 L65 48 M35 62 L62 62" stroke="#101b1e" stroke-width="3" opacity=".65"/>
- <path d="M39 15 L56 15 Q67 20 66 33 L60 44 Q49 51 35 42 L30 31 Q30 20 39 15Z" fill="#8b836b" stroke="#102025" stroke-width="4"/>
- <path d="M33 22 Q43 9 57 17 L64 29 L34 31Z" fill="#4f655d" stroke="#0c181b" stroke-width="3"/>
- <path d="M35 32 L61 33 M41 35 L45 36 M55 36 L59 34" stroke="#9b554c" stroke-width="3"/>
- <path d="M39 70 L58 71" stroke="#cad0be" opacity=".45" stroke-width="2"/>
- 
- <path d="M36 53 L52 51" stroke="#dae2d2" stroke-width="2" opacity=".7"/>
  
  
- </g>
- <path d="M35 27L42 33 52 28 62 35" stroke="#b84e43" stroke-width="3" fill="none" opacity=".8"/>
- <path d="M41 40 L44 42 M55 42 L59 40" stroke="#eb9976" stroke-width="3"/>
- <path d="M21 65 L12 78 M73 59 L84 73" stroke="#cb8c69" stroke-width="4"/>
- 
- 
- </g></g><g transform="translate(768 0)"><g transform=""><g transform=""><ellipse cx="48" cy="82" rx="21" ry="8" fill="#020706" opacity=".55"/>
- <path d="M30 63 L23 80 L34 84 L45 70 M57 67 L65 82 L77 77 L67 62" fill="#616e72" stroke="#0d1718" stroke-width="5" stroke-linejoin="round"/>
- <path d="M34 31 L61 32 L66 68 L52 79 L36 74 L27 65Z" fill="#616e72" stroke="#0d1518" stroke-width="4"/>
- <path d="M29 37 L16 53 L25 62 L38 46 M64 37 L79 51 L69 62 L57 48" fill="#7b8a82" stroke="#10181b" stroke-width="5" stroke-linejoin="round"/>
- <path d="M34 45 L59 42 L64 58 L50 69 L33 60Z" fill="#704f4c" opacity=".7"/>
- <path d="M32 48 L65 48 M35 62 L62 62" stroke="#101b1e" stroke-width="3" opacity=".65"/>
- <path d="M39 15 L56 15 Q67 20 66 33 L60 44 Q49 51 35 42 L30 31 Q30 20 39 15Z" fill="#7b8a82" stroke="#102025" stroke-width="4"/>
- <path d="M33 22 Q43 9 57 17 L64 29 L34 31Z" fill="#616e72" stroke="#0c181b" stroke-width="3"/>
- <path d="M35 32 L61 33 M41 35 L45 36 M55 36 L59 34" stroke="#9b554c" stroke-width="3"/>
- <path d="M39 70 L58 71" stroke="#cad0be" opacity=".45" stroke-width="2"/>
- 
- <path d="M36 53 L52 51" stroke="#dae2d2" stroke-width="2" opacity=".7"/>
- 
- 
- </g>
- <path d="M35 27L42 33 52 28 62 35" stroke="#b84e43" stroke-width="3" fill="none" opacity=".8"/>
- <path d="M41 40 L44 42 M55 42 L59 40" stroke="#eb9976" stroke-width="3"/>
- 
- <path d="M30 19 L46 11 65 21 65 37 31 38Z" fill="#76877a" stroke="#233538" stroke-width="3"/><path d="M35 35 L59 35" stroke="#a8aaa0" stroke-width="3"/>
- 
- </g></g><g transform="translate(864 0)"><g transform="translate(48 48) scale(1.18) translate(-48 -48)"><g transform=""><ellipse cx="48" cy="82" rx="21" ry="8" fill="#020706" opacity=".55"/>
- <path d="M30 63 L23 80 L34 84 L45 70 M57 67 L65 82 L77 77 L67 62" fill="#625045" stroke="#0d1718" stroke-width="5" stroke-linejoin="round"/>
- <path d="M34 31 L61 32 L66 68 L52 79 L36 74 L27 65Z" fill="#625045" stroke="#0d1518" stroke-width="4"/>
- <path d="M29 37 L16 53 L25 62 L38 46 M64 37 L79 51 L69 62 L57 48" fill="#867166" stroke="#10181b" stroke-width="5" stroke-linejoin="round"/>
- <path d="M34 45 L59 42 L64 58 L50 69 L33 60Z" fill="#704f4c" opacity=".7"/>
- <path d="M32 48 L65 48 M35 62 L62 62" stroke="#101b1e" stroke-width="3" opacity=".65"/>
- <path d="M39 15 L56 15 Q67 20 66 33 L60 44 Q49 51 35 42 L30 31 Q30 20 39 15Z" fill="#867166" stroke="#102025" stroke-width="4"/>
- <path d="M33 22 Q43 9 57 17 L64 29 L34 31Z" fill="#625045" stroke="#0c181b" stroke-width="3"/>
- <path d="M35 32 L61 33 M41 35 L45 36 M55 36 L59 34" stroke="#9b554c" stroke-width="3"/>
- <path d="M39 70 L58 71" stroke="#cad0be" opacity=".45" stroke-width="2"/>
- 
- <path d="M36 53 L52 51" stroke="#dae2d2" stroke-width="2" opacity=".7"/>
- 
- 
- </g>
- <path d="M35 27L42 33 52 28 62 35" stroke="#b84e43" stroke-width="3" fill="none" opacity=".8"/>
- <path d="M41 40 L44 42 M55 42 L59 40" stroke="#eb9976" stroke-width="3"/>
- 
- 
- <path d="M15 50L22 33 32 34 27 67 17 71 M74 35L85 45 78 70 67 65Z" fill="#8e655e" stroke="#3b2727" stroke-width="3"/>
- </g></g><g transform="translate(960 0)"><g transform="translate(48 48) scale(1.18) translate(-48 -48)"><g transform=""><ellipse cx="48" cy="82" rx="30" ry="8" fill="#020706" opacity=".55"/>
- <path d="M30 63 L23 80 L34 84 L45 70 M57 67 L65 82 L77 77 L67 62" fill="#514a40" stroke="#0d1718" stroke-width="5" stroke-linejoin="round"/>
- <path d="M34 31 L61 32 L66 68 L52 79 L36 74 L27 65Z" fill="#514a40" stroke="#0d1518" stroke-width="4"/>
- <path d="M29 37 L16 53 L25 62 L38 46 M64 37 L79 51 L69 62 L57 48" fill="#9e725f" stroke="#10181b" stroke-width="5" stroke-linejoin="round"/>
- <path d="M34 45 L59 42 L64 58 L50 69 L33 60Z" fill="#aa6038" opacity=".7"/>
- <path d="M32 48 L65 48 M35 62 L62 62" stroke="#101b1e" stroke-width="3" opacity=".65"/>
- <path d="M39 15 L56 15 Q67 20 66 33 L60 44 Q49 51 35 42 L30 31 Q30 20 39 15Z" fill="#9e725f" stroke="#102025" stroke-width="4"/>
- <path d="M33 22 Q43 9 57 17 L64 29 L34 31Z" fill="#514a40" stroke="#0c181b" stroke-width="3"/>
- <path d="M35 32 L61 33 M41 35 L45 36 M55 36 L59 34" stroke="#213334" stroke-width="3"/>
- <path d="M39 70 L58 71" stroke="#cad0be" opacity=".45" stroke-width="2"/>
- <path d="M52 46 L89 38 L92 45 L74 51 L75 62 L67 63 L65 53 L52 58Z" fill="#1b292b" stroke="#020c0f" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
- <path d="M36 53 L52 51" stroke="#dae2d2" stroke-width="2" opacity=".7"/>
- 
- 
- </g>
- <path d="M35 27L42 33 52 28 62 35" stroke="#b84e43" stroke-width="3" fill="none" opacity=".8"/>
- <path d="M41 40 L44 42 M55 42 L59 40" stroke="#eb9976" stroke-width="3"/>
+ <rect x="34" y="40" width="8" height="14" rx="2" fill="#a28c6c" stroke="#191e20" stroke-width="1.2"/><rect x="59" y="43" width="7" height="13" rx="2" fill="#9f8870" stroke="#191e20" stroke-width="1.2"/>
+ <path d="M63 20L75 10" fill="none" stroke="#232e30" stroke-width="2.3" stroke-linejoin="round" stroke-linecap="round"/><ellipse cx="75" cy="10" rx="2" ry="3" fill="#3b494b" stroke="none" stroke-width="1"/>
+ <!-- scuffs, edging, specular hits, never neon -->
+ <path d="M22 40L26 38 M72 40L76 38M38 57L44 57 M58 56L61 55" fill="none" stroke="#e1d3b4" stroke-width="0.9" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M37 35L42 33 M54 33L59 35" fill="none" stroke="#c7d6cb" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round"/>
+ </g></g><g transform="translate(96 0)"><g transform="translate(48 47) scale(1) translate(-48 -47)">
+ <ellipse cx="49" cy="82" rx="22" ry="8" fill="#030909" stroke="#0d1718" stroke-width="1"/>
+ <!-- tactical boots and articulated trouser legs -->
+ <path d="M33 60L26 77 32 84 42 82 46 65Z" fill="#354e55" stroke="#172125" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M52 65L60 82 70 84 75 77 65 60Z" fill="#354e55" stroke="#172125" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <rect x="24" y="73" width="14" height="10" rx="4" fill="#222b29" stroke="#111c1d" stroke-width="2"/><rect x="60" y="73" width="14" height="10" rx="4" fill="#222b29" stroke="#111c1d" stroke-width="2"/>
+ <path d="M29 69L40 69 M59 69L69 69" fill="none" stroke="#b5ac88" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <!-- big survival backpack -->
+ <rect x="29" y="37" width="38" height="34" rx="8" fill="#171e20" stroke="#111719" stroke-width="3"/>
+ <rect x="33" y="40" width="30" height="29" rx="5" fill="#606d64" stroke="#171b1b" stroke-width="2"/>
+ <path d="M33 44L63 44M33 64L63 64" fill="none" stroke="#242b29" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+ <rect x="40" y="65" width="17" height="8" rx="3" fill="#606d64" stroke="#1b2223" stroke-width="2"/>
+ <!-- hands, shoulders, arm guards -->
+ <path d="M33 32Q18 29 16 45L16 60Q23 66 29 58L37 43Z" fill="#354e55" stroke="#172125" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M62 31Q78 29 81 44L82 59Q73 65 68 58L59 44Z" fill="#354e55" stroke="#172125" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M20 47L27 49L29 59L21 60Z" fill="url(#blackplate)" stroke="#151c1e" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M70 48L78 46L79 57L72 60Z" fill="url(#blackplate)" stroke="#161d1f" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <ellipse cx="22" cy="57" rx="5" ry="5" fill="#49443c" stroke="#1c2222" stroke-width="2"/><ellipse cx="75" cy="58" rx="5" ry="5" fill="#49443c" stroke="#1c2222" stroke-width="2"/>
+ <rect x="19" y="35" width="11" height="11" rx="3" fill="url(#armor)" stroke="#172021" stroke-width="2"/><rect x="67" y="35" width="11" height="11" rx="3" fill="url(#armor)" stroke="#172021" stroke-width="2"/>
+ <!-- torso ballistic carrier and webbing -->
+ <path d="M34 30Q47 25 62 30L68 60 59 71 36 71 28 59Z" fill="#354e55" stroke="#172125" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M35 38L60 38L65 58L58 66L38 66L32 58Z" fill="url(#blackplate)" stroke="#121b20" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M33 38L41 33L43 60L35 61 M62 38L55 33L53 60L62 61" fill="none" stroke="#b5ac88" stroke-width="3.3" stroke-linejoin="round" stroke-linecap="round"/>
+ <rect x="38" y="44" width="8" height="10" rx="1" fill="#606d64" stroke="#191f22" stroke-width="1.3"/><rect x="47" y="44" width="8" height="10" rx="1" fill="#606d64" stroke="#191f22" stroke-width="1.3"/>
+ <rect x="38" y="55" width="17" height="6" rx="1" fill="#343f3a" stroke="#101c1f" stroke-width="1"/>
+ <path d="M34 62L61 62M40 69L56 69" fill="none" stroke="#b5ac88" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <!-- helmet/head seen from above -->
+ <ellipse cx="48" cy="25" rx="17" ry="17" fill="url(#helmet)" stroke="#151e22" stroke-width="3"/>
+ <ellipse cx="45" cy="21" rx="12" ry="10" fill="url(#shine)" stroke="none" stroke-width="1"/>
+ <path d="M33 24Q46 9 63 23L62 30Q46 36 34 29Z" fill="#606f68" stroke="#1b2424" stroke-width="2.7" stroke-linejoin="round" stroke-linecap="round"/>
+ <rect x="42" y="15" width="12" height="7" rx="2" fill="#3a4443" stroke="#172123" stroke-width="1.6"/>
+ <path d="M31 23L31 34 37 38M65 23L65 34 59 38" fill="none" stroke="#171e21" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+ <rect x="28" y="25" width="7" height="12" rx="3" fill="#303d40" stroke="#11191c" stroke-width="2"/><rect x="62" y="25" width="7" height="12" rx="3" fill="#303d40" stroke="#11191c" stroke-width="2"/>
+ <path d="M39 31Q49 35 57 31" fill="none" stroke="#101b20" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <!-- detail cues, distinct silhouette by class -->
  
  
  
- <path d="M14 48 L28 28 L38 39 30 72 L14 69 M69 28L84 45 81 72 67 68Z" fill="#73584d" stroke="#251d1e" stroke-width="4"/><circle cx="48" cy="52" r="8" fill="#cc6e48" opacity=".8"/></g></g><g transform="translate(1056 0)"><ellipse cx="48" cy="78" rx="32" ry="10" fill="#020706" opacity=".55"/><path d="M12 34L49 18 83 36 83 69 49 86 13 69Z" fill="#84653f" stroke="#191c19" stroke-width="4"/><path d="M12 34L48 50 83 35 M48 50L49 86" stroke="#bd985c" stroke-width="5"/><path d="M23 49L35 55 35 69 22 63Z M60 53L72 46 72 63 60 70Z" fill="#313c31"/><path d="M34 28 L51 21 63 28 48 35Z" fill="#d4b46e"/></g><g transform="translate(1152 0)"><ellipse cx="48" cy="80" rx="38" ry="9" fill="#060b0b" opacity=".7"/><path d="M14 28L48 12 82 28 82 68 48 85 14 68Z" fill="#2d4d48" stroke="#101e1f" stroke-width="5"/><path d="M23 37 L48 24 74 37 74 62 48 74 23 61Z" fill="#183d3a" stroke="#6ee3ad" stroke-width="3"/><path d="M40 41L53 36 53 28 66 43 53 58 53 49 40 55Z" fill="#88f3c0"/></g><g transform="translate(1248 0)"><ellipse cx="48" cy="77" rx="29" ry="9" fill="#020706" opacity=".5"/><path d="M19 28L48 15 77 28 77 67 49 81 19 67Z" fill="#594138" stroke="#191b1b" stroke-width="4"/><path d="M20 28L48 43 77 28" stroke="#98614a" stroke-width="6"/><path d="M40 44L58 44 58 67 40 67Z" fill="#c3714e"/><path d="M48 49 L48 61" stroke="#ead1ac" stroke-width="4"/></g></svg>
+ 
+ <rect x="39" y="44" width="21" height="8" rx="2" fill="#667c75" stroke="#222e31" stroke-width="1.5"/>
+ <rect x="41" y="45" width="4" height="6" rx="1" fill="#b7a276" stroke="none" stroke-width="1"/><rect x="47" y="45" width="4" height="6" rx="1" fill="#b7a276" stroke="none" stroke-width="1"/><rect x="53" y="45" width="4" height="6" rx="1" fill="#b7a276" stroke="none" stroke-width="1"/>
+ 
+ <!-- scuffs, edging, specular hits, never neon -->
+ <path d="M22 40L26 38 M72 40L76 38M38 57L44 57 M58 56L61 55" fill="none" stroke="#e1d3b4" stroke-width="0.9" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M37 35L42 33 M54 33L59 35" fill="none" stroke="#c7d6cb" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round"/>
+ </g></g><g transform="translate(192 0)"><g transform="translate(48 47) scale(1) translate(-48 -47)">
+ <ellipse cx="49" cy="82" rx="22" ry="8" fill="#030909" stroke="#0d1718" stroke-width="1"/>
+ <!-- tactical boots and articulated trouser legs -->
+ <path d="M33 60L26 77 32 84 42 82 46 65Z" fill="#8f9790" stroke="#172125" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M52 65L60 82 70 84 75 77 65 60Z" fill="#8f9790" stroke="#172125" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <rect x="24" y="73" width="14" height="10" rx="4" fill="#222b29" stroke="#111c1d" stroke-width="2"/><rect x="60" y="73" width="14" height="10" rx="4" fill="#222b29" stroke="#111c1d" stroke-width="2"/>
+ <path d="M29 69L40 69 M59 69L69 69" fill="none" stroke="#cb504a" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <!-- big survival backpack -->
+ <rect x="29" y="37" width="38" height="34" rx="8" fill="#171e20" stroke="#111719" stroke-width="3"/>
+ <rect x="33" y="40" width="30" height="29" rx="5" fill="#6a2525" stroke="#171b1b" stroke-width="2"/>
+ <path d="M33 44L63 44M33 64L63 64" fill="none" stroke="#242b29" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+ <rect x="40" y="65" width="17" height="8" rx="3" fill="#6a2525" stroke="#1b2223" stroke-width="2"/>
+ <!-- hands, shoulders, arm guards -->
+ <path d="M33 32Q18 29 16 45L16 60Q23 66 29 58L37 43Z" fill="#8f9790" stroke="#172125" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M62 31Q78 29 81 44L82 59Q73 65 68 58L59 44Z" fill="#8f9790" stroke="#172125" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M20 47L27 49L29 59L21 60Z" fill="url(#blackplate)" stroke="#151c1e" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M70 48L78 46L79 57L72 60Z" fill="url(#blackplate)" stroke="#161d1f" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <ellipse cx="22" cy="57" rx="5" ry="5" fill="#49443c" stroke="#1c2222" stroke-width="2"/><ellipse cx="75" cy="58" rx="5" ry="5" fill="#49443c" stroke="#1c2222" stroke-width="2"/>
+ <rect x="19" y="35" width="11" height="11" rx="3" fill="url(#armor)" stroke="#172021" stroke-width="2"/><rect x="67" y="35" width="11" height="11" rx="3" fill="url(#armor)" stroke="#172021" stroke-width="2"/>
+ <!-- torso ballistic carrier and webbing -->
+ <path d="M34 30Q47 25 62 30L68 60 59 71 36 71 28 59Z" fill="#8f9790" stroke="#172125" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M35 38L60 38L65 58L58 66L38 66L32 58Z" fill="url(#blackplate)" stroke="#121b20" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M33 38L41 33L43 60L35 61 M62 38L55 33L53 60L62 61" fill="none" stroke="#cb504a" stroke-width="3.3" stroke-linejoin="round" stroke-linecap="round"/>
+ <rect x="38" y="44" width="8" height="10" rx="1" fill="#6a2525" stroke="#191f22" stroke-width="1.3"/><rect x="47" y="44" width="8" height="10" rx="1" fill="#6a2525" stroke="#191f22" stroke-width="1.3"/>
+ <rect x="38" y="55" width="17" height="6" rx="1" fill="#343f3a" stroke="#101c1f" stroke-width="1"/>
+ <path d="M34 62L61 62M40 69L56 69" fill="none" stroke="#cb504a" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <!-- helmet/head seen from above -->
+ <ellipse cx="48" cy="25" rx="17" ry="17" fill="url(#skin)" stroke="#151e22" stroke-width="3"/>
+ <ellipse cx="45" cy="21" rx="12" ry="10" fill="#54433c" stroke="none" stroke-width="1"/>
+ <path d="M33 25Q29 12 44 11Q57 10 64 24L57 18 36 22Z" fill="#40332e" stroke="#281e20" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <ellipse cx="47" cy="16" rx="8" ry="5" fill="#332a28" stroke="none" stroke-width="1"/><path d="M36 32L42 36M57 32L53 36" fill="none" stroke="#392f2b" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <!-- detail cues, distinct silhouette by class -->
+ <rect x="28" y="43" width="10" height="18" rx="3" fill="#bfc6bb" stroke="#252b2d" stroke-width="1.5"/><path d="M33 47V56M29 51.5H37" fill="none" stroke="#bf433e" stroke-width="2.8" stroke-linejoin="round" stroke-linecap="round"/>
+ <rect x="34" y="64" width="28" height="9" rx="2" fill="#922f32" stroke="#282022" stroke-width="2"/><path d="M48 65V72M44 68.5H52" fill="none" stroke="#f1e7df" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>
+ <rect x="57" y="46" width="9" height="15" rx="2" fill="#9f3536" stroke="#262425" stroke-width="1.8"/>
+ 
+ 
+ 
+ 
+ 
+ <!-- scuffs, edging, specular hits, never neon -->
+ <path d="M22 40L26 38 M72 40L76 38M38 57L44 57 M58 56L61 55" fill="none" stroke="#e1d3b4" stroke-width="0.9" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M37 35L42 33 M54 33L59 35" fill="none" stroke="#c7d6cb" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round"/>
+ </g></g><g transform="translate(288 0)"><g transform="translate(48 47) scale(1.18) translate(-48 -47)">
+ <ellipse cx="49" cy="82" rx="22" ry="8" fill="#030909" stroke="#0d1718" stroke-width="1"/>
+ <!-- tactical boots and articulated trouser legs -->
+ <path d="M33 60L26 77 32 84 42 82 46 65Z" fill="#363e42" stroke="#172125" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M52 65L60 82 70 84 75 77 65 60Z" fill="#363e42" stroke="#172125" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <rect x="24" y="73" width="14" height="10" rx="4" fill="#222b29" stroke="#111c1d" stroke-width="2"/><rect x="60" y="73" width="14" height="10" rx="4" fill="#222b29" stroke="#111c1d" stroke-width="2"/>
+ <path d="M29 69L40 69 M59 69L69 69" fill="none" stroke="#b49b6c" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <!-- big survival backpack -->
+ <rect x="29" y="37" width="38" height="34" rx="8" fill="#171e20" stroke="#111719" stroke-width="3"/>
+ <rect x="33" y="40" width="30" height="29" rx="5" fill="#67685b" stroke="#171b1b" stroke-width="2"/>
+ <path d="M33 44L63 44M33 64L63 64" fill="none" stroke="#242b29" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+ <rect x="40" y="65" width="17" height="8" rx="3" fill="#67685b" stroke="#1b2223" stroke-width="2"/>
+ <!-- hands, shoulders, arm guards -->
+ <path d="M33 32Q18 29 16 45L16 60Q23 66 29 58L37 43Z" fill="#363e42" stroke="#172125" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M62 31Q78 29 81 44L82 59Q73 65 68 58L59 44Z" fill="#363e42" stroke="#172125" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M20 47L27 49L29 59L21 60Z" fill="url(#blackplate)" stroke="#151c1e" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M70 48L78 46L79 57L72 60Z" fill="url(#blackplate)" stroke="#161d1f" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <ellipse cx="22" cy="57" rx="5" ry="5" fill="#49443c" stroke="#1c2222" stroke-width="2"/><ellipse cx="75" cy="58" rx="5" ry="5" fill="#49443c" stroke="#1c2222" stroke-width="2"/>
+ <rect x="19" y="35" width="11" height="11" rx="3" fill="url(#armor)" stroke="#172021" stroke-width="2"/><rect x="67" y="35" width="11" height="11" rx="3" fill="url(#armor)" stroke="#172021" stroke-width="2"/>
+ <!-- torso ballistic carrier and webbing -->
+ <path d="M34 30Q47 25 62 30L68 60 59 71 36 71 28 59Z" fill="#363e42" stroke="#172125" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M35 38L60 38L65 58L58 66L38 66L32 58Z" fill="url(#blackplate)" stroke="#121b20" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M33 38L41 33L43 60L35 61 M62 38L55 33L53 60L62 61" fill="none" stroke="#b49b6c" stroke-width="3.3" stroke-linejoin="round" stroke-linecap="round"/>
+ <rect x="38" y="44" width="8" height="10" rx="1" fill="#67685b" stroke="#191f22" stroke-width="1.3"/><rect x="47" y="44" width="8" height="10" rx="1" fill="#67685b" stroke="#191f22" stroke-width="1.3"/>
+ <rect x="38" y="55" width="17" height="6" rx="1" fill="#343f3a" stroke="#101c1f" stroke-width="1"/>
+ <path d="M34 62L61 62M40 69L56 69" fill="none" stroke="#b49b6c" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <!-- helmet/head seen from above -->
+ <ellipse cx="48" cy="25" rx="17" ry="17" fill="url(#helmet)" stroke="#151e22" stroke-width="3"/>
+ <ellipse cx="45" cy="21" rx="12" ry="10" fill="url(#shine)" stroke="none" stroke-width="1"/>
+ <path d="M33 24Q46 9 63 23L62 30Q46 36 34 29Z" fill="#4a5757" stroke="#1b2424" stroke-width="2.7" stroke-linejoin="round" stroke-linecap="round"/>
+ <rect x="42" y="15" width="12" height="7" rx="2" fill="#3a4443" stroke="#172123" stroke-width="1.6"/>
+ <path d="M31 23L31 34 37 38M65 23L65 34 59 38" fill="none" stroke="#171e21" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+ <rect x="28" y="25" width="7" height="12" rx="3" fill="#303d40" stroke="#11191c" stroke-width="2"/><rect x="62" y="25" width="7" height="12" rx="3" fill="#303d40" stroke="#11191c" stroke-width="2"/>
+ <path d="M39 31Q49 35 57 31" fill="none" stroke="#101b20" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <!-- detail cues, distinct silhouette by class -->
+ 
+ <rect x="25" y="38" width="11" height="22" rx="3" fill="#9c8b69" stroke="#20272a" stroke-width="2"/><rect x="62" y="38" width="12" height="22" rx="3" fill="#9c8b69" stroke="#20272a" stroke-width="2"/>
+ <rect x="37" y="49" width="23" height="10" rx="1" fill="#4b4a43" stroke="#14191d" stroke-width="1.5"/>
+ <rect x="39" y="47" width="2" height="11" rx="1" fill="#b89b55" stroke="none" stroke-width="1"/><rect x="43" y="47" width="2" height="11" rx="1" fill="#b89b55" stroke="none" stroke-width="1"/><rect x="47" y="47" width="2" height="11" rx="1" fill="#b89b55" stroke="none" stroke-width="1"/><rect x="51" y="47" width="2" height="11" rx="1" fill="#b89b55" stroke="none" stroke-width="1"/><rect x="55" y="47" width="2" height="11" rx="1" fill="#b89b55" stroke="none" stroke-width="1"/>
+ 
+ 
+ 
+ 
+ <!-- scuffs, edging, specular hits, never neon -->
+ <path d="M22 40L26 38 M72 40L76 38M38 57L44 57 M58 56L61 55" fill="none" stroke="#e1d3b4" stroke-width="0.9" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M37 35L42 33 M54 33L59 35" fill="none" stroke="#c7d6cb" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round"/>
+ </g></g><g transform="translate(384 0)"><g transform="translate(48 47) scale(0.88) translate(-48 -47)">
+ <ellipse cx="49" cy="82" rx="22" ry="8" fill="#030909" stroke="#0d1718" stroke-width="1"/>
+ <!-- tactical boots and articulated trouser legs -->
+ <path d="M33 60L26 77 32 84 42 82 46 65Z" fill="#465a4d" stroke="#172125" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M52 65L60 82 70 84 75 77 65 60Z" fill="#465a4d" stroke="#172125" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <rect x="24" y="73" width="14" height="10" rx="4" fill="#222b29" stroke="#111c1d" stroke-width="2"/><rect x="60" y="73" width="14" height="10" rx="4" fill="#222b29" stroke="#111c1d" stroke-width="2"/>
+ <path d="M29 69L40 69 M59 69L69 69" fill="none" stroke="#cbbd99" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <!-- big survival backpack -->
+ <rect x="29" y="37" width="38" height="34" rx="8" fill="#171e20" stroke="#111719" stroke-width="3"/>
+ <rect x="33" y="40" width="30" height="29" rx="5" fill="#58634a" stroke="#171b1b" stroke-width="2"/>
+ <path d="M33 44L63 44M33 64L63 64" fill="none" stroke="#242b29" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+ <rect x="40" y="65" width="17" height="8" rx="3" fill="#58634a" stroke="#1b2223" stroke-width="2"/>
+ <!-- hands, shoulders, arm guards -->
+ <path d="M33 32Q18 29 16 45L16 60Q23 66 29 58L37 43Z" fill="#465a4d" stroke="#172125" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M62 31Q78 29 81 44L82 59Q73 65 68 58L59 44Z" fill="#465a4d" stroke="#172125" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M20 47L27 49L29 59L21 60Z" fill="url(#blackplate)" stroke="#151c1e" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M70 48L78 46L79 57L72 60Z" fill="url(#blackplate)" stroke="#161d1f" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <ellipse cx="22" cy="57" rx="5" ry="5" fill="#49443c" stroke="#1c2222" stroke-width="2"/><ellipse cx="75" cy="58" rx="5" ry="5" fill="#49443c" stroke="#1c2222" stroke-width="2"/>
+ <rect x="19" y="35" width="11" height="11" rx="3" fill="url(#armor)" stroke="#172021" stroke-width="2"/><rect x="67" y="35" width="11" height="11" rx="3" fill="url(#armor)" stroke="#172021" stroke-width="2"/>
+ <!-- torso ballistic carrier and webbing -->
+ <path d="M34 30Q47 25 62 30L68 60 59 71 36 71 28 59Z" fill="#465a4d" stroke="#172125" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M35 38L60 38L65 58L58 66L38 66L32 58Z" fill="url(#blackplate)" stroke="#121b20" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M33 38L41 33L43 60L35 61 M62 38L55 33L53 60L62 61" fill="none" stroke="#cbbd99" stroke-width="3.3" stroke-linejoin="round" stroke-linecap="round"/>
+ <rect x="38" y="44" width="8" height="10" rx="1" fill="#58634a" stroke="#191f22" stroke-width="1.3"/><rect x="47" y="44" width="8" height="10" rx="1" fill="#58634a" stroke="#191f22" stroke-width="1.3"/>
+ <rect x="38" y="55" width="17" height="6" rx="1" fill="#343f3a" stroke="#101c1f" stroke-width="1"/>
+ <path d="M34 62L61 62M40 69L56 69" fill="none" stroke="#cbbd99" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <!-- helmet/head seen from above -->
+ <ellipse cx="48" cy="25" rx="17" ry="17" fill="url(#helmet)" stroke="#151e22" stroke-width="3"/>
+ <ellipse cx="45" cy="21" rx="12" ry="10" fill="url(#shine)" stroke="none" stroke-width="1"/>
+ <path d="M33 24Q46 9 63 23L62 30Q46 36 34 29Z" fill="#5d6755" stroke="#1b2424" stroke-width="2.7" stroke-linejoin="round" stroke-linecap="round"/>
+ <rect x="42" y="15" width="12" height="7" rx="2" fill="#3a4443" stroke="#172123" stroke-width="1.6"/>
+ <path d="M31 23L31 34 37 38M65 23L65 34 59 38" fill="none" stroke="#171e21" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+ <rect x="28" y="25" width="7" height="12" rx="3" fill="#303d40" stroke="#11191c" stroke-width="2"/><rect x="62" y="25" width="7" height="12" rx="3" fill="#303d40" stroke="#11191c" stroke-width="2"/>
+ <path d="M39 31Q49 35 57 31" fill="none" stroke="#101b20" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <!-- detail cues, distinct silhouette by class -->
+ 
+ 
+ <rect x="36" y="26" width="24" height="5" rx="2" fill="#bbb49a" stroke="#1c2524" stroke-width="1.5"/><path d="M28 51L21 64M70 51L77 64" fill="none" stroke="#b29c71" stroke-width="1.3" stroke-linejoin="round" stroke-linecap="round"/>
+ 
+ 
+ 
+ <!-- scuffs, edging, specular hits, never neon -->
+ <path d="M22 40L26 38 M72 40L76 38M38 57L44 57 M58 56L61 55" fill="none" stroke="#e1d3b4" stroke-width="0.9" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M37 35L42 33 M54 33L59 35" fill="none" stroke="#c7d6cb" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round"/>
+ </g></g><g transform="translate(480 0)"><g transform="translate(48 47) scale(1) translate(-48 -47)">
+ <ellipse cx="49" cy="82" rx="22" ry="8" fill="#030909" stroke="#0d1718" stroke-width="1"/>
+ <!-- tactical boots and articulated trouser legs -->
+ <path d="M33 60L26 77 32 84 42 82 46 65Z" fill="#675f45" stroke="#172125" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M52 65L60 82 70 84 75 77 65 60Z" fill="#675f45" stroke="#172125" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <rect x="24" y="73" width="14" height="10" rx="4" fill="#222b29" stroke="#111c1d" stroke-width="2"/><rect x="60" y="73" width="14" height="10" rx="4" fill="#222b29" stroke="#111c1d" stroke-width="2"/>
+ <path d="M29 69L40 69 M59 69L69 69" fill="none" stroke="#c8a76e" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <!-- big survival backpack -->
+ <rect x="29" y="37" width="38" height="34" rx="8" fill="#171e20" stroke="#111719" stroke-width="3"/>
+ <rect x="33" y="40" width="30" height="29" rx="5" fill="#57584b" stroke="#171b1b" stroke-width="2"/>
+ <path d="M33 44L63 44M33 64L63 64" fill="none" stroke="#242b29" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+ <rect x="40" y="65" width="17" height="8" rx="3" fill="#57584b" stroke="#1b2223" stroke-width="2"/>
+ <!-- hands, shoulders, arm guards -->
+ <path d="M33 32Q18 29 16 45L16 60Q23 66 29 58L37 43Z" fill="#675f45" stroke="#172125" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M62 31Q78 29 81 44L82 59Q73 65 68 58L59 44Z" fill="#675f45" stroke="#172125" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M20 47L27 49L29 59L21 60Z" fill="url(#blackplate)" stroke="#151c1e" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M70 48L78 46L79 57L72 60Z" fill="url(#blackplate)" stroke="#161d1f" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <ellipse cx="22" cy="57" rx="5" ry="5" fill="#49443c" stroke="#1c2222" stroke-width="2"/><ellipse cx="75" cy="58" rx="5" ry="5" fill="#49443c" stroke="#1c2222" stroke-width="2"/>
+ <rect x="19" y="35" width="11" height="11" rx="3" fill="url(#armor)" stroke="#172021" stroke-width="2"/><rect x="67" y="35" width="11" height="11" rx="3" fill="url(#armor)" stroke="#172021" stroke-width="2"/>
+ <!-- torso ballistic carrier and webbing -->
+ <path d="M34 30Q47 25 62 30L68 60 59 71 36 71 28 59Z" fill="#675f45" stroke="#172125" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M35 38L60 38L65 58L58 66L38 66L32 58Z" fill="url(#blackplate)" stroke="#121b20" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M33 38L41 33L43 60L35 61 M62 38L55 33L53 60L62 61" fill="none" stroke="#c8a76e" stroke-width="3.3" stroke-linejoin="round" stroke-linecap="round"/>
+ <rect x="38" y="44" width="8" height="10" rx="1" fill="#57584b" stroke="#191f22" stroke-width="1.3"/><rect x="47" y="44" width="8" height="10" rx="1" fill="#57584b" stroke="#191f22" stroke-width="1.3"/>
+ <rect x="38" y="55" width="17" height="6" rx="1" fill="#343f3a" stroke="#101c1f" stroke-width="1"/>
+ <path d="M34 62L61 62M40 69L56 69" fill="none" stroke="#c8a76e" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <!-- helmet/head seen from above -->
+ <ellipse cx="48" cy="25" rx="17" ry="17" fill="url(#helmet)" stroke="#151e22" stroke-width="3"/>
+ <ellipse cx="45" cy="21" rx="12" ry="10" fill="url(#shine)" stroke="none" stroke-width="1"/>
+ <path d="M33 24Q46 9 63 23L62 30Q46 36 34 29Z" fill="#686757" stroke="#1b2424" stroke-width="2.7" stroke-linejoin="round" stroke-linecap="round"/>
+ <rect x="42" y="15" width="12" height="7" rx="2" fill="#3a4443" stroke="#172123" stroke-width="1.6"/>
+ <path d="M31 23L31 34 37 38M65 23L65 34 59 38" fill="none" stroke="#171e21" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+ <rect x="28" y="25" width="7" height="12" rx="3" fill="#303d40" stroke="#11191c" stroke-width="2"/><rect x="62" y="25" width="7" height="12" rx="3" fill="#303d40" stroke="#11191c" stroke-width="2"/>
+ <path d="M39 31Q49 35 57 31" fill="none" stroke="#101b20" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <!-- detail cues, distinct silhouette by class -->
+ 
+ 
+ 
+ <rect x="39" y="44" width="17" height="11" rx="2" fill="#b79a58" stroke="#2b2d28" stroke-width="2"/><path d="M43 50L52 50M47 46V54" fill="none" stroke="#263234" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/><rect x="31" y="64" width="12" height="7" rx="2" fill="#a0814a" stroke="#202424" stroke-width="1"/>
+ 
+ 
+ <!-- scuffs, edging, specular hits, never neon -->
+ <path d="M22 40L26 38 M72 40L76 38M38 57L44 57 M58 56L61 55" fill="none" stroke="#e1d3b4" stroke-width="0.9" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M37 35L42 33 M54 33L59 35" fill="none" stroke="#c7d6cb" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round"/>
+ </g></g><g transform="translate(576 0)"><g transform="translate(48 47) scale(1) translate(-48 -47)">
+ <ellipse cx="48" cy="84" rx="22" ry="8" fill="#05080a" stroke="none" stroke-width="1"/>
+ <!-- asymmetric destroyed pants and feet -->
+ <path d="M31 61L23 77L27 85L40 83L45 66Z" fill="#77766c" stroke="#1d2223" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M52 64L60 81L72 83L77 75L64 61Z" fill="#49423f" stroke="#1c2324" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M24 77L36 80 M61 78L74 76" fill="none" stroke="#9c6c62" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <rect x="23" y="77" width="12" height="8" rx="3" fill="#2e2b2c" stroke="#161b1c" stroke-width="1.5"/><rect x="63" y="77" width="13" height="8" rx="3" fill="#29292b" stroke="#15191d" stroke-width="1.5"/>
+ <!-- hunched, overlong arms, exposed tendon details -->
+ <path d="M34 31Q16 29 14 44L11 60L18 66 26 56 38 41Z" fill="#77766c" stroke="#251d20" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M60 30Q79 26 83 44L85 65L76 68 66 52 58 41Z" fill="#77766c" stroke="#251d20" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M14 53L19 58 12 69 17 75 24 66 26 58Z" fill="url(#bloody)" stroke="#302326" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M78 53L84 61 83 74 77 78 73 67 73 58Z" fill="url(#bloody)" stroke="#302326" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M11 70L6 81M14 71L12 85M19 71L20 83M80 74L83 86M85 71L92 80" fill="none" stroke="#7c4a41" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <!-- torso and rotten clothing -->
+ <path d="M33 31L64 31L71 64L59 72L36 69L26 60Z" fill="#77766c" stroke="#1c2223" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M30 42L37 45L34 61L48 64L55 54L64 42L67 62L56 68L39 66Z" fill="#644a42" stroke="#3c302f" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M37 44L44 43L48 54L54 48L59 51L56 62L39 60Z" fill="url(#bloody)" stroke="#3e292b" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M32 50L43 54 38 60 30 58M59 41L65 43 63 54 58 52" fill="none" stroke="#c16a59" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <ellipse cx="50" cy="55" rx="5" ry="8" fill="#6d3532" stroke="none" stroke-width="1"/>
+ <!-- scarred neck and broken jaw -->
+ <path d="M39 34L56 34L55 43L43 45Z" fill="url(#bloody)" stroke="#322b2b" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <ellipse cx="48" cy="25" rx="15" ry="15" fill="url(#rot)" stroke="#261d21" stroke-width="3"/>
+ <path d="M36 22L42 17 54 18 62 25 58 36 50 40 38 33Z" fill="#a89985" stroke="#40272a" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <ellipse cx="40" cy="28" rx="4" ry="3" fill="#1b2526" stroke="none" stroke-width="1"/><ellipse cx="55" cy="28" rx="4" ry="3" fill="#151b1e" stroke="none" stroke-width="1"/>
+ <path d="M43 35L51 36L55 33" fill="none" stroke="#411a1d" stroke-width="2.3" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M36 16L41 12 46 16 54 14 60 20" fill="none" stroke="#643b38" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M30 41L37 46M61 42L67 46M23 53L18 60" fill="none" stroke="#ac6557" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <ellipse cx="34" cy="57" rx="1.5" ry="2.4" fill="#ab4d45" stroke="none" stroke-width="1"/><ellipse cx="42" cy="61" rx="1.5" ry="2.4" fill="#ab4d45" stroke="none" stroke-width="1"/><ellipse cx="50" cy="57" rx="1.5" ry="2.4" fill="#ab4d45" stroke="none" stroke-width="1"/><ellipse cx="58" cy="61" rx="1.5" ry="2.4" fill="#ab4d45" stroke="none" stroke-width="1"/>
+ 
+ 
+ 
+ 
+ </g></g><g transform="translate(672 0)"><g transform="translate(48 47) scale(0.86) translate(-48 -47)">
+ <ellipse cx="48" cy="84" rx="22" ry="8" fill="#05080a" stroke="none" stroke-width="1"/>
+ <!-- asymmetric destroyed pants and feet -->
+ <path d="M31 61L23 77L27 85L40 83L45 66Z" fill="#70584d" stroke="#1d2223" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M52 64L60 81L72 83L77 75L64 61Z" fill="#49423f" stroke="#1c2324" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M24 77L36 80 M61 78L74 76" fill="none" stroke="#9c6c62" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <rect x="23" y="77" width="12" height="8" rx="3" fill="#2e2b2c" stroke="#161b1c" stroke-width="1.5"/><rect x="63" y="77" width="13" height="8" rx="3" fill="#29292b" stroke="#15191d" stroke-width="1.5"/>
+ <!-- hunched, overlong arms, exposed tendon details -->
+ <path d="M34 31Q16 29 14 44L11 60L18 66 26 56 38 41Z" fill="#70584d" stroke="#251d20" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M60 30Q79 26 83 44L85 65L76 68 66 52 58 41Z" fill="#70584d" stroke="#251d20" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M14 53L19 58 12 69 17 75 24 66 26 58Z" fill="url(#bloody)" stroke="#302326" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M78 53L84 61 83 74 77 78 73 67 73 58Z" fill="url(#bloody)" stroke="#302326" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M11 70L6 81M14 71L12 85M19 71L20 83M80 74L83 86M85 71L92 80" fill="none" stroke="#7c4a41" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <!-- torso and rotten clothing -->
+ <path d="M33 31L64 31L71 64L59 72L36 69L26 60Z" fill="#70584d" stroke="#1c2223" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M30 42L37 45L34 61L48 64L55 54L64 42L67 62L56 68L39 66Z" fill="#644a42" stroke="#3c302f" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M37 44L44 43L48 54L54 48L59 51L56 62L39 60Z" fill="url(#bloody)" stroke="#3e292b" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M32 50L43 54 38 60 30 58M59 41L65 43 63 54 58 52" fill="none" stroke="#c16a59" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <ellipse cx="50" cy="55" rx="5" ry="8" fill="#6d3532" stroke="none" stroke-width="1"/>
+ <!-- scarred neck and broken jaw -->
+ <path d="M39 34L56 34L55 43L43 45Z" fill="url(#bloody)" stroke="#322b2b" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <ellipse cx="48" cy="25" rx="15" ry="15" fill="url(#rot)" stroke="#261d21" stroke-width="3"/>
+ <path d="M36 22L42 17 54 18 62 25 58 36 50 40 38 33Z" fill="#ac8c7e" stroke="#40272a" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <ellipse cx="40" cy="28" rx="4" ry="3" fill="#1b2526" stroke="none" stroke-width="1"/><ellipse cx="55" cy="28" rx="4" ry="3" fill="#151b1e" stroke="none" stroke-width="1"/>
+ <path d="M43 35L51 36L55 33" fill="none" stroke="#411a1d" stroke-width="2.3" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M36 16L41 12 46 16 54 14 60 20" fill="none" stroke="#643b38" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M30 41L37 46M61 42L67 46M23 53L18 60" fill="none" stroke="#ac6557" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <ellipse cx="34" cy="57" rx="1.5" ry="2.4" fill="#ab4d45" stroke="none" stroke-width="1"/><ellipse cx="42" cy="61" rx="1.5" ry="2.4" fill="#ab4d45" stroke="none" stroke-width="1"/><ellipse cx="50" cy="57" rx="1.5" ry="2.4" fill="#ab4d45" stroke="none" stroke-width="1"/><ellipse cx="58" cy="61" rx="1.5" ry="2.4" fill="#ab4d45" stroke="none" stroke-width="1"/>
+ <path d="M18 46L11 60L17 65M78 45L85 60L79 67" fill="none" stroke="#9e695e" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/><path d="M35 26L29 33M60 28L65 37" fill="none" stroke="#8d352f" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+ 
+ 
+ 
+ </g></g><g transform="translate(768 0)"><g transform="translate(48 47) scale(1) translate(-48 -47)">
+ <ellipse cx="48" cy="84" rx="22" ry="8" fill="#05080a" stroke="none" stroke-width="1"/>
+ <!-- asymmetric destroyed pants and feet -->
+ <path d="M31 61L23 77L27 85L40 83L45 66Z" fill="#3b4648" stroke="#1d2223" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M52 64L60 81L72 83L77 75L64 61Z" fill="#49423f" stroke="#1c2324" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M24 77L36 80 M61 78L74 76" fill="none" stroke="#9c6c62" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <rect x="23" y="77" width="12" height="8" rx="3" fill="#2e2b2c" stroke="#161b1c" stroke-width="1.5"/><rect x="63" y="77" width="13" height="8" rx="3" fill="#29292b" stroke="#15191d" stroke-width="1.5"/>
+ <!-- hunched, overlong arms, exposed tendon details -->
+ <path d="M34 31Q16 29 14 44L11 60L18 66 26 56 38 41Z" fill="#3b4648" stroke="#251d20" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M60 30Q79 26 83 44L85 65L76 68 66 52 58 41Z" fill="#3b4648" stroke="#251d20" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M14 53L19 58 12 69 17 75 24 66 26 58Z" fill="url(#bloody)" stroke="#302326" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M78 53L84 61 83 74 77 78 73 67 73 58Z" fill="url(#bloody)" stroke="#302326" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M11 70L6 81M14 71L12 85M19 71L20 83M80 74L83 86M85 71L92 80" fill="none" stroke="#7c4a41" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <!-- torso and rotten clothing -->
+ <path d="M33 31L64 31L71 64L59 72L36 69L26 60Z" fill="#3b4648" stroke="#1c2223" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M30 42L37 45L34 61L48 64L55 54L64 42L67 62L56 68L39 66Z" fill="#644a42" stroke="#3c302f" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M37 44L44 43L48 54L54 48L59 51L56 62L39 60Z" fill="url(#bloody)" stroke="#3e292b" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M32 50L43 54 38 60 30 58M59 41L65 43 63 54 58 52" fill="none" stroke="#c16a59" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <ellipse cx="50" cy="55" rx="5" ry="8" fill="#6d3532" stroke="none" stroke-width="1"/>
+ <!-- scarred neck and broken jaw -->
+ <path d="M39 34L56 34L55 43L43 45Z" fill="url(#bloody)" stroke="#322b2b" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <ellipse cx="48" cy="25" rx="15" ry="15" fill="url(#rot)" stroke="#261d21" stroke-width="3"/>
+ <path d="M36 22L42 17 54 18 62 25 58 36 50 40 38 33Z" fill="#93766d" stroke="#40272a" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <ellipse cx="40" cy="28" rx="4" ry="3" fill="#1b2526" stroke="none" stroke-width="1"/><ellipse cx="55" cy="28" rx="4" ry="3" fill="#151b1e" stroke="none" stroke-width="1"/>
+ <path d="M43 35L51 36L55 33" fill="none" stroke="#411a1d" stroke-width="2.3" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M36 16L41 12 46 16 54 14 60 20" fill="none" stroke="#643b38" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M30 41L37 46M61 42L67 46M23 53L18 60" fill="none" stroke="#ac6557" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <ellipse cx="34" cy="57" rx="1.5" ry="2.4" fill="#ab4d45" stroke="none" stroke-width="1"/><ellipse cx="42" cy="61" rx="1.5" ry="2.4" fill="#ab4d45" stroke="none" stroke-width="1"/><ellipse cx="50" cy="57" rx="1.5" ry="2.4" fill="#ab4d45" stroke="none" stroke-width="1"/><ellipse cx="58" cy="61" rx="1.5" ry="2.4" fill="#ab4d45" stroke="none" stroke-width="1"/>
+ 
+ <path d="M31 16Q46 6 63 17L64 28 55 32 36 30Z" fill="url(#blackplate)" stroke="#111c20" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+ <rect x="32" y="36" width="32" height="26" rx="4" fill="url(#blackplate)" stroke="#161e21" stroke-width="3"/>
+ <path d="M36 40L59 40M36 46L60 46M37 56L58 56" fill="none" stroke="#86908a" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <rect x="19" y="36" width="12" height="14" rx="2" fill="url(#armor)" stroke="#182021" stroke-width="2"/><rect x="65" y="36" width="12" height="14" rx="2" fill="url(#armor)" stroke="#182021" stroke-width="2"/>
+ <path d="M33 34L48 41 38 50M61 41L51 53" fill="none" stroke="#b34e45" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+ 
+ 
+ </g></g><g transform="translate(864 0)"><g transform="translate(48 47) scale(1.16) translate(-48 -47)">
+ <ellipse cx="48" cy="84" rx="22" ry="8" fill="#05080a" stroke="none" stroke-width="1"/>
+ <!-- asymmetric destroyed pants and feet -->
+ <path d="M31 61L23 77L27 85L40 83L45 66Z" fill="#50423c" stroke="#1d2223" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M52 64L60 81L72 83L77 75L64 61Z" fill="#49423f" stroke="#1c2324" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M24 77L36 80 M61 78L74 76" fill="none" stroke="#9c6c62" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <rect x="23" y="77" width="12" height="8" rx="3" fill="#2e2b2c" stroke="#161b1c" stroke-width="1.5"/><rect x="63" y="77" width="13" height="8" rx="3" fill="#29292b" stroke="#15191d" stroke-width="1.5"/>
+ <!-- hunched, overlong arms, exposed tendon details -->
+ <path d="M34 31Q16 29 14 44L11 60L18 66 26 56 38 41Z" fill="#50423c" stroke="#251d20" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M60 30Q79 26 83 44L85 65L76 68 66 52 58 41Z" fill="#50423c" stroke="#251d20" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M14 53L19 58 12 69 17 75 24 66 26 58Z" fill="url(#bloody)" stroke="#302326" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M78 53L84 61 83 74 77 78 73 67 73 58Z" fill="url(#bloody)" stroke="#302326" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M11 70L6 81M14 71L12 85M19 71L20 83M80 74L83 86M85 71L92 80" fill="none" stroke="#7c4a41" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <!-- torso and rotten clothing -->
+ <path d="M33 31L64 31L71 64L59 72L36 69L26 60Z" fill="#50423c" stroke="#1c2223" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M30 42L37 45L34 61L48 64L55 54L64 42L67 62L56 68L39 66Z" fill="#644a42" stroke="#3c302f" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M37 44L44 43L48 54L54 48L59 51L56 62L39 60Z" fill="url(#bloody)" stroke="#3e292b" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M32 50L43 54 38 60 30 58M59 41L65 43 63 54 58 52" fill="none" stroke="#c16a59" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <ellipse cx="50" cy="55" rx="5" ry="8" fill="#6d3532" stroke="none" stroke-width="1"/>
+ <!-- scarred neck and broken jaw -->
+ <path d="M39 34L56 34L55 43L43 45Z" fill="url(#bloody)" stroke="#322b2b" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <ellipse cx="48" cy="25" rx="15" ry="15" fill="url(#rot)" stroke="#261d21" stroke-width="3"/>
+ <path d="M36 22L42 17 54 18 62 25 58 36 50 40 38 33Z" fill="#a17c70" stroke="#40272a" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <ellipse cx="40" cy="28" rx="4" ry="3" fill="#1b2526" stroke="none" stroke-width="1"/><ellipse cx="55" cy="28" rx="4" ry="3" fill="#151b1e" stroke="none" stroke-width="1"/>
+ <path d="M43 35L51 36L55 33" fill="none" stroke="#411a1d" stroke-width="2.3" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M36 16L41 12 46 16 54 14 60 20" fill="none" stroke="#643b38" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M30 41L37 46M61 42L67 46M23 53L18 60" fill="none" stroke="#ac6557" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <ellipse cx="34" cy="57" rx="1.5" ry="2.4" fill="#ab4d45" stroke="none" stroke-width="1"/><ellipse cx="42" cy="61" rx="1.5" ry="2.4" fill="#ab4d45" stroke="none" stroke-width="1"/><ellipse cx="50" cy="57" rx="1.5" ry="2.4" fill="#ab4d45" stroke="none" stroke-width="1"/><ellipse cx="58" cy="61" rx="1.5" ry="2.4" fill="#ab4d45" stroke="none" stroke-width="1"/>
+ 
+ 
+ <path d="M17 33Q4 38 8 54L14 59 25 46M75 29Q93 34 92 53L84 62 72 45" fill="url(#bloody)" stroke="#321d24" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+ <ellipse cx="24" cy="42" rx="14" ry="11" fill="url(#bloody)" stroke="#38292d" stroke-width="2"/><ellipse cx="73" cy="40" rx="14" ry="13" fill="url(#bloody)" stroke="#38292d" stroke-width="2"/>
+ <ellipse cx="27" cy="41" rx="3" ry="4" fill="#b16e5d" stroke="none" stroke-width="1"/><ellipse cx="39" cy="54" rx="4" ry="4" fill="#b16e5d" stroke="none" stroke-width="1"/><ellipse cx="51" cy="41" rx="3" ry="4" fill="#b16e5d" stroke="none" stroke-width="1"/><ellipse cx="63" cy="54" rx="4" ry="4" fill="#b16e5d" stroke="none" stroke-width="1"/>
+ <path d="M28 54L37 58M61 58L70 50" fill="none" stroke="#b9826f" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+ 
+ </g></g><g transform="translate(960 0)"><g transform="translate(48 47) scale(1.35) translate(-48 -47)">
+ <ellipse cx="48" cy="84" rx="22" ry="8" fill="#05080a" stroke="none" stroke-width="1"/>
+ <!-- asymmetric destroyed pants and feet -->
+ <path d="M31 61L23 77L27 85L40 83L45 66Z" fill="#5a4140" stroke="#1d2223" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M52 64L60 81L72 83L77 75L64 61Z" fill="#49423f" stroke="#1c2324" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M24 77L36 80 M61 78L74 76" fill="none" stroke="#9c6c62" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <rect x="23" y="77" width="12" height="8" rx="3" fill="#2e2b2c" stroke="#161b1c" stroke-width="1.5"/><rect x="63" y="77" width="13" height="8" rx="3" fill="#29292b" stroke="#15191d" stroke-width="1.5"/>
+ <!-- hunched, overlong arms, exposed tendon details -->
+ <path d="M34 31Q16 29 14 44L11 60L18 66 26 56 38 41Z" fill="#5a4140" stroke="#251d20" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M60 30Q79 26 83 44L85 65L76 68 66 52 58 41Z" fill="#5a4140" stroke="#251d20" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M14 53L19 58 12 69 17 75 24 66 26 58Z" fill="url(#bloody)" stroke="#302326" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M78 53L84 61 83 74 77 78 73 67 73 58Z" fill="url(#bloody)" stroke="#302326" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M11 70L6 81M14 71L12 85M19 71L20 83M80 74L83 86M85 71L92 80" fill="none" stroke="#7c4a41" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <!-- torso and rotten clothing -->
+ <path d="M33 31L64 31L71 64L59 72L36 69L26 60Z" fill="#5a4140" stroke="#1c2223" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M30 42L37 45L34 61L48 64L55 54L64 42L67 62L56 68L39 66Z" fill="#644a42" stroke="#3c302f" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M37 44L44 43L48 54L54 48L59 51L56 62L39 60Z" fill="url(#bloody)" stroke="#3e292b" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M32 50L43 54 38 60 30 58M59 41L65 43 63 54 58 52" fill="none" stroke="#c16a59" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <ellipse cx="50" cy="55" rx="5" ry="8" fill="#6d3532" stroke="none" stroke-width="1"/>
+ <!-- scarred neck and broken jaw -->
+ <path d="M39 34L56 34L55 43L43 45Z" fill="url(#bloody)" stroke="#322b2b" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <ellipse cx="48" cy="25" rx="18" ry="18" fill="url(#rot)" stroke="#261d21" stroke-width="3"/>
+ <path d="M36 22L42 17 54 18 62 25 58 36 50 40 38 33Z" fill="#a4776b" stroke="#40272a" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <ellipse cx="40" cy="28" rx="4" ry="3" fill="#1b2526" stroke="none" stroke-width="1"/><ellipse cx="55" cy="28" rx="4" ry="3" fill="#151b1e" stroke="none" stroke-width="1"/>
+ <path d="M43 35L51 36L55 33" fill="none" stroke="#411a1d" stroke-width="2.3" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M36 16L41 12 46 16 54 14 60 20" fill="none" stroke="#643b38" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M30 41L37 46M61 42L67 46M23 53L18 60" fill="none" stroke="#ac6557" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+ <ellipse cx="34" cy="57" rx="1.5" ry="2.4" fill="#ab4d45" stroke="none" stroke-width="1"/><ellipse cx="42" cy="61" rx="1.5" ry="2.4" fill="#ab4d45" stroke="none" stroke-width="1"/><ellipse cx="50" cy="57" rx="1.5" ry="2.4" fill="#ab4d45" stroke="none" stroke-width="1"/><ellipse cx="58" cy="61" rx="1.5" ry="2.4" fill="#ab4d45" stroke="none" stroke-width="1"/>
+ 
+ 
+ <path d="M17 33Q4 38 8 54L14 59 25 46M75 29Q93 34 92 53L84 62 72 45" fill="url(#bloody)" stroke="#321d24" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+ <ellipse cx="24" cy="42" rx="14" ry="11" fill="url(#bloody)" stroke="#38292d" stroke-width="2"/><ellipse cx="73" cy="40" rx="14" ry="13" fill="url(#bloody)" stroke="#38292d" stroke-width="2"/>
+ <ellipse cx="27" cy="41" rx="3" ry="4" fill="#b16e5d" stroke="none" stroke-width="1"/><ellipse cx="39" cy="54" rx="4" ry="4" fill="#b16e5d" stroke="none" stroke-width="1"/><ellipse cx="51" cy="41" rx="3" ry="4" fill="#b16e5d" stroke="none" stroke-width="1"/><ellipse cx="63" cy="54" rx="4" ry="4" fill="#b16e5d" stroke="none" stroke-width="1"/>
+ <path d="M28 54L37 58M61 58L70 50" fill="none" stroke="#b9826f" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M30 29L37 20 57 18 69 29M28 44L24 58 37 68" fill="none" stroke="#4b302d" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M31 41L33 52 45 57 52 47 65 49" fill="none" stroke="#cf7b6b" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+ <ellipse cx="48" cy="51" rx="12" ry="8" fill="#662d30" stroke="none" stroke-width="1"/>
+ </g></g><g transform="translate(1056 0)"><ellipse cx="48" cy="78" rx="32" ry="10" fill="#020706" opacity=".55"/><path d="M12 34L49 18 83 36 83 69 49 86 13 69Z" fill="#84653f" stroke="#191c19" stroke-width="4"/><path d="M12 34L48 50 83 35 M48 50L49 86" stroke="#bd985c" stroke-width="5"/><path d="M23 49L35 55 35 69 22 63Z M60 53L72 46 72 63 60 70Z" fill="#313c31"/><path d="M34 28 L51 21 63 28 48 35Z" fill="#d4b46e"/></g><g transform="translate(1152 0)"><ellipse cx="48" cy="80" rx="38" ry="9" fill="#060b0b" opacity=".7"/><path d="M14 28L48 12 82 28 82 68 48 85 14 68Z" fill="#2d4d48" stroke="#101e1f" stroke-width="5"/><path d="M23 37 L48 24 74 37 74 62 48 74 23 61Z" fill="#183d3a" stroke="#6ee3ad" stroke-width="3"/><path d="M40 41L53 36 53 28 66 43 53 58 53 49 40 55Z" fill="#88f3c0"/></g><g transform="translate(1248 0)"><ellipse cx="48" cy="77" rx="29" ry="9" fill="#020706" opacity=".5"/><path d="M19 28L48 15 77 28 77 67 49 81 19 67Z" fill="#594138" stroke="#191b1b" stroke-width="4"/><path d="M20 28L48 43 77 28" stroke="#98614a" stroke-width="6"/><path d="M40 44L58 44 58 67 40 67Z" fill="#c3714e"/><path d="M48 49 L48 61" stroke="#ead1ac" stroke-width="4"/></g></svg>
