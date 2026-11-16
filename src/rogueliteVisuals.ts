@@ -353,23 +353,31 @@ export function drawSprite(ctx:CanvasRenderingContext2D,kind:SpriteKind,v:View,x
   const thickness=kind==='heavy'?.13:.10;
   const sleeve=kind==='medic'?'#929c96':kind==='heavy'?'#4c5557':
    kind==='engineer'?'#70674e':kind==='scout'?'#51624d':'#53615b';
-  const strokeArm=(arm:typeof left)=>{
+  // Filled upper-arm and forearm capsules replace the double stroked paths.
+  // No lineTo/stroke paths are used in the arm rig, so a long gray line can
+  // no longer escape from the weapon or its shoulder joints.
+  const drawArm=(arm:typeof left)=>{
    const {shoulder,elbow,hand}=arm;
-   ctx.save();ctx.lineCap='round';ctx.lineJoin='round';
-   ctx.strokeStyle='#172225';ctx.lineWidth=sz*(thickness+.05);
-   ctx.beginPath();ctx.moveTo(shoulder.x*sz,shoulder.y*sz);
-   ctx.lineTo(elbow.x*sz,elbow.y*sz);ctx.lineTo(hand.x*sz,hand.y*sz);ctx.stroke();
-   ctx.strokeStyle=sleeve;ctx.lineWidth=sz*thickness;
-   ctx.beginPath();ctx.moveTo(shoulder.x*sz,shoulder.y*sz);
-   ctx.lineTo(elbow.x*sz,elbow.y*sz);ctx.lineTo(hand.x*sz,hand.y*sz);ctx.stroke();
-   // Pads and gloves make the bending direction visually unambiguous.
-   ctx.fillStyle='#61716a';ctx.strokeStyle='#202a2a';ctx.lineWidth=sz*.023;
-   ctx.beginPath();ctx.ellipse(elbow.x*sz,elbow.y*sz,sz*thickness*.6,sz*thickness*.52,0,0,Math.PI*2);ctx.fill();ctx.stroke();
-   ctx.fillStyle='#343d37';
-   ctx.beginPath();ctx.ellipse(hand.x*sz,hand.y*sz,sz*.068,sz*.056,0,0,Math.PI*2);ctx.fill();
-   ctx.restore();
+   const segment=(a:typeof shoulder,b:typeof shoulder,width:number,color:string)=>{
+    const dx=b.x-a.x,dy=b.y-a.y,length=Math.hypot(dx,dy);
+    if(!Number.isFinite(length)||length<.0001)return;
+    const cx=(a.x+b.x)*sz*.5,cy=(a.y+b.y)*sz*.5;
+    ctx.save();ctx.translate(cx,cy);ctx.rotate(Math.atan2(dy,dx));
+    ctx.fillStyle=color;ctx.beginPath();
+    ctx.ellipse(0,0,(length*sz+width*sz*.8)*.5,width*sz*.5,0,0,Math.PI*2);
+    ctx.fill();ctx.restore();
+   };
+   segment(shoulder,elbow,thickness+.025,'#172225');
+   segment(shoulder,elbow,thickness,sleeve);
+   segment(elbow,hand,thickness+.018,'#172225');
+   segment(elbow,hand,thickness*.88,sleeve);
+   ctx.fillStyle='#65756e';ctx.beginPath();
+   ctx.ellipse(elbow.x*sz,elbow.y*sz,sz*thickness*.49,sz*thickness*.46,0,0,Math.PI*2);ctx.fill();
+   ctx.fillStyle='#343d37';ctx.beginPath();
+   ctx.ellipse(hand.x*sz,hand.y*sz,sz*.062,sz*.052,0,0,Math.PI*2);ctx.fill();
   };
-  strokeArm(left);strokeArm(right);
+  drawArm(left);drawArm(right);
+
   ctx.save();
   // During reload the weapon dips slightly and the magazine/charging handle
   // animates, without changing the body's upright pose or the ballistic muzzle.
