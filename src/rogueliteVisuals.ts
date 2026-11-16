@@ -2,6 +2,7 @@ import type {DungeonLayout} from './dungeon.ts';
 import type {WeaponId} from './equipmentArmory.ts';
 import {drawHeldWeapon,heldWeaponMuzzle,isMeleeWeapon} from './weaponVisuals.ts';
 import {weaponRelativeAngle,weaponRigShoulder} from './characterMotion.ts';
+import {drawCharacterLegs} from './characterLegs.ts';
 const spriteUrl=new URL('./assets/deadzone-sprites.svg',import.meta.url).href;
 // Optional art pack: when uploaded to public/environment, it loads without a code edit.
 const environmentAtlas=typeof Image==='undefined'?null:new Image();
@@ -237,8 +238,6 @@ export function drawSprite(ctx:CanvasRenderingContext2D,kind:SpriteKind,v:View,x
  const living=['player','rifleman','medic','heavy','scout','engineer','shambler','runner','armored','bruiser','boss'].includes(kind);
  const walking=living&&!opts?.down&&(opts?.motionSpeed??0)>.12;
  const resting=living&&!walking&&!opts?.down;
- const gait=walking?Math.min(1,(opts?.motionSpeed??0)/2.3):0;
- const step=Math.sin(opts?.stride??0)*gait,other=Math.sin((opts?.stride??0)+Math.PI)*gait;
  const px=v.ox+x*v.tile,py=v.oy+y*v.tile,sz=v.tile*(opts?.scale??1);
  const zombie=['shambler','runner','armored','bruiser','boss'].includes(kind);
  ctx.save();ctx.translate(px,py);
@@ -267,40 +266,18 @@ export function drawSprite(ctx:CanvasRenderingContext2D,kind:SpriteKind,v:View,x
   ctx.scale(1+breath*.005,1-breath*.009);
  }
  if(opts?.glow){ctx.fillStyle=opts.glow;ctx.globalAlpha=.16;ctx.beginPath();ctx.ellipse(0,0,sz*.72,sz*.65,0,0,Math.PI*2);ctx.fill();ctx.globalAlpha=opts.alpha??1}
+ // Detailed limb rig replaces the rigid source legs both at rest and while running.
+ // Downed units retain their full fallen sprite. Aim still rotates only arms/gun.
+ if(living&&!opts?.down)drawCharacterLegs(ctx,kind,sz,opts?.stride??0,walking?(opts?.motionSpeed??0):0);
  if(ready&&atlas){
-  if(walking){
-   // The original atlas has rigid legs. Replace only the lower part with articulated
-   // alternating legs and visible foot placement, preserving the character's own torso/gear.
-   const sx=spriteIndex[kind]*spriteSize;
-   const spread=zombie?.15:.13,hipY=sz*.075,footY=sz*.36;
-   for(const [side,swing] of [[-1,step],[1,other]] as const){
-    const hipX=side*sz*spread;
-    const footX=hipX+sz*swing*(zombie?.20:.18);
-    const footYAdjusted=footY-sz*Math.max(0,swing)*(zombie?.11:.13);
-    const kneeX=(hipX+footX)*.5+side*sz*.018;
-    const kneeY=(hipY+footYAdjusted)*.52;
-    ctx.lineCap='round';ctx.lineJoin='round';
-    ctx.strokeStyle=zombie?'#3d4540':'#1b302e';
-    ctx.lineWidth=sz*(kind==='heavy'||kind==='bruiser'?.16:.125);
-    ctx.beginPath();ctx.moveTo(hipX,hipY);ctx.lineTo(kneeX,kneeY);ctx.lineTo(footX,footYAdjusted);ctx.stroke();
-    ctx.strokeStyle=zombie?'#647065':'#65756b';ctx.lineWidth=sz*.055;
-    ctx.beginPath();ctx.moveTo(kneeX,kneeY);ctx.lineTo(footX,footYAdjusted);ctx.stroke();
-    ctx.fillStyle=zombie?'#252e2b':'#152623';
-    ctx.beginPath();ctx.ellipse(footX,footYAdjusted+sz*.025,sz*.085,sz*.052,side*.09,0,Math.PI*2);ctx.fill();
-   }
-   // Armed humans use the articulated arm rig; crop the static sprite arms
-   // while retaining helmet, torso, armor, backpack, and animated legs.
-   const torsoHeight=69,armed=!zombie&&!!opts?.weapon&&!opts?.down;
+  if(living&&!opts?.down){
+   const top=0,torsoHeight=65,armed=!zombie&&!!opts?.weapon;
    const inset=armed?22:0,sourceWidth=spriteSize-inset*2;
-   ctx.drawImage(atlas,sx+inset,0,sourceWidth,torsoHeight,
+   ctx.drawImage(atlas,spriteIndex[kind]*spriteSize+inset,top,sourceWidth,torsoHeight,
     -sz*.6+sz*1.2*inset/spriteSize,-sz*.7,
     sz*1.2*sourceWidth/spriteSize,sz*1.2*torsoHeight/spriteSize);
   }else{
-   const armed=living&&!zombie&&!!opts?.weapon&&!opts?.down;
-   const inset=armed?22:0,sourceWidth=spriteSize-inset*2;
-   ctx.drawImage(atlas,spriteIndex[kind]*spriteSize+inset,0,sourceWidth,spriteSize,
-    -sz*.6+sz*1.2*inset/spriteSize,-sz*.7,
-    sz*1.2*sourceWidth/spriteSize,sz*1.2);
+   ctx.drawImage(atlas,spriteIndex[kind]*spriteSize,0,spriteSize,spriteSize,-sz*.6,-sz*.7,sz*1.2,sz*1.2);
   }
  }else{
   ctx.fillStyle=kind==='player'?'#dcd0b3':kind==='elevator'?'#61cda0':kind==='crate'?'#b9975d':'#7b9991';
