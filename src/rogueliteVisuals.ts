@@ -1,6 +1,6 @@
 import type {DungeonLayout} from './dungeon.ts';
 import type {WeaponId} from './equipmentArmory.ts';
-import {drawHeldWeapon,heldWeaponMuzzle} from './weaponVisuals.ts';
+import {drawHeldWeapon,heldWeaponMuzzle,isMeleeWeapon} from './weaponVisuals.ts';
 import {meleePose} from './meleeCombat.ts';
 import {aimedHand,solveAimArm} from './characterMotion.ts';
 import {drawCharacterLegs} from './characterLegs.ts';
@@ -372,7 +372,16 @@ export function drawSprite(ctx:CanvasRenderingContext2D,kind:SpriteKind,v:View,x
   ctx.translate(offsetX*sz,offsetY*sz);
   ctx.rotate(weaponHeading+Math.PI/2+(opts.weaponRecoil??0)+Math.sin(reloading*Math.PI)*.16);
   drawHeldWeapon(ctx,opts.weapon,sz,{reload:reloading,recoil:opts.weaponRecoil,time:opts.idleTime});
-  // No constant muzzle line: only actual bullets and brief muzzle flashes are rendered.
+  // Restore the short forward aim marker. This is separate from the unwanted
+  // gray stroke that extended rearward from the firearm.
+  if(kind==='player'&&opts.showAim&&!isMeleeWeapon(opts.weapon)){
+   const muzzle=heldWeaponMuzzle(opts.weapon,sz);
+   ctx.strokeStyle='rgba(255,231,185,.82)';
+   ctx.lineWidth=Math.max(1,v.tile*.035);
+   ctx.lineCap='round';
+   ctx.beginPath();ctx.moveTo(muzzle.x,muzzle.y);
+   ctx.lineTo(muzzle.x,muzzle.y-v.tile*.95);ctx.stroke();
+  }
   ctx.restore();
  }
  ctx.restore();
