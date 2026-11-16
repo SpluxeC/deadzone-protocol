@@ -1336,7 +1336,7 @@ function draw(){
   if(a.hp<a.maxHp||a.downed>0)drawBar(ctx,v,a.x,a.y,a.downed>0?a.downed/ALLY_BLEEDOUT:a.hp/a.maxHp,a.downed>0?'#f1c17e':hudColor(a.hp/a.maxHp));
  }
  const playerMotion=animatedPose(r.player,now,0,12);
- drawSprite(ctx,'player',v,r.player.x,r.player.y,{weapon:activeWeapon(r)?.model??null,angle:playerMotion.angle,aimAngle:Math.atan2(aim.y,aim.x),weaponRecoil:shotKick*(Math.sin(now/32)>0?1:-1),stride:playerMotion.phase,motionSpeed:playerMotion.speed,idleTime:now/1000,showAim:true,scale:1.25,down:(r.playerDowned??0)>0,glow:'#b3d8b4'});
+ drawSprite(ctx,'player',v,r.player.x,r.player.y,{weapon:activeWeapon(r)?.model??null,angle:playerMotion.angle,aimAngle:Math.atan2(aim.y,aim.x),weaponRecoil:shotKick*(Math.sin(now/32)>0?1:-1),reloadProgress:r.reloadTimer&&activeWeapon(r)?1-Math.max(0,r.reloadTimer)/Math.max(.01,effectiveStats(activeWeapon(r)!).reload):0,stride:playerMotion.phase,motionSpeed:playerMotion.speed,idleTime:now/1000,showAim:true,scale:1.25,down:(r.playerDowned??0)>0,glow:'#b3d8b4'});
  // A bullet effect cannot reveal enemies or objects through unexplored tiles.
  ctx.save();if(fog)clipToExplored(ctx,m,v,fog);
  drawCombatFx(ctx,v,combatFx);
