@@ -17,6 +17,7 @@ import {gearIcon,gearIconModels,grenadeIcon} from './gearIcons';
 import {makeAttackFx,ageCombatFx,drawCombatFx,shotProfile,type CombatFx} from './combatFx';
 import {bloodOnHit,ageBloodFx,drawBloodFx,MAX_BLOOD_EFFECTS,type BloodFx} from './bloodFx';
 import {traceBullet,meleeHits,unit,penetrationFor,aimHasTarget} from './hitDetection';
+import {createMeleeAttack,advanceMeleeAttack,meleeTargetLimit,meleeRecovery,type MeleeAttack} from './meleeCombat';
 import {createFog,updateFog,renderFog,exploredIndices,discoveredAt,clipToExplored,type FogState,type Explorer} from './fogOfWar';
 import {normalizeStick,stickKnob,type StickVector} from './mobileControls';
 import {walkableTile,canOccupy,nearestWalkable} from './tileCollision';
@@ -124,6 +125,7 @@ const zeroStick=():StickVector=>({x:0,y:0,magnitude:0});
 type LootPopup={x:number;y:number;model:string;label:string;start:number};
 let lootPopups:LootPopup[]=[];let grenadeFlights:GrenadeFlight[]=[];let grenadeBursts:{x:number;y:number;type:GrenadeType;age:number}[]=[];
 let combatFx:CombatFx[]=[],bloodFx:BloodFx[]=[],fog:FogState|null=null;
+let meleeAttacks:MeleeAttack<{x:number;y:number}>[]=[];
 let moveAnalog=zeroStick(),aimAnalog=zeroStick(),cameraZoom=1;
 // Desktop mouse aiming is active only while the pointer is over the dungeon canvas.
 let shellEffects:Casing[]=[];let shotKick=0;
@@ -276,7 +278,7 @@ function balanceSquadAmmo(r:Run){
   if(amount>0){bank[kind]-=amount;ally.magReserve+=amount}
  }
 }
-function buildFloor(seed:number,wave:number){gameAudio.stopBreach();combatFx=[];bloodFx=[];shellEffects=[];shotKick=0;bossEffects=[];lootPopups=[];grenadeFlights=[];grenadeBursts=[];poseCache=new WeakMap<object,CharacterMotion>();if(run)run.layoutVersion=3;plan=makeWave(seed,wave,3);if(!run)return;run.explored=[];run.triggeredEvents=[];run.secretOpened=false;run.noiseEvent=null;run.sealedHoles=[];run.breachEvent=null;fog=createFog(plan.map);const p=plan.map.entrance;run.player={x:p.x,y:p.y};run.enemies=[];run.spawned=0;run.kills=0;run.looted=[];run.stage='fight';run.reloadTimer=0;run.reloadSlot=null;ensureEquipment(run).rerolls=0;if(wave>1)balanceSquadAmmo(run);run.focusTarget=null;run.waveHit=false;run.waveSeconds=0;run.waveStartKills=run.killsTotal??0;run.waveStartLooted=run.lootedTotal??0;run.peakThreat=0;run.waveStartHp=run.hp;run.waveStartArmor=run.armor;pathClock=0;pathField=null;searchFields.clear();bossPulse=0;noiseClock=0;const occupied=[run.player];for(let i=0;i<run.allies.length;i++){const ally=run.allies[i];const wanted={x:p.x-1-i*.45,y:p.y+1+i*.45};const placed=spacedSquadPosition(plan.map,wanted,occupied);ally.x=placed.x;ally.y=placed.y;occupied.push(ally);ally.anchor={x:ally.x,y:ally.y};ally.reviveProgress=0}spawnClock=0;allyClock=0;spawnInitial();save()}
+function buildFloor(seed:number,wave:number){gameAudio.stopBreach();meleeAttacks=[];combatFx=[];bloodFx=[];shellEffects=[];shotKick=0;bossEffects=[];lootPopups=[];grenadeFlights=[];grenadeBursts=[];poseCache=new WeakMap<object,CharacterMotion>();if(run)run.layoutVersion=3;plan=makeWave(seed,wave,3);if(!run)return;run.explored=[];run.triggeredEvents=[];run.secretOpened=false;run.noiseEvent=null;run.sealedHoles=[];run.breachEvent=null;fog=createFog(plan.map);const p=plan.map.entrance;run.player={x:p.x,y:p.y};run.enemies=[];run.spawned=0;run.kills=0;run.looted=[];run.stage='fight';run.reloadTimer=0;run.reloadSlot=null;ensureEquipment(run).rerolls=0;if(wave>1)balanceSquadAmmo(run);run.focusTarget=null;run.waveHit=false;run.waveSeconds=0;run.waveStartKills=run.killsTotal??0;run.waveStartLooted=run.lootedTotal??0;run.peakThreat=0;run.waveStartHp=run.hp;run.waveStartArmor=run.armor;pathClock=0;pathField=null;searchFields.clear();bossPulse=0;noiseClock=0;const occupied=[run.player];for(let i=0;i<run.allies.length;i++){const ally=run.allies[i];const wanted={x:p.x-1-i*.45,y:p.y+1+i*.45};const placed=spacedSquadPosition(plan.map,wanted,occupied);ally.x=placed.x;ally.y=placed.y;occupied.push(ally);ally.anchor={x:ally.x,y:ally.y};ally.reviveProgress=0}spawnClock=0;allyClock=0;spawnInitial();save()}
 function newRun(){loadProfile();const kit=startingKit(profile);run={wave:1,credits:kit.credits,hp:100,armor:kit.armor,mag:kit.loadout.primary?.mag??0,reserve:kit.ammo.rifle,medkits:kit.medkits,weaponTier:1,damage:1,maxMag:kit.loadout.primary?.mag??0,player:{x:0,y:0},enemies:[],allies:kit.teammate==='none'?[]:[makeSquadmate(kit.teammate,'starter-01',0,0)],spawned:0,kills:0,bosses:0,cleared:0,seed:Math.floor(Math.random()*2000000000),stage:'fight',looted:[],grenades:emptyGrenades(),grenadeCooldown:0,squadAmmo:kit.teammate==='none'?0:8,activeSlot:'primary',sideMag:kit.loadout.secondary?.mag??12,sideReserve:kit.ammo.light,reloadTimer:0,reloadSlot:null,playerDowned:0,playerDead:false,squadOrder:'follow',focusTarget:null,reviveProgress:0,killsTotal:0,lootedTotal:0,flawlessWaves:0,bestSquad:kit.teammate==='none'?0:1,waveHit:false,equipment:{loadout:kit.loadout,bag:[],ammo:kit.ammo,capacity:kit.capacity,rerolls:0}};buildFloor(run.seed,1);overlay.hidden=true;paused=false;notice('WAVE 1 · Reach the elevator before the horde overwhelms you')}
 function throwSelectedGrenade(type:GrenadeType){
  if(!run||!plan||paused||run.stage!=='fight'||(run.playerDowned??0)>0||run.playerDead)return;
@@ -364,7 +366,8 @@ function spawnInitial(){
 }
 function remaining(){return run?run.enemies.filter(e=>e.alive).length:0}
 function cleared(){return !!run&&!!plan&&run.stage==='fight'&&canExtract(run.sealedHoles??[],run.breachEvent??null)}
-function equip(slot:WeaponSlot){if(!run||paused||run.stage!=='fight'||(run.playerDowned??0)>0)return;if(!ensureEquipment(run).loadout[slot]){notice('No weapon equipped in '+slot);return}run.activeSlot=slot;run.reloadTimer=0;run.reloadSlot=null;shotCooldown=.18;notice(itemName(activeWeapon(run)!));save()}
+function equip(slot:WeaponSlot){if(!run||paused||run.stage!=='fight'||(run.playerDowned??0)>0)return;
+ meleeAttacks=meleeAttacks.filter(attack=>attack.actor!==run!.player);if(!ensureEquipment(run).loadout[slot]){notice('No weapon equipped in '+slot);return}run.activeSlot=slot;run.reloadTimer=0;run.reloadSlot=null;shotCooldown=.18;notice(itemName(activeWeapon(run)!));save()}
 function swapFirearm(){
  if(!run||paused||run.stage!=='fight')return;
  const current=run.activeSlot??'primary';
@@ -410,14 +413,11 @@ function shoot(){
  const def=weaponDefs[w.model],handling=effectiveStats(w),p=run.player;
  if(def.ammo&&w.mag<=0){reload();return}
  if(def.ammo){w.mag--;noiseClock=2.4*handling.noise;run.noiseEvent={x:p.x,y:p.y,radius:Math.max(3,Math.min(19,12*handling.noise)),ttl:2.4};shotKick=Math.min(.3,shotKick+.09+handling.damage*.009);shellEffects.push(ejectCasing(p.x,p.y,aim.x,aim.y,run.kills+run.spawned+w.mag));}
- shotCooldown=handling.rate;
+ shotCooldown=def.slot==='melee'?meleeRecovery(w):handling.rate;
  gameAudio.playWeapon(w.model,{suppressed:w.mods?.barrel?.model==='suppressor'||w.model==='suppressedSmg'});
  const facing=unit(aim.x,aim.y);
  if(def.slot==='melee'){
-  const hits=meleeHits(plan.map,p,facing,handling.range,run.enemies,w.model==='axe'?'axe':'knife');
-  for(const hit of hits)strikeZombie(hit.target,handling.damage,facing,true)
-  shotKick=.17;
-  combatFx.push(...makeAttackFx(w.model,p.x,p.y,facing.x,facing.y,handling.range));
+  meleeAttacks.push(createMeleeAttack(p,w,facing,handling.damage,handling.range));
  }else{
   const profile=shotProfile(w.model)!;
   const distances:number[]=[];
@@ -438,6 +438,29 @@ function shoot(){
  // Begin the normal timed reload immediately after spending the last round.
  if(def.ammo&&w.mag===0)reload();
  save();
+}
+/** Damage is applied on the same contact frame shown by the melee weapon animation. */
+function updateMeleeAttacks(dt:number){
+ if(!run||!plan)return;
+ const active:typeof meleeAttacks=[];
+ for(const attack of meleeAttacks){
+  const player=attack.actor===run.player;
+  if((player&&((run.playerDowned??0)>0||run.playerDead))||
+    (!player&&(!run.allies.includes(attack.actor as Ally)||
+      (attack.actor as Ally).dead||(attack.actor as Ally).downed>0)))continue;
+  const {strike,ended}=advanceMeleeAttack(attack,dt);
+  if(strike){
+   const kind=attack.weapon.model==='axe'?'axe':'knife';
+   const hits=meleeHits(plan.map,attack.actor,{x:attack.dx,y:attack.dy},attack.range,
+     run.enemies,kind,meleeTargetLimit(attack.weapon.model,attack.weapon.tier));
+   for(const hit of hits)strikeZombie(hit.target,attack.damage,{x:attack.dx,y:attack.dy},true);
+   combatFx.push(...makeAttackFx(attack.weapon.model,attack.actor.x,attack.actor.y,
+     attack.dx,attack.dy,attack.range));
+   if(combatFx.length>120)combatFx.splice(0,combatFx.length-120);
+  }
+  if(!ended)active.push(attack);
+ }
+ meleeAttacks=active;
 }
 function defeat(e:Unit){if(!run||!e.alive)return;gameAudio.playZombie(e.kind??'shambler','death',Math.hypot(e.x-run.player.x,e.y-run.player.y));if(e.boss)bossEffects.push({kind:bossAttack(run.wave),x:e.x,y:e.y,age:0,death:true,heading:Math.atan2(run.player.y-e.y,run.player.x-e.x)});e.alive=false;run.kills++;run.killsTotal=(run.killsTotal??0)+1;run.credits+=killPayout(run.wave,!!e.boss);if(e.boss){run.bosses++;notice(bossIdentity(run.wave).name+' ELIMINATED');const eq=ensureEquipment(run),reward=rareLoot(run.seed,run.wave,999,true);if(reward&&canAddItem(eq.bag,eq.ammo,run.medkits,eq.capacity)){eq.bag.push(reward);notice('BOSS REWARD: '+itemName(reward))}else{run.credits+=250;notice('BOSS REWARD: +250 credits (backpack full)')}}}
 function reload(){if(!run||run.stage!=='fight'||run.reloadTimer||(run.playerDowned??0)>0)return;const w=activeWeapon(run);if(!w)return;const def=weaponDefs[w.model];if(!def.ammo)return;
@@ -972,9 +995,8 @@ function squadUpdate(dt:number){if(!run||!plan)return;const r=run,p=r.player,ord
   if(melee){
    gameAudio.playWeapon(weapon.model,{distance:Math.hypot(a.x-p.x,a.y-p.y)});
    const damage=Math.max(1.4,effectiveStats(weapon).damage*(1+.12*(a.gearTier-1)));
-   strikeZombie(target,damage,dir,true);
-   combatFx.push(...makeAttackFx(weapon.model,a.x,a.y,dir.x,dir.y,reach));
-   a.cooldown=Math.max(.45,effectiveStats(weapon).rate);
+   meleeAttacks.push(createMeleeAttack(a,weapon,dir,damage,reach));
+   a.cooldown=meleeRecovery(weapon);
    continue;
   }
   if(a.magReserve<=0)continue;
@@ -1083,6 +1105,7 @@ if(spawnClock>=interval&&active<cap){
 // Don't retain thousands of dead entities across a long survival attempt.
 if(run.enemies.length>cap*3)run.enemies=run.enemies.filter(e=>e.alive);
 squadUpdate(dt);
+updateMeleeAttacks(dt);
 if(fog&&updateFog(plan.map,fog,explorationSources()))run.explored=exploredIndices(fog);
 pathClock-=dt;if(pathClock<=0||!pathField){pathField=distanceField(plan.map,run.player);searchFields.clear();pathClock=.32}
 for(const e of run.enemies){if(!e.alive)continue;
@@ -1332,11 +1355,17 @@ function draw(){
   if(!isKnown(a.x,a.y))continue;
   const dir=allyDirection(a),direction=Math.atan2(dir.y,dir.x);
   const motion=animatedPose(a,now,direction,4);
-  drawSprite(ctx,a.role,v,a.x,a.y,{weapon:squadWeapon(a).model,angle:motion.angle,aimAngle:direction,stride:motion.phase,motionSpeed:motion.speed,idleTime:now/1000,scale:a.role==='heavy'?1.25:1.08,down:a.downed>0,alpha:a.dead?.3:1,glow:a.role==='medic'?'#69e8a1':undefined});
+  const melee=meleeAttacks.find(hit=>hit.actor===a);
+  drawSprite(ctx,a.role,v,a.x,a.y,{weapon:melee?.weapon.model??squadWeapon(a).model,
+   meleeAttack:melee?{model:melee.weapon.model,progress:melee.elapsed/melee.duration,angle:Math.atan2(melee.dy,melee.dx)}:undefined,
+   angle:motion.angle,aimAngle:direction,stride:motion.phase,motionSpeed:motion.speed,idleTime:now/1000,scale:a.role==='heavy'?1.25:1.08,down:a.downed>0,alpha:a.dead?.3:1,glow:a.role==='medic'?'#69e8a1':undefined});
   if(a.hp<a.maxHp||a.downed>0)drawBar(ctx,v,a.x,a.y,a.downed>0?a.downed/ALLY_BLEEDOUT:a.hp/a.maxHp,a.downed>0?'#f1c17e':hudColor(a.hp/a.maxHp));
  }
  const playerMotion=animatedPose(r.player,now,0,12);
- drawSprite(ctx,'player',v,r.player.x,r.player.y,{weapon:activeWeapon(r)?.model??null,angle:playerMotion.angle,aimAngle:Math.atan2(aim.y,aim.x),weaponRecoil:shotKick*(Math.sin(now/32)>0?1:-1),reloadProgress:r.reloadTimer&&activeWeapon(r)?1-Math.max(0,r.reloadTimer)/Math.max(.01,effectiveStats(activeWeapon(r)!).reload):0,stride:playerMotion.phase,motionSpeed:playerMotion.speed,idleTime:now/1000,showAim:true,scale:1.25,down:(r.playerDowned??0)>0,glow:'#b3d8b4'});
+ const playerMelee=meleeAttacks.find(hit=>hit.actor===r.player);
+ drawSprite(ctx,'player',v,r.player.x,r.player.y,{weapon:playerMelee?.weapon.model??activeWeapon(r)?.model??null,
+  meleeAttack:playerMelee?{model:playerMelee.weapon.model,progress:playerMelee.elapsed/playerMelee.duration,angle:Math.atan2(playerMelee.dy,playerMelee.dx)}:undefined,
+  angle:playerMotion.angle,aimAngle:Math.atan2(aim.y,aim.x),weaponRecoil:shotKick*(Math.sin(now/32)>0?1:-1),reloadProgress:r.reloadTimer&&activeWeapon(r)?1-Math.max(0,r.reloadTimer)/Math.max(.01,effectiveStats(activeWeapon(r)!).reload):0,stride:playerMotion.phase,motionSpeed:playerMotion.speed,idleTime:now/1000,showAim:true,scale:1.25,down:(r.playerDowned??0)>0,glow:'#b3d8b4'});
  // A bullet effect cannot reveal enemies or objects through unexplored tiles.
  ctx.save();if(fog)clipToExplored(ctx,m,v,fog);
  drawCombatFx(ctx,v,combatFx);
