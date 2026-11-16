@@ -12,8 +12,8 @@ export const meleeRecovery=(weapon:Weapon):number=>{
  // retain their approved attack rate progression.
  return weapon.model==='knife'?Math.max(.18,rate*Math.pow(.89,Math.max(0,weapon.tier-1))):rate;
 };
-export const meleeDuration=(model:WeaponId):number=>
- model==='knife'?.235:model==='axe'?.47:model==='machete'?.36:model==='crowbar'?.42:.34;
+export const meleeDuration=(model:WeaponId,tier=1):number=>
+ model==='knife'?.235*Math.pow(.90,Math.max(0,tier-1)):model==='axe'?.47:model==='machete'?.36:model==='crowbar'?.42:.34;
 export const meleeContact=(model:WeaponId):number=>
  model==='knife'?.48:model==='axe'?.54:.51;
 export function meleePose(model:WeaponId,progress:number):MeleeAnimation{
@@ -32,7 +32,7 @@ export function createMeleeAttack<T extends {x:number;y:number}>(
 ):MeleeAttack<T>{
  const length=Math.hypot(direction.x,direction.y)||1;
  return {actor,weapon,dx:direction.x/length,dy:direction.y/length,
-  elapsed:0,duration:meleeDuration(weapon.model),contact:meleeContact(weapon.model),
+  elapsed:0,duration:meleeDuration(weapon.model,weapon.tier),contact:meleeContact(weapon.model),
   damage,range,hit:false};
 }
 export function advanceMeleeAttack<T extends {x:number;y:number}>(
