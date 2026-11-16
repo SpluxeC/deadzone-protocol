@@ -376,7 +376,28 @@ export function drawSprite(ctx:CanvasRenderingContext2D,kind:SpriteKind,v:View,x
    ctx.fillStyle='#343d37';ctx.beginPath();
    ctx.ellipse(hand.x*sz,hand.y*sz,sz*.062,sz*.052,0,0,Math.PI*2);ctx.fill();
   };
-  drawArm(left);drawArm(right);
+  if(animated){
+   // Full articulated limbs only for actual melee stabs and swings.
+   drawArm(left);drawArm(right);
+  }else{
+   // Firearm grip pose: no rear-facing connecting lines or long capsules.
+   // The gun overlays these compact sleeves and gloves at its receiver.
+   const shortSleeve=(x:number,y:number)=>{
+    ctx.fillStyle='#172225';ctx.beginPath();
+    ctx.ellipse(x*sz,y*sz,sz*.105,sz*.092,0,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle=sleeve;ctx.beginPath();
+    ctx.ellipse(x*sz,y*sz,sz*.082,sz*.07,0,0,Math.PI*2);ctx.fill();
+   };
+   shortSleeve(-.215,-.18);
+   shortSleeve(.215,-.18);
+   // A couple of compact gloves, not two elongated strokes out of the rear.
+   ctx.fillStyle='#333f3a';
+   for(const pos of [left.hand,right.hand]){
+    const x=Math.max(-.27,Math.min(.27,pos.x));
+    const y=Math.max(-.36,Math.min(-.03,pos.y));
+    ctx.beginPath();ctx.ellipse(x*sz,y*sz,sz*.055,sz*.047,0,0,Math.PI*2);ctx.fill();
+   }
+  }
 
   ctx.save();
   // During reload the weapon dips slightly and the magazine/charging handle
