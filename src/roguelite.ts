@@ -414,11 +414,11 @@ function shoot(){
  if(def.ammo&&w.mag<=0){reload();return}
  if(def.ammo){w.mag--;noiseClock=2.4*handling.noise;run.noiseEvent={x:p.x,y:p.y,radius:Math.max(3,Math.min(19,12*handling.noise)),ttl:2.4};shotKick=Math.min(.3,shotKick+.09+handling.damage*.009);shellEffects.push(ejectCasing(p.x,p.y,aim.x,aim.y,run.kills+run.spawned+w.mag));}
  shotCooldown=def.slot==='melee'?meleeRecovery(w):handling.rate;
- gameAudio.playWeapon(w.model,{suppressed:w.mods?.barrel?.model==='suppressor'||w.model==='suppressedSmg'});
  const facing=unit(aim.x,aim.y);
  if(def.slot==='melee'){
   meleeAttacks.push(createMeleeAttack(p,w,facing,handling.damage,handling.range));
  }else{
+  gameAudio.playWeapon(w.model,{suppressed:w.mods?.barrel?.model==='suppressor'||w.model==='suppressedSmg'});
   const profile=shotProfile(w.model)!;
   const distances:number[]=[];
   const targets=run.enemies.filter(e=>e.alive);
@@ -450,6 +450,7 @@ function updateMeleeAttacks(dt:number){
       (attack.actor as Ally).dead||(attack.actor as Ally).downed>0)))continue;
   const {strike,ended}=advanceMeleeAttack(attack,dt);
   if(strike){
+   gameAudio.playWeapon(attack.weapon.model,{distance:Math.hypot(attack.actor.x-run.player.x,attack.actor.y-run.player.y)});
    const kind=attack.weapon.model==='axe'?'axe':'knife';
    const hits=meleeHits(plan.map,attack.actor,{x:attack.dx,y:attack.dy},attack.range,
      run.enemies,kind,meleeTargetLimit(attack.weapon.model,attack.weapon.tier));
@@ -1001,7 +1002,6 @@ function squadUpdate(dt:number){if(!run||!plan)return;const r=run,p=r.player,ord
   const aimY=(target.armorIntegrity??1)<=0&&(target.boss||target.kind==='armored')?target.y-.18:target.y;
    const dir=unit(target.x-a.x,aimY-a.y);
   if(melee){
-   gameAudio.playWeapon(weapon.model,{distance:Math.hypot(a.x-p.x,a.y-p.y)});
    const damage=Math.max(1.4,effectiveStats(weapon).damage*(1+.12*(a.gearTier-1)));
    meleeAttacks.push(createMeleeAttack(a,weapon,dir,damage,reach));
    a.cooldown=meleeRecovery(weapon);
