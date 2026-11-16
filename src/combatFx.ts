@@ -35,7 +35,7 @@ export function shotProfile(model:WeaponId):ShotProfile|null{
 export function makeAttackFx(model:WeaponId,x:number,y:number,dx:number,dy:number,range:number,hitDistances?:readonly number[],showFlash=true):CombatFx[]{
  const length=Math.hypot(dx,dy)||1,ux=dx/length,uy=dy/length;
  if(['knife','axe','machete','bat','crowbar'].includes(model))
-  return [{kind:'swing',model,x,y,dx:ux,dy:uy,age:0,duration:model==='axe'||model==='crowbar'?.37:.23,distance:range,angleOffset:0}];
+  return [{kind:'swing',model,x,y,dx:ux,dy:uy,age:0,duration:model==='axe'||model==='crowbar'?.19:.13,distance:range,angleOffset:0}];
  const profile=shots[model as keyof typeof shots],maximum=Math.max(0,range);
  return Array.from({length:profile.count},(_,i)=>{
   const offset=profile.count===1?0:(i/(profile.count-1)*2-1)*profile.spread;
@@ -55,29 +55,35 @@ export function drawCombatFx(ctx:CanvasRenderingContext2D,v:View,effects:readonl
   ctx.save();
   ctx.translate(px,py);ctx.rotate(Math.atan2(fx.dy,fx.dx));
   if(fx.kind==='swing'){
-   const axe=fx.model==='axe'||fx.model==='crowbar'||fx.model==='bat',radius=v.tile*Math.max(.55,fx.distance-.18);
-   const sweep=axe?2.15:1.55,origin=axe?-1.05:-.78,head=origin+sweep*progress;
-   ctx.globalAlpha=Math.min(1,(1-progress)*1.5);
-   ctx.lineCap='round';
-   ctx.strokeStyle=axe?'#f3b878':'#d7f4ec';
-   ctx.lineWidth=Math.max(3,v.tile*(axe?.14:.075));
-   ctx.shadowColor=axe?'#ffae68':'#b4fff5';ctx.shadowBlur=v.tile*.27;
-   ctx.beginPath();ctx.arc(0,0,radius,Math.min(origin,head),Math.max(origin,head));ctx.stroke();
-   ctx.shadowBlur=0;ctx.strokeStyle='rgba(255,255,255,.83)';ctx.lineWidth=Math.max(1,v.tile*.032);
-   ctx.beginPath();ctx.arc(0,0,radius,head-.16,head);ctx.stroke();
+   // The weapon itself performs the animation. These are contact-only sparks,
+   // not persistent arcs or a second ghost weapon sticking out of the survivor.
+   const axe=fx.model==='axe'||fx.model==='crowbar'||fx.model==='bat';
+   const reach=Math.min(fx.distance,axe?1.05:.85)*v.tile;
+   const decay=Math.max(0,1-progress);
+   ctx.globalAlpha=decay*.75;
+   if(axe){
+    ctx.strokeStyle='rgba(242,200,148,.72)';
+    ctx.lineWidth=Math.max(1.5,v.tile*.045*decay);
+    ctx.beginPath();ctx.arc(reach,0,v.tile*.23,-.80,.55);ctx.stroke();
+    ctx.fillStyle='rgba(229,193,148,.38)';
+    ctx.beginPath();ctx.ellipse(reach,0,v.tile*.10*decay,v.tile*.17*decay,-.2,0,Math.PI*2);ctx.fill();
+   }else{
+    ctx.fillStyle='#dedbd1';
+    ctx.beginPath();ctx.ellipse(reach,0,v.tile*.075*decay,v.tile*.045*decay,0,0,Math.PI*2);ctx.fill();
+   }
   }else{
    const profile=shotProfile(fx.model)!;
    // Bullets are visible projectiles with a bright core, tapered afterimage,
    // small warm halo and a fading impact glint instead of a solid laser line.
    const travelTime=fx.distance/profile.speed;
    const traveled=Math.min(fx.distance,fx.age*profile.speed);
-   const x=traveled*v.tile,trail=Math.min(traveled,profile.trail*.8)*v.tile;
+   const x=traveled*v.tile,trail=Math.min(traveled,Math.min(.24,profile.trail*.45))*v.tile;
    const fading=Math.max(0,Math.min(1,(fx.duration-fx.age)/.12));
    const width=Math.max(1.1,profile.width*v.tile*.9);
    ctx.lineCap='round';
    if(fx.age<=travelTime){
-    ctx.globalAlpha=fading*.25;ctx.strokeStyle=profile.color;
-    ctx.lineWidth=width*3.4;ctx.beginPath();ctx.moveTo(x-trail,0);ctx.lineTo(x,0);ctx.stroke();
+    ctx.globalAlpha=fading*.15;ctx.strokeStyle=profile.color;
+    ctx.lineWidth=width*2.2;ctx.beginPath();ctx.moveTo(x-trail,0);ctx.lineTo(x,0);ctx.stroke();
     ctx.globalAlpha=fading*.65;ctx.strokeStyle=profile.color;
     ctx.lineWidth=width*1.5;ctx.beginPath();ctx.moveTo(x-trail*.65,0);ctx.lineTo(x,0);ctx.stroke();
     ctx.globalAlpha=fading;ctx.strokeStyle='#fff6d8';
