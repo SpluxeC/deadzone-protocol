@@ -62,16 +62,19 @@ export function drawHeldWeapon(ctx:CanvasRenderingContext2D,model:WeaponId,sz:nu
  }
  // Receiver and stock use steel depth/shadow instead of thin abstract lines.
  if(!pistol&&!smg){
-  rect(x-sz*.066,sz*.025,sz*.15,sz*.20,'#262f30',sz*.025);
-  rect(x-sz*.09,sz*.19,sz*.19,sz*.052,'#171e20',sz*.013);
-  line(x-sz*.07,sz*.04,x-sz*.07,sz*.19,'#6f7d78',sz*.021);
+  // Compact shoulder stock: never draw past the back of the character.
+  rect(x-sz*.066,sz*.035,sz*.13,sz*.115,'#262f30',sz*.025);
+  rect(x-sz*.078,sz*.14,sz*.16,sz*.039,'#171e20',sz*.013);
+  line(x-sz*.065,sz*.05,x-sz*.065,sz*.135,'#6f7d78',sz*.012);
  }
  // Grip and trigger guard.
  rect(x-sz*.055,sz*.005,sz*.12,sz*.16,'#303a39',sz*.022);
  line(x+sz*.04,sz*.025,x+sz*.085,sz*.11,'#8a9790',sz*.017);
  rect(x-sz*.076,sz*bodyFront,sz*.165,sz*(bodyRear-bodyFront),dark,sz*.035);
  rect(x-sz*.053,sz*(bodyFront+.024),sz*.115,sz*(bodyRear-bodyFront-.045),receiver,sz*.025);
- line(x-sz*.046,sz*(bodyFront+.035),x-sz*.046,sz*(bodyRear-.018),silver,sz*.014);
+ // Keep the light receiver seam within the metal housing only. A full-length
+ // silver stroke along the back looked like a separate rod behind the firearm.
+ line(x-sz*.046,sz*(bodyFront+.045),x-sz*.046,sz*(bodyFront+.16),silver,sz*.012);
  // Distinct magazine families.
  if(model==='revolver'){
   ctx.fillStyle='#687975';ctx.beginPath();ctx.arc(x+sz*.035,sz*-.105,sz*.077,0,Math.PI*2);ctx.fill();
