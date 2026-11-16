@@ -1332,11 +1332,11 @@ function draw(){
   if(!isKnown(a.x,a.y))continue;
   const dir=allyDirection(a),direction=Math.atan2(dir.y,dir.x);
   const motion=animatedPose(a,now,direction,4);
-  drawSprite(ctx,a.role,v,a.x,a.y,{weapon:squadWeapon(a).model,angle:motion.angle,stride:motion.phase,motionSpeed:motion.speed,idleTime:now/1000,scale:a.role==='heavy'?1.25:1.08,down:a.downed>0,alpha:a.dead?.3:1,glow:a.role==='medic'?'#69e8a1':undefined});
+  drawSprite(ctx,a.role,v,a.x,a.y,{weapon:squadWeapon(a).model,angle:motion.angle,aimAngle:direction,stride:motion.phase,motionSpeed:motion.speed,idleTime:now/1000,scale:a.role==='heavy'?1.25:1.08,down:a.downed>0,alpha:a.dead?.3:1,glow:a.role==='medic'?'#69e8a1':undefined});
   if(a.hp<a.maxHp||a.downed>0)drawBar(ctx,v,a.x,a.y,a.downed>0?a.downed/ALLY_BLEEDOUT:a.hp/a.maxHp,a.downed>0?'#f1c17e':hudColor(a.hp/a.maxHp));
  }
- const playerMotion=animatedPose(r.player,now,Math.atan2(aim.y,aim.x),12,true);
- drawSprite(ctx,'player',v,r.player.x,r.player.y,{weapon:activeWeapon(r)?.model??null,angle:playerMotion.angle+shotKick*(Math.sin(now/32)>0?1:-1),stride:playerMotion.phase,motionSpeed:playerMotion.speed,idleTime:now/1000,showAim:true,scale:1.25,down:(r.playerDowned??0)>0,glow:'#b3d8b4'});
+ const playerMotion=animatedPose(r.player,now,0,12);
+ drawSprite(ctx,'player',v,r.player.x,r.player.y,{weapon:activeWeapon(r)?.model??null,angle:playerMotion.angle,aimAngle:Math.atan2(aim.y,aim.x),weaponRecoil:shotKick*(Math.sin(now/32)>0?1:-1),stride:playerMotion.phase,motionSpeed:playerMotion.speed,idleTime:now/1000,showAim:true,scale:1.25,down:(r.playerDowned??0)>0,glow:'#b3d8b4'});
  // A bullet effect cannot reveal enemies or objects through unexplored tiles.
  ctx.save();if(fog)clipToExplored(ctx,m,v,fog);
  drawCombatFx(ctx,v,combatFx);
