@@ -1423,3 +1423,29 @@
 
 /* Never leave an empty notification pill over the Impact/Stun grenade buttons. */
 #rogue #toast:empty{display:none!important}
+
+/* Cinematic metal-and-canvas item cards: preserve compact mobile layouts. */
+#rogue #overlay .armory-item .gear-mini,
+#rogue #overlay .inventory-section .gear-mini,
+#rogue #overlay .equipment-row .gear-mini{
+  position:relative;
+  border-color:#718a80;
+  background-color:#1b2d2d;
+  box-shadow:inset 0 1px 0 #d8e6d22b,inset 0 -3px 7px #050c0d77,0 2px 7px #000a;
+  filter:contrast(1.12) saturate(.88);
+  transform:translateZ(0);
+}
+#rogue #overlay button.armory-item:not(:disabled):active .gear-mini{
+  filter:brightness(1.35) contrast(1.12);
+  transform:translateY(1px);
+}
+@media(hover:hover) and (pointer:fine){
+ #rogue #overlay button.armory-item:not(:disabled):hover .gear-mini{
+  filter:brightness(1.2) contrast(1.14) saturate(.95);
+  box-shadow:inset 0 1px 0 #eaf0de55,0 0 0 1px #bdd1ae88,0 3px 10px #000b;
+  transition:filter .15s ease,box-shadow .15s ease;
+ }
+}
+@media(prefers-reduced-motion:reduce){
+ #rogue #overlay button.armory-item .gear-mini{transition:none!important}
+}
