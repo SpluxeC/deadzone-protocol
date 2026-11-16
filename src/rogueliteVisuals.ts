@@ -1,7 +1,7 @@
 import type {DungeonLayout} from './dungeon.ts';
 import type {WeaponId} from './equipmentArmory.ts';
 import {drawHeldWeapon,heldWeaponMuzzle,isMeleeWeapon} from './weaponVisuals.ts';
-import {weaponRelativeAngle,weaponRigShoulder} from './characterMotion.ts';
+import {aimedHand,solveAimArm} from './characterMotion.ts';
 import {drawCharacterLegs} from './characterLegs.ts';
 const spriteUrl=new URL('./assets/deadzone-sprites.svg',import.meta.url).href;
 // Optional art pack: when uploaded to public/environment, it loads without a code edit.
@@ -253,9 +253,10 @@ export function drawSprite(ctx:CanvasRenderingContext2D,kind:SpriteKind,v:View,x
  }else{
   ctx.fillStyle='rgba(0,5,6,.35)';ctx.beginPath();ctx.ellipse(0,sz*.36,sz*.38,sz*.115,0,0,Math.PI*2);ctx.fill();
  }
- // Humans and infected use the original head-forward transform. For the player,
- // correct the rifle's diagonal angle so the barrel actually faces their aim.
- const rotation=(opts?.angle??0)+(living?Math.PI/2:0)+(opts?.down?Math.PI*.5:0);
+ // Human torsos always stay upright on screen, even while strafing or running.
+ // Infected still turn toward travel/targets; incapacitated humans can lie down.
+ const rotation=zombie?(opts?.angle??0)+Math.PI/2:
+  opts?.down?Math.PI*.5:0;
  ctx.rotate(rotation);
  // Human motion has controlled weight transfer; infected locomotion is uneven.
  // Heavy units plant their boots, runners have longer airborne strides, and
@@ -292,29 +293,33 @@ export function drawSprite(ctx:CanvasRenderingContext2D,kind:SpriteKind,v:View,x
   ctx.beginPath();ctx.arc(0,0,sz*.35,0,Math.PI*2);ctx.fill();
  }
  if(opts?.weapon&&living&&!zombie&&!opts?.down){
-  // Body orientation comes from travel. The arms and weapon have their own
-  // aim transform, so standing still or strafing does not rotate the torso.
-  const aimed=opts.aimAngle??opts.angle??0;
-  const body=opts.angle??0;
-  const relative=weaponRelativeAngle(body,aimed)+(opts.weaponRecoil??0);
-  const left=weaponRigShoulder(-.21,-.135,relative);
-  const right=weaponRigShoulder(.22,-.13,relative);
-  const armWidth=sz*(kind==='heavy'?.145:.115);
-  const sleeve=kind==='medic'?'#959f98':kind==='heavy'?'#51595b':kind==='engineer'?'#746e51':kind==='scout'?'#51634f':'#535f58';
-  ctx.save();ctx.rotate(relative);
-  ctx.lineCap='round';ctx.lineJoin='round';
-  // Support arm leads toward the forestock while the weapon hand grips the receiver.
-  ctx.strokeStyle='#151e21';ctx.lineWidth=armWidth+sz*.045;
-  ctx.beginPath();ctx.moveTo(left.x*sz,left.y*sz);ctx.lineTo(-sz*.15,-sz*.17);ctx.lineTo(sz*.125,-sz*.30);ctx.stroke();
-  ctx.strokeStyle=sleeve;ctx.lineWidth=armWidth;
-  ctx.beginPath();ctx.moveTo(left.x*sz,left.y*sz);ctx.lineTo(-sz*.15,-sz*.17);ctx.lineTo(sz*.125,-sz*.30);ctx.stroke();
-  ctx.strokeStyle='#172326';ctx.lineWidth=armWidth+sz*.045;
-  ctx.beginPath();ctx.moveTo(right.x*sz,right.y*sz);ctx.lineTo(sz*.32,-sz*.04);ctx.lineTo(sz*.16,-sz*.12);ctx.stroke();
-  ctx.strokeStyle=sleeve;ctx.lineWidth=armWidth;
-  ctx.beginPath();ctx.moveTo(right.x*sz,right.y*sz);ctx.lineTo(sz*.32,-sz*.04);ctx.lineTo(sz*.16,-sz*.12);ctx.stroke();
-  ctx.fillStyle='#374039';
-  ctx.beginPath();ctx.ellipse(sz*.125,-sz*.30,sz*.076,sz*.056,-.5,0,Math.PI*2);ctx.fill();
-  ctx.beginPath();ctx.ellipse(sz*.16,-sz*.12,sz*.075,sz*.055,0,0,Math.PI*2);ctx.fill();
+  // Separate two-bone arms are anchored at the upright torso's shoulders.
+  // Only hand targets and weapon rotate with aim; elbows bend away from the body.
+  const aimed=opts.aimAngle??0;
+  const left=solveAimArm(-1,aimedHand(.10,-.285,aimed));
+  const right=solveAimArm(1,aimedHand(.16,-.115,aimed));
+  const thickness=kind==='heavy'?.13:.10;
+  const sleeve=kind==='medic'?'#929c96':kind==='heavy'?'#4c5557':
+   kind==='engineer'?'#70674e':kind==='scout'?'#51624d':'#53615b';
+  const strokeArm=(arm:typeof left)=>{
+   const {shoulder,elbow,hand}=arm;
+   ctx.save();ctx.lineCap='round';ctx.lineJoin='round';
+   ctx.strokeStyle='#172225';ctx.lineWidth=sz*(thickness+.05);
+   ctx.beginPath();ctx.moveTo(shoulder.x*sz,shoulder.y*sz);
+   ctx.lineTo(elbow.x*sz,elbow.y*sz);ctx.lineTo(hand.x*sz,hand.y*sz);ctx.stroke();
+   ctx.strokeStyle=sleeve;ctx.lineWidth=sz*thickness;
+   ctx.beginPath();ctx.moveTo(shoulder.x*sz,shoulder.y*sz);
+   ctx.lineTo(elbow.x*sz,elbow.y*sz);ctx.lineTo(hand.x*sz,hand.y*sz);ctx.stroke();
+   // Pads and gloves make the bending direction visually unambiguous.
+   ctx.fillStyle='#61716a';ctx.strokeStyle='#202a2a';ctx.lineWidth=sz*.023;
+   ctx.beginPath();ctx.ellipse(elbow.x*sz,elbow.y*sz,sz*thickness*.6,sz*thickness*.52,0,0,Math.PI*2);ctx.fill();ctx.stroke();
+   ctx.fillStyle='#343d37';
+   ctx.beginPath();ctx.ellipse(hand.x*sz,hand.y*sz,sz*.068,sz*.056,0,0,Math.PI*2);ctx.fill();
+   ctx.restore();
+  };
+  strokeArm(left);strokeArm(right);
+  ctx.save();
+  ctx.rotate(aimed+Math.PI/2+(opts.weaponRecoil??0));
   drawHeldWeapon(ctx,opts.weapon,sz);
   if(kind==='player'&&opts.showAim&&!isMeleeWeapon(opts.weapon)){
    const muzzle=heldWeaponMuzzle(opts.weapon,sz);
@@ -326,7 +331,6 @@ export function drawSprite(ctx:CanvasRenderingContext2D,kind:SpriteKind,v:View,x
   }
   ctx.restore();
  }
-
  ctx.restore();
 }
 export function drawBar(ctx:CanvasRenderingContext2D,v:View,x:number,y:number,ratio:number,color:string,width=.8):void{
