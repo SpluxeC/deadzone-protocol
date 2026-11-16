@@ -288,11 +288,19 @@ export function drawSprite(ctx:CanvasRenderingContext2D,kind:SpriteKind,v:View,x
     ctx.fillStyle=zombie?'#252e2b':'#152623';
     ctx.beginPath();ctx.ellipse(footX,footYAdjusted+sz*.025,sz*.085,sz*.052,side*.09,0,Math.PI*2);ctx.fill();
    }
-   // Source cropping avoids painting the old, stationary legs over the new walk cycle.
-   const torsoHeight=69;
-   ctx.drawImage(atlas,sx,0,spriteSize,torsoHeight,-sz*.6,-sz*.7,sz*1.2,sz*1.2*torsoHeight/spriteSize);
+   // Armed humans use the articulated arm rig; crop the static sprite arms
+   // while retaining helmet, torso, armor, backpack, and animated legs.
+   const torsoHeight=69,armed=!zombie&&!!opts?.weapon&&!opts?.down;
+   const inset=armed?22:0,sourceWidth=spriteSize-inset*2;
+   ctx.drawImage(atlas,sx+inset,0,sourceWidth,torsoHeight,
+    -sz*.6+sz*1.2*inset/spriteSize,-sz*.7,
+    sz*1.2*sourceWidth/spriteSize,sz*1.2*torsoHeight/spriteSize);
   }else{
-   ctx.drawImage(atlas,spriteIndex[kind]*spriteSize,0,spriteSize,spriteSize,-sz*.6,-sz*.7,sz*1.2,sz*1.2);
+   const armed=living&&!zombie&&!!opts?.weapon&&!opts?.down;
+   const inset=armed?22:0,sourceWidth=spriteSize-inset*2;
+   ctx.drawImage(atlas,spriteIndex[kind]*spriteSize+inset,0,sourceWidth,spriteSize,
+    -sz*.6+sz*1.2*inset/spriteSize,-sz*.7,
+    sz*1.2*sourceWidth/spriteSize,sz*1.2);
   }
  }else{
   ctx.fillStyle=kind==='player'?'#dcd0b3':kind==='elevator'?'#61cda0':kind==='crate'?'#b9975d':'#7b9991';
