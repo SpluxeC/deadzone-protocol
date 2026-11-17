@@ -1496,8 +1496,7 @@ function draw(){
   ctx.fillStyle=identity.color;ctx.fillRect(bx,by+12*ratio,bw*Math.max(0,livingBoss.hp/livingBoss.maxHp),bh);
   ctx.restore();
  }
- const w=activeWeapon(r),ammoType=w?weaponDefs[w.model].ammo:null,eq=ensureEquipment(r);
- const ammo=w&&ammoType?w.mag+'/'+eq.ammo[ammoType]:'MELEE';
+ const w=activeWeapon(r);
  // Mobile squad orders only exist when at least one living squadmate can receive them.
  const hasActiveSquad=r.allies.some(ally=>!ally.dead&&ally.downed<=0);
  const mobileSquad=document.querySelector<HTMLElement>('#mobile-squad')!;
