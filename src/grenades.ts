@@ -1,11 +1,11 @@
 /** Tactical grenade equipment: dedicated storage, deterministic supply loot, and flight physics. */
-export const GRENADE_TYPES=['frag','impact','stun','lure'] as const;
+export const GRENADE_TYPES=['frag','impact','stun','lure','shock','incendiary'] as const;
 export type GrenadeType=typeof GRENADE_TYPES[number];
 export type GrenadeInventory=Record<GrenadeType,number>;
-export const GRENADE_PRICE:Record<GrenadeType,number>={frag:60,impact:50,stun:45,lure:40};
-export const GRENADE_RADIUS:Record<GrenadeType,number>={frag:3,impact:3,stun:4,lure:12};
+export const GRENADE_PRICE:Record<GrenadeType,number>={frag:60,impact:50,stun:45,lure:40,shock:70,incendiary:85};
+export const GRENADE_RADIUS:Record<GrenadeType,number>={frag:3,impact:3,stun:4,lure:12,shock:3.5,incendiary:3};
 export const GRENADE_CAP=2;
-export const emptyGrenades=():GrenadeInventory=>({frag:0,impact:0,stun:0,lure:0});
+export const emptyGrenades=():GrenadeInventory=>({frag:0,impact:0,stun:0,lure:0,shock:0,incendiary:0});
 export function migrateGrenades(v?:Partial<GrenadeInventory>|null):GrenadeInventory{
  const result=emptyGrenades();
  for(const type of GRENADE_TYPES)result[type]=Math.min(GRENADE_CAP,Math.max(0,Math.floor(Number(v?.[type])||0)));
@@ -20,12 +20,12 @@ export function grenadeCrateLoot(seed:number,wave:number,crate:number):{type:Gre
  let s=(seed^Math.imul(wave+17,0x9e3779b1)^Math.imul(crate+53,0x85ebca6b))>>>0;
  const roll=()=>((s=(Math.imul(s,1664525)+1013904223)>>>0)/4294967296);
  if(roll()>=.2)return null;
- return {type:GRENADE_TYPES[Math.floor(roll()*4)],amount:roll()<.75?1:2};
+ return {type:GRENADE_TYPES[Math.floor(roll()*GRENADE_TYPES.length)],amount:roll()<.75?1:2};
 }
 export type GrenadeFlight={type:GrenadeType;x:number;y:number;vx:number;vy:number;age:number;life:number;altitude:number;active:number;fired:boolean;originX:number;originY:number};
 export function throwGrenade(type:GrenadeType,x:number,y:number,dx:number,dy:number):GrenadeFlight{
  const d=Math.hypot(dx,dy)||1;
- return {type,x,y,vx:dx/d*14,vy:dy/d*14,age:0,life:type==='frag'?2:1,altitude:0,active:0,fired:false,originX:x,originY:y};
+ return {type,x,y,vx:dx/d*14,vy:dy/d*14,age:0,life:type==='frag'||type==='incendiary'?2:1,altitude:0,active:0,fired:false,originX:x,originY:y};
 }
 export function advanceGrenade(g:GrenadeFlight,dt:number,walkable:(x:number,y:number)=>boolean):{detonate:boolean;ended:boolean}{
  g.age+=dt;
@@ -38,7 +38,7 @@ export function advanceGrenade(g:GrenadeFlight,dt:number,walkable:(x:number,y:nu
   const scale=rangeReached?6/travel:1;
   const tx=g.originX+(nx-g.originX)*scale,ty=g.originY+(ny-g.originY)*scale;
   const hitX=!walkable(tx,g.y),hitY=!walkable(g.x,ty);
-  if(g.type==='impact'&&(hitX||hitY||rangeReached)){
+  if((g.type==='impact'||g.type==='shock')&&(hitX||hitY||rangeReached)){
    if(!hitX)g.x=tx;
    if(!hitY)g.y=ty;
    g.fired=true;return {detonate:true,ended:true};
@@ -50,7 +50,7 @@ export function advanceGrenade(g:GrenadeFlight,dt:number,walkable:(x:number,y:nu
   }
   const drag=Math.pow(.55,dt);g.vx*=drag;g.vy*=drag;
   g.altitude=Math.max(0,Math.sin(Math.min(1,g.age/.72)*Math.PI)*.65);
-  if(g.type==='impact'&&g.age>=.72){g.fired=true;return {detonate:true,ended:true}}
+  if((g.type==='impact'||g.type==='shock')&&g.age>=.72){g.fired=true;return {detonate:true,ended:true}}
   if(g.age>=g.life){g.fired=true;return {detonate:true,ended:g.type!=='lure'}}
   return {detonate:false,ended:false};
  }
