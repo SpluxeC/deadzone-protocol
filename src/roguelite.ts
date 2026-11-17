@@ -17,6 +17,7 @@ import {gearIcon,gearIconModels,grenadeIcon} from './gearIcons';
 import {makeAttackFx,ageCombatFx,drawCombatFx,shotProfile,type CombatFx} from './combatFx';
 import {bloodOnHit,ageBloodFx,drawBloodFx,MAX_BLOOD_EFFECTS,type BloodFx} from './bloodFx';
 import {traceBullet,meleeHits,unit,penetrationFor,aimHasTarget} from './hitDetection';
+import {findAutoTarget} from './autoCombat';
 import {createMeleeAttack,advanceMeleeAttack,meleeTargetLimit,meleeRecovery,type MeleeAttack} from './meleeCombat';
 import {createFog,updateFog,renderFog,exploredIndices,discoveredAt,clipToExplored,type FogState,type Explorer} from './fogOfWar';
 import {normalizeStick,stickKnob,type StickVector} from './mobileControls';
@@ -126,7 +127,7 @@ type LootPopup={x:number;y:number;model:string;label:string;start:number};
 let lootPopups:LootPopup[]=[];let grenadeFlights:GrenadeFlight[]=[];let grenadeBursts:{x:number;y:number;type:GrenadeType;age:number}[]=[];
 let combatFx:CombatFx[]=[],bloodFx:BloodFx[]=[],fog:FogState|null=null;
 let meleeAttacks:MeleeAttack<{x:number;y:number}>[]=[];
-let moveAnalog=zeroStick(),aimAnalog=zeroStick(),cameraZoom=1;
+let moveAnalog=zeroStick(),cameraZoom=1;
 // Desktop mouse aiming is active only while the pointer is over the dungeon canvas.
 let shellEffects:Casing[]=[];let shotKick=0;
 let bossEffects:{kind:ReturnType<typeof bossAttack>;x:number;y:number;age:number;death?:boolean;heading?:number}[]=[];
@@ -1080,26 +1081,24 @@ shotCooldown=Math.max(0,shotCooldown-dt);noiseClock=Math.max(0,noiseClock-dt);if
  const p=run.player;let dx=0,dy=0;if(keys.has('KeyW')||keys.has('ArrowUp')||touch.has('up'))dy--;if(keys.has('KeyS')||keys.has('ArrowDown')||touch.has('down'))dy++;if(keys.has('KeyA')||keys.has('ArrowLeft')||touch.has('left'))dx--;if(keys.has('KeyD')||keys.has('ArrowRight')||touch.has('right'))dx++;const len=Math.hypot(dx,dy);if((run.playerDowned??0)===0){if(len)moveUnit(p,dx/len,dy/len,dt*(keys.has('ShiftLeft')?4:3));else if(moveAnalog.magnitude>0)moveUnit(p,moveAnalog.x,moveAnalog.y,dt*3)}
 rescueAction(dt,keys.has('KeyV')||touch.has('revive'));
 if((run.playerDowned??0)===0)triggerFloorEvents();
-if(aimAnalog.magnitude>0){aim={x:aimAnalog.x/aimAnalog.magnitude,y:aimAnalog.y/aimAnalog.magnitude};
- const target=run.enemies.filter(e=>e.alive&&(e.boss||e.kind==='armored')&&(e.armorIntegrity??1)<=0&&canSee(p.x,p.y,e.x,e.y)).find(e=>{const d=Math.hypot(e.x-p.x,e.y-.18-p.y);return d<9&&Math.abs((e.x-p.x)*aim.y-(e.y-.18-p.y)*aim.x)/Math.max(.01,d)<.17});
- if(target){const v=unit(target.x-p.x,target.y-.18-p.y);aim=unit(aim.x*.75+v.x*.25,aim.y*.75+v.y*.25)}
-}
-else if(mouseAimActive&&canvas.width>0&&canvas.height>0){
- // Recalculate against the current player position; a stationary cursor still aims
- // at the same screen point while the character moves and the camera follows.
- const view=camera(plan.map,p,canvas.width,canvas.height,cameraZoom);
- const target=toWorld(view,mouseAimX*canvas.width,mouseAimY*canvas.height);
- const ax=target.x-p.x,ay=target.y-p.y,d=Math.hypot(ax,ay);
- if(d>.1)aim={x:ax/d,y:ay/d};
-}
-if((run.playerDowned??0)===0){
- const manualFire=keys.has('Space');
- if(manualFire){const nearest=run.enemies.filter(e=>e.alive&&canSee(p.x,p.y,e.x,e.y)&&Math.hypot(e.x-p.x,e.y-p.y)<=(activeWeapon(run!)?effectiveStats(activeWeapon(run!)!).range:1.3)).sort((a,b)=>Math.hypot(a.x-p.x,a.y-p.y)-Math.hypot(b.x-p.x,b.y-p.y))[0];if(nearest&&keys.has('Space')){const length=Math.hypot(nearest.x-p.x,nearest.y-p.y)||1;aim={x:(nearest.x-p.x)/length,y:(nearest.y-p.y)/length}}shoot()}
- else if((aimAnalog.magnitude>0||mouseAimActive)&&shotCooldown<=0){
-  const w=activeWeapon(run);
-  if(w&&(!weaponDefs[w.model].ammo||w.mag>0)&&aimHasTarget(plan.map,p,aim,effectiveStats(w).range,run.enemies.filter(e=>!fog||discoveredAt(plan!.map,fog,e.x,e.y)),w.model))shoot();
+// One-stick survival: aim and fire at the nearest hittable, explored infected.
+ // Desktop keeps optional manual mouse targeting while Space is held.
+ const manualFire=keys.has('Space')&&mouseAimActive;
+ const currentWeapon=activeWeapon(run);
+ if(manualFire&&canvas.width>0&&canvas.height>0){
+  const view=camera(plan.map,p,canvas.width,canvas.height,cameraZoom);
+  const at=toWorld(view,mouseAimX*canvas.width,mouseAimY*canvas.height);
+  aim=unit(at.x-p.x,at.y-p.y);
+  if((run.playerDowned??0)===0)shoot();
+ }else if(currentWeapon&&(run.playerDowned??0)===0){
+  const target=findAutoTarget(plan.map,p,effectiveStats(currentWeapon).range,currentWeapon.model,
+   run.enemies,e=>!fog||discoveredAt(plan!.map,fog,e.x,e.y));
+  if(target){
+   aim=target.direction;
+   if(shotCooldown<=0&&(!weaponDefs[currentWeapon.model].ammo||currentWeapon.mag>0))shoot();
+  }
  }
-}
+
 run.waveSeconds=(run.waveSeconds??0)+dt;run.runSeconds=(run.runSeconds??0)+dt;
 updateBreach(dt);
 spawnClock+=dt;
@@ -1442,7 +1441,7 @@ function draw(){
 function frame(now:number){const dt=Math.min(.05,(now-last)/1000);last=now;update(dt);draw();const menuCanvas=overlay.hidden?null:overlay.querySelector<HTMLCanvasElement>('#menu-cinematic');if(menuCanvas)renderMenuCinematic(menuCanvas,now,window.matchMedia('(prefers-reduced-motion: reduce)').matches);if(noticeUntil<now)toastEl.textContent='';requestAnimationFrame(frame)}
 window.addEventListener('keydown',e=>{if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code))e.preventDefault();keys.add(e.code);if(e.repeat)return;if(e.code==='Digit1')equip('primary');if(e.code==='Digit2')equip('secondary');if(e.code==='Digit3')equip('melee');if(e.code==='KeyR')reload();if(e.code==='KeyH')heal();if(e.code==='KeyI'&&run&&run.stage==='fight')inventory();if(e.code==='KeyF')throwSelectedGrenade('frag');if(e.code==='KeyG')throwSelectedGrenade('impact');if(e.code==='KeyB')throwSelectedGrenade('stun');if(e.code==='KeyL')throwSelectedGrenade('lure');if(e.code==='KeyT')squadPanel();if(e.code==='KeyE')interact();if(e.code==='Escape'){if(overlay.querySelector('.settings-screen'))overlay.querySelector<HTMLButtonElement>('#settings-back')?.click();else if(overlay.hidden)showSettings();else if(run?.stage==='shop')showSettings(shop);else if(run?.stage==='fight')showSettings();else menu()}});window.addEventListener('keyup',e=>keys.delete(e.code));window.addEventListener('blur',()=>{keys.clear();mouseAimActive=false;touch.clear();resetAnalogs()});document.addEventListener('visibilitychange',()=>{if(document.hidden)resetAnalogs()});
 /** Independent pointer capture lets both thumbs move and aim at once. */
-function resetAnalogs(){moveAnalog=zeroStick();aimAnalog=zeroStick();document.querySelectorAll<HTMLElement>('.analog-knob').forEach(node=>{node.style.transform='translate(-50%,-50%)'})}
+function resetAnalogs(){moveAnalog=zeroStick();document.querySelectorAll<HTMLElement>('.analog-knob').forEach(node=>{node.style.transform='translate(-50%,-50%)'})}
 function bindAnalog(id:string,update:(v:StickVector)=>void){
  const base=document.querySelector<HTMLElement>('#'+id)!;
  const knob=base.querySelector<HTMLElement>('.analog-knob')!;
@@ -1468,7 +1467,6 @@ function bindAnalog(id:string,update:(v:StickVector)=>void){
  window.addEventListener('blur',()=>{pointer=null;update(zeroStick());knob.style.transform='translate(-50%,-50%)'});
 }
 bindAnalog('move-stick',v=>{moveAnalog=v});
-bindAnalog('aim-stick',v=>{aimAnalog=v});
 canvas.addEventListener('pointermove',e=>{
  if(e.pointerType==='touch')return;
  const rect=canvas.getBoundingClientRect();
