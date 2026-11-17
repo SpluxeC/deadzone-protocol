@@ -39,7 +39,7 @@ type Run={wave:number;credits:number;hp:number;armor:number;mag:number;reserve:n
 type Profile=ProfileV5;
 const root=document.querySelector<HTMLDivElement>('#app')!;
 root.innerHTML=`<div id="rogue" style="height:100dvh;display:flex;flex-direction:column;background:#0c1416;color:#eaf0eb;font:14px system-ui;overflow:hidden">
-<header><strong class="game-title">DEADZONE <span style="color:#f18567">PROTOCOL</span></strong><div id="combat-hud" aria-label="Survivor status"><span id="stats" class="top-stat">WAVE 1</span><div class="hud-meter" aria-label="Health"><span>HP</span><div><i id="hud-hp"></i></div><b id="hud-hp-text">100</b></div><div class="hud-meter" aria-label="Armor"><span>ARM</span><div><i id="hud-armor"></i></div><b id="hud-armor-text">50</b></div><span class="top-stat" id="hud-weapon">CARBINE · 30/90</span><span class="top-stat" id="hud-team">SQUAD 0/4</span><span class="top-stat" id="hud-credits">₡0</span></div><button id="menu" type="button">SETTINGS</button></header>
+<header><strong class="game-title">DEADZONE <span style="color:#f18567">PROTOCOL</span></strong><div id="combat-hud" aria-label="Survivor status"><span id="stats" class="top-stat">WAVE 1</span><div class="hud-meter" aria-label="Armor"><span>ARM</span><div><i id="hud-armor"></i></div><b id="hud-armor-text">50</b></div><span class="top-stat" id="hud-weapon">CARBINE</span><span class="top-stat" id="hud-team">SQUAD 0/4</span><span class="top-stat" id="hud-credits">₡0</span></div><button id="menu" type="button">SETTINGS</button></header>
 <div id="playarea" style="position:relative;min-height:0;flex:1;display:flex;justify-content:center;align-items:center;background:#0a1113"><canvas id="rogue-canvas" style="width:100%;height:100%;object-fit:contain;touch-action:none"></canvas><div id="breach-banner" role="alert" aria-live="polite" hidden style="position:absolute;top:8px;left:50%;transform:translateX(-50%);z-index:4;pointer-events:none;max-width:94%;min-width:min(90%,440px);box-sizing:border-box;padding:9px 14px;border-radius:7px;background:#64231eee;border:2px solid #ffac79;text-align:center;color:#fff4da;font-size:clamp(11px,2vw,15px);font-weight:800;box-shadow:0 4px 18px #000a"></div><div id="mobile-sticks" aria-label="Touch analog controls"><div class="analog-group analog-left"><button id="mobile-inventory-team" type="button" aria-label="Tap inventory; hold for team">INVENTORY / TEAM</button><div class="analog-base" id="move-stick" role="group" aria-label="Move"><div class="analog-ring"></div><div class="analog-knob"></div></div><span class="analog-caption">MOVE</span></div><div class="analog-group analog-right" id="mobile-equipment" aria-label="Tactical equipment"><button id="mobile-weapon-swap" type="button" aria-label="Tap to swap primary and secondary; hold for melee">SWAP WEAPON</button><div id="mobile-squad" aria-label="Tactical quick throw"><button type="button" data-grenade="frag"><span class="grenade-name">FRAG</span><span class="grenade-count">0/2</span></button><button type="button" data-grenade="impact"><span class="grenade-name">IMPACT</span><span class="grenade-count">0/2</span></button><button type="button" data-grenade="wire"><span class="grenade-name">WIRE</span><span class="grenade-count">0/3</span></button><button type="button" data-grenade="lure"><span class="grenade-name">LURE</span><span class="grenade-count">0/2</span></button><button type="button" data-grenade="shock"><span class="grenade-name">SHOCK</span><span class="grenade-count">0/2</span></button><button type="button" data-grenade="incendiary"><span class="grenade-name">FIRE</span><span class="grenade-count">0/2</span></button></div><span class="analog-caption">AUTO AIM · AUTO FIRE</span></div><button id="mobile-medkit-revive" type="button" aria-label="Tap to use medkit; hold to revive">MEDKIT / REVIVE</button><div id="mobile-actions"><button id="mobile-interact" type="button" disabled>INTERACT</button></div></div><div id="rotate-phone" role="status" aria-live="polite"><div class="rotate-symbol" aria-hidden="true">↻</div><h2>Rotate Your Device</h2><p>Deadzone Protocol is played in landscape mode.</p></div><div id="overlay" style="position:absolute;inset:0;display:flex;align-items:flex-start;justify-content:center;background:#081112df;overflow:auto;padding:14px;box-sizing:border-box"></div></div>
 <footer style="display:flex;flex-wrap:wrap;justify-content:center;gap:6px;padding:8px;background:#152521"><button id="weapon-primary">1 PRIMARY</button><button id="weapon-secondary">2 SIDEARM</button><button id="weapon-melee">3 MELEE</button><button id="heal">MEDKIT (H)</button><button id="inventory">INVENTORY (I)</button><button id="orders">SQUAD: FOLLOW (Q)</button><button id="squad-panel">TEAM</button><button id="revive">HOLD REVIVE (V)</button><button id="moveup">▲</button><button id="moveleft">◀</button><button id="movedown">▼</button><button id="moveright">▶</button><button id="interact" disabled>INTERACT (E)</button></footer>
 <div id="toast" style="position:fixed;left:50%;bottom:78px;transform:translateX(-50%);pointer-events:none;background:#243c37e8;padding:6px 12px;border-radius:6px;color:white;z-index:5"></div></div>`;
@@ -1464,6 +1464,21 @@ function draw(){
  drawSprite(ctx,'player',v,r.player.x,r.player.y,{weapon:playerMelee?.weapon.model??activeWeapon(r)?.model??null,
   meleeAttack:playerMelee?{model:playerMelee.weapon.model,progress:playerMelee.elapsed/playerMelee.duration,angle:Math.atan2(playerMelee.dy,playerMelee.dx)}:undefined,
   angle:playerMotion.angle,aimAngle:Math.atan2(aim.y,aim.x),weaponRecoil:shotKick*(Math.sin(now/32)>0?1:-1),reloadProgress:r.reloadTimer&&activeWeapon(r)?1-Math.max(0,r.reloadTimer)/Math.max(.01,effectiveStats(activeWeapon(r)!).reload):0,stride:playerMotion.phase,motionSpeed:playerMotion.speed,idleTime:now/1000,showAim:true,scale:1.25,down:(r.playerDowned??0)>0,glow:'#b3d8b4'});
+ // Player-local health only while injured.
+ if(r.hp<100)drawBar(ctx,v,r.player.x,r.player.y-.50,Math.max(0,r.hp/100),hudColor(r.hp/100),.95);
+ // Firearm magazine/reserve sits under player feet; melee has no ammo label.
+ const playerGun=activeWeapon(r),playerAmmoType=playerGun?weaponDefs[playerGun.model].ammo:null;
+ if(playerGun&&playerAmmoType){
+  const footX=v.ox+r.player.x*v.tile,footY=v.oy+(r.player.y+.84)*v.tile;
+  const rounds=playerGun.mag+'/'+ensureEquipment(r).ammo[playerAmmoType];
+  ctx.save();ctx.font='800 '+Math.max(10,Math.min(16,v.tile*.30))+'px system-ui';
+  ctx.textAlign='center';ctx.textBaseline='middle';
+  const textWidth=ctx.measureText(rounds).width,pad=Math.max(4,v.tile*.10),height=Math.max(15,v.tile*.39);
+  ctx.fillStyle='rgba(12,23,24,.83)';
+  ctx.beginPath();ctx.roundRect(footX-textWidth/2-pad,footY-height/2,textWidth+pad*2,height,4);ctx.fill();
+  ctx.fillStyle=r.reloadTimer?'#f0c384':'#edf3dc';
+  ctx.fillText(rounds,footX,footY+.5);ctx.restore();
+ }
  // A bullet effect cannot reveal enemies or objects through unexplored tiles.
  ctx.save();if(fog)clipToExplored(ctx,m,v,fog);
  drawCombatFx(ctx,v,combatFx);
@@ -1519,14 +1534,12 @@ function draw(){
   if(action?.kind==='hole')button.textContent=run?.breachEvent?'DEFEND BREACH':id==='interact'?'SEAL HOLE · 200 (E)':'SEAL · 200';
   else button.textContent=id==='interact'?'INTERACT (E)':'INTERACT';
  }
- const hpRatio=Math.max(0,r.hp/100),armorRatio=Math.max(0,r.armor/100);
- const hpBar=document.querySelector<HTMLElement>('#hud-hp')!,armorBar=document.querySelector<HTMLElement>('#hud-armor')!;
- hpBar.style.width=(hpRatio*100)+'%';hpBar.style.background=hudColor(hpRatio);
+ const armorRatio=Math.max(0,r.armor/100);
+ const armorBar=document.querySelector<HTMLElement>('#hud-armor')!;
  armorBar.style.width=(armorRatio*100)+'%';armorBar.style.background=hudColor(armorRatio);
  document.querySelector('#hud-credits')!.textContent='₡'+r.credits;
- document.querySelector('#hud-hp-text')!.textContent=String(Math.ceil(r.hp));
  document.querySelector('#hud-armor-text')!.textContent=String(Math.ceil(r.armor));
- document.querySelector('#hud-weapon')!.textContent=(w?weaponDefs[w.model].name:'UNARMED')+' · '+ammo+(r.reloadTimer?' · RELOADING':'');
+ document.querySelector('#hud-weapon')!.textContent=(w?weaponDefs[w.model].name:'UNARMED')+(r.reloadTimer?' · RELOADING':'');
  document.querySelector('#hud-team')!.textContent='SQUAD '+r.allies.length+'/4'+(r.playerDowned?' · DOWN '+Math.ceil(r.playerDowned)+'s':'');
 }
 function frame(now:number){const dt=Math.min(.05,(now-last)/1000);last=now;update(dt);draw();const menuCanvas=overlay.hidden?null:overlay.querySelector<HTMLCanvasElement>('#menu-cinematic');if(menuCanvas)renderMenuCinematic(menuCanvas,now,window.matchMedia('(prefers-reduced-motion: reduce)').matches);if(noticeUntil<now)toastEl.textContent='';requestAnimationFrame(frame)}
