@@ -30,7 +30,7 @@ export function grenadeCrateLoot(seed:number,wave:number,crate:number):{type:Gre
 export type GrenadeFlight={type:GrenadeType;x:number;y:number;vx:number;vy:number;age:number;life:number;altitude:number;active:number;fired:boolean;originX:number;originY:number};
 export function throwGrenade(type:GrenadeType,x:number,y:number,dx:number,dy:number):GrenadeFlight{
  const d=Math.hypot(dx,dy)||1;
- return {type,x,y,vx:dx/d*14,vy:dy/d*14,age:0,life:type==='frag'||type==='incendiary'?2:1,altitude:0,active:0,fired:false,originX:x,originY:y};
+ return {type,x,y,vx:dx/d*14,vy:dy/d*14,age:0,life:type==='frag'?2:1,altitude:0,active:0,fired:false,originX:x,originY:y};
 }
 export function advanceGrenade(g:GrenadeFlight,dt:number,walkable:(x:number,y:number)=>boolean):{detonate:boolean;ended:boolean}{
  g.age+=dt;
@@ -43,7 +43,7 @@ export function advanceGrenade(g:GrenadeFlight,dt:number,walkable:(x:number,y:nu
   const scale=rangeReached?6/travel:1;
   const tx=g.originX+(nx-g.originX)*scale,ty=g.originY+(ny-g.originY)*scale;
   const hitX=!walkable(tx,g.y),hitY=!walkable(g.x,ty);
-  if((g.type==='impact'||g.type==='shock')&&(hitX||hitY||rangeReached)){
+  if((g.type==='impact'||g.type==='shock'||g.type==='incendiary')&&(hitX||hitY||rangeReached)){
    if(!hitX)g.x=tx;
    if(!hitY)g.y=ty;
    g.fired=true;return {detonate:true,ended:true};
