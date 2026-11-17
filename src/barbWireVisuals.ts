@@ -1,14 +1,15 @@
 import type {View} from './rogueliteVisuals.ts';
-import {wireCells,type WireFence} from './barbWire.ts';
+import {WIRE_MAX_DURABILITY,type WireFence} from './barbWire.ts';
 /** Floor-level decorative barbed wire, never entered into collision or pathfinding. */
 export function drawBarbedWire(ctx:CanvasRenderingContext2D,v:View,fence:WireFence):void{
  const t=v.tile;
  const horizontal=fence.orientation==='horizontal';
  const x=v.ox+fence.x*t,y=v.oy+fence.y*t;
  const deploy=Math.min(1,Math.max(0,fence.age/.32));
+ const wear=Math.max(0,Math.min(1,fence.durability/WIRE_MAX_DURABILITY));
  ctx.save();
  ctx.translate(x,y);
- ctx.globalAlpha=Math.max(.2,deploy);
+ ctx.globalAlpha=Math.max(.2,deploy)*(.45+.55*wear);
  ctx.scale(horizontal?deploy:1,horizontal?1:deploy);
  const post=(px:number,py:number)=>{
   ctx.fillStyle='#20282a';ctx.beginPath();ctx.ellipse(px+2,py+3,t*.12,t*.10,0,0,Math.PI*2);ctx.fill();
@@ -16,6 +17,9 @@ export function drawBarbedWire(ctx:CanvasRenderingContext2D,v:View,fence:WireFen
   ctx.fillStyle='#a2aba4';ctx.fillRect(px-t*.025,py-t*.07,t*.05,t*.13);
  };
  for(const i of [-1,0,1]){
+  // Damaged fences lose coils progressively before collapsing completely.
+  if(wear<.40&&i===1)continue;
+  if(wear<.19&&i===-1)continue;
   const px=(horizontal?i:0)*t,py=(horizontal?0:i)*t;
   ctx.save();ctx.translate(px,py);
   // Low intertwined coils have a substantial, readable top-down silhouette.
@@ -44,5 +48,10 @@ export function drawBarbedWire(ctx:CanvasRenderingContext2D,v:View,fence:WireFen
  ctx.beginPath();
  ctx.moveTo(horizontal?-1.4*t:0,horizontal?0:-1.4*t);
  ctx.lineTo(horizontal?1.4*t:0,horizontal?0:1.4*t);ctx.stroke();
+ // Small visible wear indicator on the central mounting post.
+ if(wear<.75){
+  ctx.strokeStyle='#d88459';ctx.lineWidth=Math.max(1,t*.032);
+  ctx.beginPath();ctx.moveTo(-t*.13,t*.08);ctx.lineTo(t*.13,-t*.04);ctx.stroke();
+ }
  ctx.restore();
 }
