@@ -29,7 +29,7 @@ export function drawHeldWeapon(ctx:CanvasRenderingContext2D,model:WeaponId,sz:nu
  const pulse=reload>0?Math.sin(reload*Math.PI):0;
  const railTop=m.y,bodyFront=pistol?-.17:smg?-.24:machine?-.31:-.34;
  const bodyRear=pistol?.08:smg?.08:.15;
- const dark='#151d20',edge='#0c1518',receiver=shotgun?'#655c4a':'#455859',silver='#95a8a3';
+ const dark='#151d20',receiver=shotgun?'#655c4a':'#455859',silver='#95a8a3';
  const rect=(xx:number,yy:number,w:number,h:number,fill:string,r=0)=>{
   ctx.fillStyle=fill;ctx.beginPath();ctx.roundRect(xx,yy,w,h,r);ctx.fill();
  };
@@ -97,18 +97,15 @@ export function drawHeldWeapon(ctx:CanvasRenderingContext2D,model:WeaponId,sz:nu
   }
  }
  // Barrel, vented handguard, top rail and optic.
- const barrelEnd=railTop+sz*(model==='suppressedSmg'?.04:.06);
  const handEnd=shotgun?-.41:precision?-.45:machine?-.40:smg?-.35:pistol?-.20:-.39;
  rect(x-sz*.067,sz*handEnd,sz*.134,sz*(bodyFront-handEnd+.07),shotgun?'#79674d':'#3f5555',sz*.022);
  for(let i=0;i<3;i++){
   const y=handEnd+.045+i*.06;
   if(y<bodyFront+.02)line(x-sz*.045,sz*y,x+sz*.041,sz*y,'#202c2e',sz*.018);
  }
- // Both railTop and handguardEndPx are PIXELS; never scale railTop twice.
- // The previous formula made the barrel rail hundreds/thousands of pixels long.
- const handguardEndPx=sz*handEnd;
- rect(x-sz*.045,railTop,sz*.09,Math.max(sz*.02,handguardEndPx-railTop+sz*.01),'#202c2f',sz*.02);
- line(x-sz*.017,railTop+sz*.016,x-sz*.017,sz*(handEnd-.025),'#a1ada8',sz*.017);
+ // Do not draw an independent full-length rail or gray highlight stroke.
+ // The body and handguard already supply a readable firearm silhouette.
+ // This removes the remaining rearward-looking gray bar at its source.
  if(model==='suppressedSmg'){
   rect(x-sz*.073,railTop,sz*.146,sz*.21,'#435454',sz*.027);
   for(let i=0;i<3;i++)line(x-sz*.04,railTop+sz*(.045+i*.055),x+sz*.042,railTop+sz*(.045+i*.055),'#788b85',sz*.009);
