@@ -4,7 +4,7 @@ export type WireCell={x:number;y:number};
 export type WireFence={x:number;y:number;orientation:'horizontal'|'vertical';age:number;durability:number};
 export const WIRE_CAP=3;
 /** One durability charge is spent each time a distinct zombie enters a fence. */
-export const WIRE_MAX_DURABILITY=8;
+export const WIRE_MAX_DURABILITY=10;
 export const wireKey=(wire:WireFence):string=>wire.x+':'+wire.y+':'+wire.orientation;
 export function wearWire(wire:WireFence):boolean{
  wire.durability=Math.max(0,wire.durability-1);
