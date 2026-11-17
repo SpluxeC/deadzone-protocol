@@ -26,14 +26,14 @@ import {squadMove,spacedSquadPosition} from './squadMovement';
 import {formationDestination,pickTacticalTarget} from './squadCommandAI';
 import {spawnHoles,openHoleIndices,startBreachEvent,advanceBreachEvent,canExtract,SEAL_COST,BREACH_DURATION,BREACH_SEAL_RADIUS,withinBreachRadius,REQUIRED_SEALS,drawSpawnHole,type BreachEvent} from './spawnHoles';
 import {GRENADE_TYPES,GRENADE_PRICE,inventoryCap,emptyGrenades,migrateGrenades,grantGrenade,grenadeCrateLoot,throwGrenade,advanceGrenade,blastDamage,type GrenadeType,type GrenadeInventory,type GrenadeFlight} from './grenades';
-import {proposedWire,canDeployWire,touchesWire,migrateWireFences,WIRE_TICK_SECONDS,WIRE_TICK_DAMAGE,WIRE_SLOW_FACTOR,type WireFence} from './barbWire';
+import {proposedWire,canDeployWire,touchesWire,wireKey,wearWire,migrateWireFences,WIRE_TICK_SECONDS,WIRE_TICK_DAMAGE,WIRE_SLOW_FACTOR,type WireFence} from './barbWire';
 import {drawBarbedWire} from './barbWireVisuals';
 import {createGroundFire,advanceGroundFires,insideGroundFire,migrateGroundFires,MAX_GROUND_FIRES,type GroundFire} from './groundFire';
 import {drawGroundFire} from './groundFireVisuals';
 import './rogueliteTheme.css';
 import './style.css';
 
-type Unit={x:number;y:number;hp:number;maxHp:number;speed:number;attack:number;boss?:boolean;alive:boolean;kind?:ZombieKind;windup?:number;phase?:number;aggro?:number;suppressed?:number;scoutMarked?:number;bossTarget?:{x:number;y:number};bossOrigin?:{x:number;y:number};summoned?:boolean;bossRecover?:number;lastKnown?:{x:number;y:number}|null;searchClock?:number;alertMode?:ThreatKind;stagger?:number;hitFlash?:number;hitVx?:number;hitVy?:number;emerging?:number;armorIntegrity?:number;knockdown?:number;knockVx?:number;knockVy?:number;burnTime?:number;burnTick?:number;wireTick?:number};
+type Unit={x:number;y:number;hp:number;maxHp:number;speed:number;attack:number;boss?:boolean;alive:boolean;kind?:ZombieKind;windup?:number;phase?:number;aggro?:number;suppressed?:number;scoutMarked?:number;bossTarget?:{x:number;y:number};bossOrigin?:{x:number;y:number};summoned?:boolean;bossRecover?:number;lastKnown?:{x:number;y:number}|null;searchClock?:number;alertMode?:ThreatKind;stagger?:number;hitFlash?:number;hitVx?:number;hitVy?:number;emerging?:number;armorIntegrity?:number;knockdown?:number;knockVx?:number;knockVy?:number;burnTime?:number;burnTick?:number;wireTick?:number;wireContact?:string};
 type Ally=Squadmate;
 type Run={wave:number;credits:number;hp:number;armor:number;mag:number;reserve:number;medkits:number;weaponTier:number;damage:number;maxMag:number;player:{x:number;y:number};enemies:Unit[];allies:Ally[];spawned:number;kills:number;bosses:number;cleared:number;seed:number;stage:'fight'|'shop';looted:number[];squadAmmo:number;activeSlot?:WeaponSlot;sideMag?:number;sideReserve?:number;reloadTimer?:number;reloadSlot?:WeaponSlot|null;playerDowned?:number;playerDead?:boolean;squadOrder?:SquadOrder;focusTarget?:number|null;reviveProgress?:number;equipment?:{loadout:Loadout;bag:Gear[];ammo:AmmoBank;capacity:number;rerolls:number;};killsTotal?:number;lootedTotal?:number;flawlessWaves?:number;bestSquad?:number;waveStartHp?:number;waveStartArmor?:number;waveHit?:boolean;explored?:number[];layoutVersion?:1|2|3;waveSeconds?:number;runSeconds?:number;waveStartKills?:number;waveStartLooted?:number;peakThreat?:number;triggeredEvents?:number[];secretOpened?:boolean;noiseEvent?:{x:number;y:number;radius:number;ttl:number}|null;sealedHoles?:number[];breachEvent?:BreachEvent|null;grenades?:GrenadeInventory;grenadeCooldown?:number;wireFences?:WireFence[];groundFires?:GroundFire[];}
 type Profile=ProfileV5;
@@ -1168,18 +1168,31 @@ for(const e of run.enemies){if(!e.alive)continue;
   e.burnTick=(e.burnTick??.45)-dt;
   if(e.burnTick<=0){e.burnTick+=.5;strikeZombie(e,e.boss?.9:1.6,{x:0,y:-1},false,true);if(!e.alive)continue;}
  }
- // Wire is traversable and never enters navigation or character collision.
- const onWire=(run.wireFences??[]).some(fence=>touchesWire(e,fence));
- if(onWire){
+ // Each individual zombie spends one durability charge on entering a fence.
+ // Damage and slowdown remain non-blocking and pathfinding remains unchanged.
+ const crossing=(run.wireFences??[]).find(fence=>touchesWire(e,fence));
+ if(crossing){
+  const key=wireKey(crossing);
+  if(e.wireContact!==key){
+   e.wireContact=key;
+   if(wearWire(crossing)){
+    run.wireFences=run.wireFences?.filter(fence=>fence!==crossing);
+    // A fresh replacement fence at the same tile must register new crossings.
+    for(const other of run.enemies)if(other.wireContact===key)other.wireContact=undefined;
+   }
+  }
   e.wireTick=(e.wireTick??WIRE_TICK_SECONDS)-dt;
   if(e.wireTick<=0){
    e.wireTick+=WIRE_TICK_SECONDS;
-   // Direct contact damage deliberately causes no knockback, stun or new pathing.
+   // Direct contact damage deliberately causes no knockback or new pathing.
    e.hp-=WIRE_TICK_DAMAGE*(e.boss||e.kind==='armored'?.65:1);
    e.hitFlash=Math.max(e.hitFlash??0,.07);
    if(e.hp<=0){defeat(e);continue;}
   }
- }else e.wireTick=WIRE_TICK_SECONDS;
+ }else{
+  e.wireContact=undefined;
+  e.wireTick=WIRE_TICK_SECONDS;
+ }
  e.stagger=Math.max(0,(e.stagger??0)-dt);e.knockdown=Math.max(0,(e.knockdown??0)-dt);if((e.knockdown??0)>0){moveUnit(e,e.knockVx??0,e.knockVy??0,dt);e.knockVx=(e.knockVx??0)*.85;e.knockVy=(e.knockVy??0)*.85;continue}e.hitFlash=Math.max(0,(e.hitFlash??0)-dt);
  e.suppressed=Math.max(0,(e.suppressed??0)-dt);e.scoutMarked=Math.max(0,(e.scoutMarked??0)-dt);const stats=zombieStats(e.kind??(e.boss?'boss':'shambler'));if(e.boss&&e.hp<e.maxHp*.5&&e.phase!==2){e.phase=2;notice(bossIdentity(run.wave).name+' · SECOND PHASE!');if(!e.summoned){e.summoned=true;for(let k=0;k<3;k++)spawnOne(false,false)}}
  const sight=Math.hypot(e.x-p.x,e.y-p.y);
