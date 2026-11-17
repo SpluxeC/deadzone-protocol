@@ -104,7 +104,10 @@ export function drawHeldWeapon(ctx:CanvasRenderingContext2D,model:WeaponId,sz:nu
   const y=handEnd+.045+i*.06;
   if(y<bodyFront+.02)line(x-sz*.045,sz*y,x+sz*.041,sz*y,'#202c2e',sz*.018);
  }
- rect(x-sz*.045,railTop,sz*.09,sz*(handEnd-railTop+.01),'#202c2f',sz*.02);
+ // Both railTop and handguardEndPx are PIXELS; never scale railTop twice.
+ // The previous formula made the barrel rail hundreds/thousands of pixels long.
+ const handguardEndPx=sz*handEnd;
+ rect(x-sz*.045,railTop,sz*.09,Math.max(sz*.02,handguardEndPx-railTop+sz*.01),'#202c2f',sz*.02);
  line(x-sz*.017,railTop+sz*.016,x-sz*.017,sz*(handEnd-.025),'#a1ada8',sz*.017);
  if(model==='suppressedSmg'){
   rect(x-sz*.073,railTop,sz*.146,sz*.21,'#435454',sz*.027);
