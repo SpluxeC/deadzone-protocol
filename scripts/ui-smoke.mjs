@@ -211,6 +211,9 @@ async function runScenario(touch){
  await tap('#new-run');
  await tap('#launch-run');
  assert.equal(await page.locator('[data-grenade]').count(),6,'six tactical equipment buttons are present');
+ assert.equal(await page.locator('[data-grenade="wire"]').count(),1,'barbed-wire deploy button replaces stun');
+ assert.equal(await page.locator('[data-grenade="stun"]').count(),0,'old stun grenade button is removed');
+ assert.equal((await page.locator('[data-grenade="wire"] .grenade-count').textContent())?.trim(),'0/3','wire stock UI uses three-item capacity');
  assert.equal(await page.locator('#aim-stick').count(),0,'right aiming joystick is removed in auto-fire mode');
  assert.equal(await page.locator('#mobile-equipment').count(),1,'right thumb tactical tray is available');
   assert.equal(await page.locator('[data-squad-order]').count(),0,'squad commands are removed from the touch HUD');
