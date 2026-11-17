@@ -210,7 +210,9 @@ async function runScenario(touch){
  await tap('#prep-back');
  await tap('#new-run');
  await tap('#launch-run');
- assert.equal(await page.locator('[data-grenade]').count(),4,'four dedicated grenade buttons are present');
+ assert.equal(await page.locator('[data-grenade]').count(),6,'six tactical equipment buttons are present');
+ assert.equal(await page.locator('#aim-stick').count(),0,'right aiming joystick is removed in auto-fire mode');
+ assert.equal(await page.locator('#mobile-equipment').count(),1,'right thumb tactical tray is available');
   assert.equal(await page.locator('[data-squad-order]').count(),0,'squad commands are removed from the touch HUD');
  assert.equal(await page.locator('#audio-dock').count(),1,'audio controls remain accessible in gameplay');
  if(touch){
