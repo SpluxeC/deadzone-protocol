@@ -20,7 +20,7 @@ test('supply grenade drops deterministic and approximately twenty percent',()=>{
  assert.ok(count>1600&&count<2400,'expected approximately 20 percent');
 });
 test('grenades use one and two second fuses independent of collisions',()=>{
- for(const [kind,seconds] of [['frag',2],['stun',1],['lure',1],['shock',.72],['incendiary',2]] as const){
+ for(const [kind,seconds] of [['frag',2],['stun',1],['lure',1],['incendiary',2]] as const){
   const g=throwGrenade(kind,0,0,1,0);
   let time=0,detonated=false;
   while(time<seconds+.1&&!detonated){const result=advanceGrenade(g,.05,()=>true);time+=.05;detonated=result.detonate}
@@ -53,4 +53,15 @@ test('new tactical consumables migrate into old saves without losing stock',()=>
  assert.equal(grantGrenade(old,'shock',1).added,1);
  assert.equal(grantGrenade(old,'incendiary',2).added,2);
  assert.equal(grantGrenade(old,'incendiary',1).added,0);
+});
+
+test('shock pulse triggers on reaching throw range or a surface',()=>{
+ const g=throwGrenade('shock',4,4,1,0);
+ let result={detonate:false,ended:false};
+ for(let i=0;i<30&&!result.detonate;i++)result=advanceGrenade(g,.05,()=>true);
+ assert.equal(result.detonate,true);
+ assert.ok(g.age<=.72);
+ const blocked=throwGrenade('shock',4,4,1,0);
+ const hit=advanceGrenade(blocked,.05,()=>false);
+ assert.equal(hit.detonate,true);
 });
