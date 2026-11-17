@@ -56,9 +56,9 @@ test('endless zombie pressure accelerates the longer the player remains on a wav
  assert.equal(formatRunTime(3610),'60:10');
 });
 
-test('standard zombies award six credits and bosses award one hundred at every wave',()=>{
+test('standard zombies award eight credits and bosses award one hundred at every wave',()=>{
  for(const wave of [1,2,5,10,25,50,100]){
-  assert.equal(killPayout(wave,false),6);
+  assert.equal(killPayout(wave,false),8);
   assert.equal(killPayout(wave,true),100);
  }
 });
