@@ -24,7 +24,8 @@ export function meleePose(model:WeaponId,progress:number):MeleeAnimation{
   return {model,progress:p,angleOffset:0,thrust};
  }
  // Fire axe and other melee tools physically sweep across their attack arc.
- const swing=p<.17?-1.00:p<.76?-1+2.05*((p-.17)/.59):1.05*(1-(p-.76)/.24);
+ const start=model==='axe'?-1.22:-1.00,end=model==='axe'?1.22:1.05;
+ const swing=p<.17?start:p<.76?start+(end-start)*((p-.17)/.59):end*(1-(p-.76)/.24);
  return {model,progress:p,angleOffset:swing,thrust:0};
 }
 export function createMeleeAttack<T extends {x:number;y:number}>(
