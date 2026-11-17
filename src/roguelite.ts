@@ -1378,8 +1378,8 @@ function draw(){
   const boss=e.boss?bossIdentity(r.wave):null;
   if(e.boss){ctx.save();ctx.strokeStyle=boss!.color;ctx.lineWidth=Math.max(2,v.tile*.095);ctx.globalAlpha=.5+.2*Math.sin(now/240);ctx.beginPath();ctx.arc(v.ox+e.x*v.tile,v.oy+e.y*v.tile,v.tile*.85,0,Math.PI*2);ctx.stroke();ctx.restore()}
   if((e.emerging??0)>0){ctx.save();ctx.beginPath();ctx.ellipse(v.ox+e.x*v.tile,v.oy+e.y*v.tile,v.tile*.57,v.tile*.38,0,0,Math.PI*2);ctx.clip();ctx.globalAlpha=Math.max(.28,1-(e.emerging??0)*.85)}
-  if(boss)drawBossArt(ctx,v,boss.ability,{x:e.x,y:e.y,heading:motion.angle,stride:motion.phase,speed:motion.speed,time:now/1000,windup:e.windup?Math.max(0,1-(e.windup??0)/(boss.ability==='charge'?1.25:boss.ability==='shockwave'?1.45:1.05)):0,recover:Math.min(1,(e.bossRecover??0)/.55),enraged:e.phase===2});
-  else drawSprite(ctx,kind,v,e.x,e.y,{angle:motion.angle+(e.hitFlash??0)*Math.sin(now/23)*.7,stride:motion.phase,motionSpeed:motion.speed,idleTime:now/1000,scale:kind==='bruiser'?1.32:kind==='runner'?.93:1.12,glow:(e.hitFlash??0)>0?'#ef7e65':undefined});
+  if(boss)drawBossArt(ctx,v,boss.ability,{x:e.x,y:e.y,heading:0,stride:motion.phase,speed:motion.speed,time:now/1000,windup:e.windup?Math.max(0,1-(e.windup??0)/(boss.ability==='charge'?1.25:boss.ability==='shockwave'?1.45:1.05)):0,recover:Math.min(1,(e.bossRecover??0)/.55),enraged:e.phase===2});
+  else drawSprite(ctx,kind,v,e.x,e.y,{angle:0,stride:motion.phase,motionSpeed:motion.speed,idleTime:now/1000,scale:kind==='bruiser'?1.32:kind==='runner'?.93:1.12,glow:(e.hitFlash??0)>0?'#ef7e65':undefined});
    if((e.attackPose??0)>0&&!e.boss){
     // Forward claw-swipe animation triggered on each melee hit.
     const phase=1-(e.attackPose??0)/.3,reach=v.tile*(.3+Math.sin(phase*Math.PI)*.32);
@@ -1444,7 +1444,7 @@ function draw(){
   const melee=meleeAttacks.find(hit=>hit.actor===a);
   drawSprite(ctx,a.role,v,a.x,a.y,{weapon:melee?.weapon.model??squadWeapon(a).model,
    meleeAttack:melee?{model:melee.weapon.model,progress:melee.elapsed/melee.duration,angle:Math.atan2(melee.dy,melee.dx)}:undefined,
-   angle:motion.angle,aimAngle:direction,stride:motion.phase,motionSpeed:motion.speed,idleTime:now/1000,scale:a.role==='heavy'?1.25:1.08,down:a.downed>0,alpha:a.dead?.3:1,glow:a.role==='medic'?'#69e8a1':undefined});
+   angle:0,aimAngle:direction,stride:motion.phase,motionSpeed:motion.speed,idleTime:now/1000,scale:a.role==='heavy'?1.25:1.08,down:a.downed>0,alpha:a.dead?.3:1,glow:a.role==='medic'?'#69e8a1':undefined});
   if(a.hp<a.maxHp||a.downed>0)drawBar(ctx,v,a.x,a.y,a.downed>0?a.downed/ALLY_BLEEDOUT:a.hp/a.maxHp,a.downed>0?'#f1c17e':hudColor(a.hp/a.maxHp));
  }
  const playerMotion=animatedPose(r.player,now,0,12);
