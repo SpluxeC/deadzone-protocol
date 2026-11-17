@@ -25,7 +25,7 @@ export function proposedWire(player:{x:number;y:number},direction:{x:number;y:nu
  const step=verticalTravel?Math.sign(direction.y)||1:Math.sign(direction.x)||1;
  return verticalTravel
   ?{x:Math.round(player.x),y:Math.round(player.y)+step,orientation,age:0,durability:WIRE_MAX_DURABILITY}
-  :{x:Math.round(player.x)+step,y:Math.round(player.y),orientation,age:0};
+  :{x:Math.round(player.x)+step,y:Math.round(player.y),orientation,age:0,durability:WIRE_MAX_DURABILITY};
 }
 export function canDeployWire(wire:WireFence,validCell:(x:number,y:number)=>boolean,others:readonly WireFence[]):boolean{
  return wire.durability>0&&wireCells(wire).every(c=>validCell(c.x,c.y)&&!others.some(other=>wireCells(other).some(o=>o.x===c.x&&o.y===c.y)));
