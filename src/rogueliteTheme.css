@@ -1449,3 +1449,55 @@
 @media(prefers-reduced-motion:reduce){
  #rogue #overlay button.armory-item .gear-mini{transition:none!important}
 }
+
+/* ONE-STICK SURVIVAL CONTROLS: right thumb is now a tactical equipment tray. */
+@media (pointer:coarse) and (orientation:landscape){
+ #rogue #mobile-sticks{align-items:flex-end}
+ #rogue #mobile-equipment{
+  display:flex!important;position:relative;align-items:center;justify-content:flex-end;
+  width:clamp(168px,31vw,250px);min-width:0;max-width:36vw;
+  pointer-events:none;gap:5px;
+ }
+ #rogue #mobile-equipment #mobile-weapon-swap{
+  position:static!important;display:block!important;transform:none!important;
+  min-height:29px!important;padding:4px 9px!important;font-size:9px!important;
+  pointer-events:auto;align-self:center;max-width:100%;
+ }
+ #rogue #mobile-equipment #mobile-squad{
+  display:grid!important;position:static!important;transform:none!important;
+  left:auto!important;right:auto!important;bottom:auto!important;
+  width:100%!important;max-width:100%!important;min-width:0!important;
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  gap:4px!important;pointer-events:auto;box-sizing:border-box;
+ }
+ #rogue #mobile-equipment #mobile-squad [data-grenade]{
+  min-width:0!important;width:100%!important;
+  min-height:39px!important;padding:3px 1px!important;
+  display:flex!important;flex-direction:column!important;
+  align-items:center;justify-content:center;
+  font-size:9px!important;line-height:1!important;
+  border-radius:7px;touch-action:none;
+ }
+ #rogue #mobile-equipment #mobile-squad .grenade-name{
+  font-size:clamp(7px,1.18vw,10px)!important;
+ }
+ #rogue #mobile-equipment #mobile-squad .grenade-count{
+  font-size:clamp(8px,1.28vw,10px)!important;
+ }
+ #rogue #mobile-equipment .analog-caption{
+  display:block;font-size:8px;letter-spacing:.07em;
+  padding-bottom:0;white-space:nowrap;
+ }
+ #rogue #mobile-actions{
+  right:calc(max(16px,env(safe-area-inset-right)) + clamp(168px,31vw,250px) + 10px);
+  bottom:max(11px,env(safe-area-inset-bottom));
+ }
+}
+@media (pointer:coarse) and (orientation:landscape) and (max-height:430px){
+ #rogue #mobile-equipment{width:clamp(168px,33vw,226px);max-width:39vw;gap:2px}
+ #rogue #mobile-equipment #mobile-weapon-swap{min-height:26px!important;font-size:8px!important;padding:3px 6px!important}
+ #rogue #mobile-equipment #mobile-squad{gap:2px!important}
+ #rogue #mobile-equipment #mobile-squad [data-grenade]{min-height:30px!important;padding:2px 1px!important}
+ #rogue #mobile-equipment .analog-caption{font-size:7px}
+ #rogue #mobile-actions{right:calc(max(16px,env(safe-area-inset-right)) + clamp(168px,33vw,226px) + 5px);bottom:10px}
+}
