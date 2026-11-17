@@ -295,9 +295,8 @@ export function drawSprite(ctx:CanvasRenderingContext2D,kind:SpriteKind,v:View,x
   ctx.fillStyle='rgba(0,5,6,.35)';ctx.beginPath();ctx.ellipse(0,sz*.36,sz*.38,sz*.115,0,0,Math.PI*2);ctx.fill();
  }
  // Human torsos always stay upright on screen, even while strafing or running.
- // Infected still turn toward travel/targets; incapacitated humans can lie down.
- const rotation=zombie?(opts?.angle??0)+Math.PI/2:
-  opts?.down?Math.PI*.5:0;
+ // Infected also remain upright; incapacitated humans can lie down.
+ const rotation=opts?.down&&!zombie?Math.PI*.5:0;
  ctx.rotate(rotation);
  // Human motion has controlled weight transfer; infected locomotion is uneven.
  // Heavy units plant their boots, runners have longer airborne strides, and
@@ -308,7 +307,7 @@ export function drawSprite(ctx:CanvasRenderingContext2D,kind:SpriteKind,v:View,x
  const bounce=walking?sz*moving*(isRunner?.035:isShambler?.008:kind==='boss'||kind==='bruiser'?.013:.018)*Math.abs(Math.sin(phase)):0;
  const sway=walking?sz*moving*(isShambler?.025:isRunner?.014:.008)*Math.sin(phase*.5):0;
  ctx.translate(sway,-bounce+(opts?.bob??0));
- if(walking&&zombie)ctx.rotate(Math.sin(phase*.5)*(isShambler?.045:isRunner?.018:.016)*moving);
+ // Infected stay upright; their leg animations and lateral sway convey motion.
  if(resting){
   // Subtle breathing and shifting weight, not a full-body rotation.
   const breath=Math.sin((opts?.idleTime??0)*1.8+spriteIndex[kind]*.7);
