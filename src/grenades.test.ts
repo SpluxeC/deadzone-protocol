@@ -20,7 +20,7 @@ test('supply grenade drops deterministic and approximately twenty percent',()=>{
  assert.ok(count>1600&&count<2400,'expected approximately 20 percent');
 });
 test('grenades use one and two second fuses independent of collisions',()=>{
- for(const [kind,seconds] of [['frag',2],['lure',1],['incendiary',2]] as const){
+ for(const [kind,seconds] of [['frag',2],['lure',1]] as const){
   const g=throwGrenade(kind,0,0,1,0);
   let time=0,detonated=false;
   while(time<seconds+.1&&!detonated){const result=advanceGrenade(g,.05,()=>true);time+=.05;detonated=result.detonate}
@@ -72,4 +72,17 @@ test('barbed wire stock cap is three and excess becomes credits',()=>{
  assert.equal(g.wire,3);
  assert.equal(grantGrenade(g,'wire',1).added,0);
  assert.equal(migrateGrenades({wire:99}).wire,3);
+});
+
+test('incendiary detonates on first wall impact or maximum throw range, with no two-second wait',()=>{
+ const wall=throwGrenade('incendiary',4,4,1,0);
+ const hit=advanceGrenade(wall,.05,()=>false);
+ assert.equal(hit.detonate,true);
+ assert.equal(hit.ended,true);
+ assert.ok(wall.age<.1);
+ const ground=throwGrenade('incendiary',4,4,1,0);
+ let landed=false;
+ for(let tick=0;tick<30&&!landed;tick++)landed=advanceGrenade(ground,.05,()=>true).detonate;
+ assert.ok(landed,'impact should burst upon reaching the throw limit');
+ assert.ok(ground.age<.72);
 });
