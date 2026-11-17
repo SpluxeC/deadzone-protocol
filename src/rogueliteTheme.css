@@ -1501,3 +1501,81 @@
  #rogue #mobile-equipment .analog-caption{font-size:7px}
  #rogue #mobile-actions{right:calc(max(16px,env(safe-area-inset-right)) + clamp(168px,33vw,226px) + 5px);bottom:10px}
 }
+
+/* Tactical layout: all throwables and the larger INTERACT key share the right edge.
+   Place the controls in a stable single stack, not a separate overlapping overlay. */
+@media (pointer:coarse) and (orientation:landscape){
+ #rogue #mobile-sticks{
+  padding-right:max(8px,env(safe-area-inset-right))!important;
+ }
+ #rogue #mobile-equipment{
+  display:flex!important;
+  position:relative!important;
+  flex-direction:column!important;
+  align-items:stretch!important;
+  justify-content:flex-end!important;
+  gap:4px!important;
+  width:clamp(150px,24vw,226px)!important;
+  min-width:0!important;
+  max-width:31vw!important;
+  padding:0!important;
+  margin:0!important;
+  box-sizing:border-box;
+  pointer-events:none;
+ }
+ #rogue #mobile-equipment #mobile-weapon-swap{
+  position:static!important;transform:none!important;
+  width:100%!important;min-height:29px!important;
+  font-size:9px!important;
+  pointer-events:auto;
+ }
+ #rogue #mobile-equipment #mobile-squad{
+  position:static!important;transform:none!important;
+  left:auto!important;right:auto!important;bottom:auto!important;
+  display:grid!important;
+  width:100%!important;max-width:none!important;
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  grid-template-rows:repeat(2,minmax(0,1fr))!important;
+  gap:4px!important;pointer-events:auto;
+ }
+ #rogue #mobile-equipment #mobile-squad [data-grenade]{
+  min-height:37px!important;
+  padding:4px 1px!important;
+  border-radius:7px!important;
+ }
+ #rogue #mobile-equipment #mobile-actions{
+  position:static!important;
+  display:block!important;
+  inset:auto!important;
+  width:100%!important;
+  transform:none!important;
+  pointer-events:auto;
+ }
+ #rogue #mobile-equipment #mobile-actions #mobile-interact{
+  display:block!important;
+  box-sizing:border-box!important;
+  width:100%!important;
+  min-width:0!important;
+  min-height:50px!important;
+  padding:9px 10px!important;
+  font-size:12px!important;
+  font-weight:900!important;
+  border-width:2px!important;
+  letter-spacing:.08em!important;
+  border-radius:9px!important;
+ }
+}
+@media (pointer:coarse) and (orientation:landscape) and (max-height:430px){
+ #rogue #mobile-equipment{
+  width:clamp(148px,25vw,207px)!important;
+  max-width:33vw!important;gap:3px!important;
+ }
+ #rogue #mobile-equipment #mobile-weapon-swap{min-height:25px!important}
+ #rogue #mobile-equipment #mobile-squad{gap:3px!important}
+ #rogue #mobile-equipment #mobile-squad [data-grenade]{
+  min-height:29px!important;padding:2px 1px!important;
+ }
+ #rogue #mobile-equipment #mobile-actions #mobile-interact{
+  min-height:39px!important;font-size:11px!important;padding:6px 8px!important;
+ }
+}
