@@ -1101,6 +1101,7 @@ function update(dt:number){if(!run||!plan||paused||run.stage!=='fight'){gameAudi
   if(near.length){const z=near[Math.floor((run.waveSeconds??0)*7)%near.length];gameAudio.playZombie(z.kind??'shambler','growl',Math.hypot(z.x-run.player.x,z.y-run.player.y))}
  }
 combatFx=ageCombatFx(combatFx,dt);tickGrenades(dt);
+ for(const fence of run.wireFences??[])fence.age=Math.min(60,fence.age+dt);
  shellEffects=ageCasings(shellEffects,dt);shotKick=Math.max(0,shotKick-dt*1.9);
  bossEffects=bossEffects.filter(fx=>(fx.age+=dt)<(fx.death?1.15:.55));
  bloodFx=ageBloodFx(bloodFx,dt);
@@ -1154,6 +1155,16 @@ for(const e of run.enemies){if(!e.alive)continue;
   e.burnTick=(e.burnTick??.45)-dt;
   if(e.burnTick<=0){e.burnTick+=.5;strikeZombie(e,e.boss?.9:1.6,{x:0,y:-1},false,true);if(!e.alive)continue;}
  }
+ // Wire is traversable and never enters navigation or character collision.
+ const onWire=(run.wireFences??[]).some(fence=>touchesWire(e,fence));
+ if(onWire){
+  e.wireTick=(e.wireTick??WIRE_TICK_SECONDS)-dt;
+  if(e.wireTick<=0){
+   e.wireTick+=WIRE_TICK_SECONDS;
+   strikeZombie(e,WIRE_TICK_DAMAGE,{x:0,y:0},false,true);
+   if(!e.alive)continue;
+  }
+ }else e.wireTick=WIRE_TICK_SECONDS;
  e.stagger=Math.max(0,(e.stagger??0)-dt);e.knockdown=Math.max(0,(e.knockdown??0)-dt);if((e.knockdown??0)>0){moveUnit(e,e.knockVx??0,e.knockVy??0,dt);e.knockVx=(e.knockVx??0)*.85;e.knockVy=(e.knockVy??0)*.85;continue}e.hitFlash=Math.max(0,(e.hitFlash??0)-dt);
  e.suppressed=Math.max(0,(e.suppressed??0)-dt);e.scoutMarked=Math.max(0,(e.scoutMarked??0)-dt);const stats=zombieStats(e.kind??(e.boss?'boss':'shambler'));if(e.boss&&e.hp<e.maxHp*.5&&e.phase!==2){e.phase=2;notice(bossIdentity(run.wave).name+' · SECOND PHASE!');if(!e.summoned){e.summoned=true;for(let k=0;k<3;k++)spawnOne(false,false)}}
  const sight=Math.hypot(e.x-p.x,e.y-p.y);
@@ -1223,7 +1234,7 @@ for(const e of run.enemies){if(!e.alive)continue;
     const nearby=run.enemies.find(other=>other!==e&&other.alive&&Math.hypot(other.x-e.x,other.y-e.y)<.4);
     const avoid=nearby?Math.sign(e.x-nearby.x||((run.spawned%2)*2-1))*.22:0;
     const factor=e.kind==='armored'?1.12:e.kind==='bruiser'&&nearby?1.08:1;
-    moveUnit(e,(vx+avoid)/Math.max(.01,len),vy/Math.max(.01,len),dt*stats.speed*factor*(e.phase===2?1.3:1)*((e.suppressed??0)>0?.65:1));
+    moveUnit(e,(vx+avoid)/Math.max(.01,len),vy/Math.max(.01,len),dt*stats.speed*factor*(e.phase===2?1.3:1)*((e.suppressed??0)>0?.65:1)*((run.wireFences??[]).some(fence=>touchesWire(e,fence))?WIRE_SLOW_FACTOR:1));
    }
   }
  }
@@ -1348,6 +1359,7 @@ function draw(){
   }
   ctx.restore();
  }
+ for(const fence of r.wireFences??[])drawBarbedWire(ctx,v,fence);
  for(const g of grenadeFlights){ctx.save();ctx.fillStyle=g.type==='lure'?'#fa5c43':g.type==='shock'?'#8bcfe4':g.type==='incendiary'?'#cc6534':'#657a63';ctx.beginPath();ctx.arc(v.ox+g.x*v.tile,v.oy+(g.y-g.altitude)*v.tile,v.tile*.16,0,Math.PI*2);ctx.fill();ctx.restore()}
  for(const fx of bossEffects){if(fx.death)drawBossDeath(ctx,v,fx.kind,fx.x,fx.y,fx.heading??0,fx.age);else drawBossImpact(ctx,v,fx.kind,fx.x,fx.y,fx.age)}
  ctx.restore();
