@@ -285,7 +285,12 @@ function throwSelectedGrenade(type:GrenadeType){
  if(!run||!plan||paused||run.stage!=='fight'||(run.playerDowned??0)>0||run.playerDead)return;
  const inv=run.grenades??(run.grenades=emptyGrenades());
  if(inv[type]<=0||(run.grenadeCooldown??0)>0)return;
- inv[type]--;run.grenadeCooldown=1;grenadeFlights.push(throwGrenade(type,run.player.x,run.player.y,aim.x,aim.y));save();
+ // Throws automatically travel toward a nearby visible infected without a second stick.
+  const picked=findAutoTarget(plan.map,run.player,6,'pistol',run.enemies,
+   e=>!fog||discoveredAt(plan!.map,fog,e.x,e.y));
+  const direction=picked?.direction??aim;
+  inv[type]--;run.grenadeCooldown=1;
+  grenadeFlights.push(throwGrenade(type,run.player.x,run.player.y,direction.x,direction.y));save();
 }
 function grenadeBlast(g:GrenadeFlight){
  if(!run)return;
