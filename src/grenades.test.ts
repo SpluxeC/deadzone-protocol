@@ -3,12 +3,12 @@ import assert from 'node:assert/strict';
 import {GRENADE_PRICE,GRENADE_TYPES,emptyGrenades,migrateGrenades,grantGrenade,grenadeCrateLoot,throwGrenade,advanceGrenade,blastDamage} from './grenades.ts';
 test('grenade inventory stays separate, capped at two per type',()=>{
  const g=emptyGrenades();
- assert.deepEqual(GRENADE_TYPES,['frag','impact','stun','lure']);
+ assert.deepEqual(GRENADE_TYPES,['frag','impact','stun','lure','shock','incendiary']);
  assert.equal(grantGrenade(g,'frag',1).added,1);
  assert.deepEqual(grantGrenade(g,'frag',3),{added:1,credits:60});
  assert.equal(g.frag,2);
- assert.deepEqual(migrateGrenades({frag:999,stun:-5}),{frag:2,impact:0,stun:0,lure:0});
- assert.deepEqual(GRENADE_PRICE,{frag:60,impact:50,stun:45,lure:40});
+ assert.deepEqual(migrateGrenades({frag:999,stun:-5}),{frag:2,impact:0,stun:0,lure:0,shock:0,incendiary:0});
+ assert.deepEqual(GRENADE_PRICE,{frag:60,impact:50,stun:45,lure:40,shock:70,incendiary:85});
 });
 test('supply grenade drops deterministic and approximately twenty percent',()=>{
  let count=0;
@@ -20,7 +20,7 @@ test('supply grenade drops deterministic and approximately twenty percent',()=>{
  assert.ok(count>1600&&count<2400,'expected approximately 20 percent');
 });
 test('grenades use one and two second fuses independent of collisions',()=>{
- for(const [kind,seconds] of [['frag',2],['stun',1],['lure',1]] as const){
+ for(const [kind,seconds] of [['frag',2],['stun',1],['lure',1],['shock',.72],['incendiary',2]] as const){
   const g=throwGrenade(kind,0,0,1,0);
   let time=0,detonated=false;
   while(time<seconds+.1&&!detonated){const result=advanceGrenade(g,.05,()=>true);time+=.05;detonated=result.detonate}
@@ -45,4 +45,12 @@ test('grenade travel is capped at six tiles in every direction',()=>{
    }
   }
  }
+});
+
+test('new tactical consumables migrate into old saves without losing stock',()=>{
+ const old=migrateGrenades({frag:1,impact:2,stun:1,lure:1});
+ assert.deepEqual(old,{frag:1,impact:2,stun:1,lure:1,shock:0,incendiary:0});
+ assert.equal(grantGrenade(old,'shock',1).added,1);
+ assert.equal(grantGrenade(old,'incendiary',2).added,2);
+ assert.equal(grantGrenade(old,'incendiary',1).added,0);
 });
