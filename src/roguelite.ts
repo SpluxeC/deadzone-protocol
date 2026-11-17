@@ -130,6 +130,7 @@ let lootPopups:LootPopup[]=[];let grenadeFlights:GrenadeFlight[]=[];let grenadeB
 let combatFx:CombatFx[]=[],bloodFx:BloodFx[]=[],fog:FogState|null=null;
 let meleeAttacks:MeleeAttack<{x:number;y:number}>[]=[];
 let moveAnalog=zeroStick(),cameraZoom=1;
+let placementFacing={x:0,y:-1}; // last movement direction, independent of auto-aim
 // Desktop mouse aiming is active only while the pointer is over the dungeon canvas.
 let shellEffects:Casing[]=[];let shotKick=0;
 let bossEffects:{kind:ReturnType<typeof bossAttack>;x:number;y:number;age:number;death?:boolean;heading?:number}[]=[];
@@ -281,7 +282,7 @@ function balanceSquadAmmo(r:Run){
   if(amount>0){bank[kind]-=amount;ally.magReserve+=amount}
  }
 }
-function buildFloor(seed:number,wave:number){gameAudio.stopBreach();meleeAttacks=[];combatFx=[];bloodFx=[];shellEffects=[];shotKick=0;bossEffects=[];lootPopups=[];grenadeFlights=[];grenadeBursts=[];poseCache=new WeakMap<object,CharacterMotion>();if(run)run.layoutVersion=3;plan=makeWave(seed,wave,3);if(!run)return;run.explored=[];run.triggeredEvents=[];run.secretOpened=false;run.noiseEvent=null;run.sealedHoles=[];run.breachEvent=null;run.wireFences=[];fog=createFog(plan.map);const p=plan.map.entrance;run.player={x:p.x,y:p.y};run.enemies=[];run.spawned=0;run.kills=0;run.looted=[];run.stage='fight';run.reloadTimer=0;run.reloadSlot=null;ensureEquipment(run).rerolls=0;if(wave>1)balanceSquadAmmo(run);run.focusTarget=null;run.waveHit=false;run.waveSeconds=0;run.waveStartKills=run.killsTotal??0;run.waveStartLooted=run.lootedTotal??0;run.peakThreat=0;run.waveStartHp=run.hp;run.waveStartArmor=run.armor;pathClock=0;pathField=null;searchFields.clear();bossPulse=0;noiseClock=0;const occupied=[run.player];for(let i=0;i<run.allies.length;i++){const ally=run.allies[i];const wanted={x:p.x-1-i*.45,y:p.y+1+i*.45};const placed=spacedSquadPosition(plan.map,wanted,occupied);ally.x=placed.x;ally.y=placed.y;occupied.push(ally);ally.anchor={x:ally.x,y:ally.y};ally.reviveProgress=0}spawnClock=0;allyClock=0;spawnInitial();save()}
+function buildFloor(seed:number,wave:number){gameAudio.stopBreach();meleeAttacks=[];combatFx=[];bloodFx=[];shellEffects=[];shotKick=0;bossEffects=[];lootPopups=[];grenadeFlights=[];grenadeBursts=[];poseCache=new WeakMap<object,CharacterMotion>();if(run)run.layoutVersion=3;plan=makeWave(seed,wave,3);if(!run)return;run.explored=[];run.triggeredEvents=[];run.secretOpened=false;run.noiseEvent=null;run.sealedHoles=[];run.breachEvent=null;run.wireFences=[];placementFacing={x:0,y:-1};fog=createFog(plan.map);const p=plan.map.entrance;run.player={x:p.x,y:p.y};run.enemies=[];run.spawned=0;run.kills=0;run.looted=[];run.stage='fight';run.reloadTimer=0;run.reloadSlot=null;ensureEquipment(run).rerolls=0;if(wave>1)balanceSquadAmmo(run);run.focusTarget=null;run.waveHit=false;run.waveSeconds=0;run.waveStartKills=run.killsTotal??0;run.waveStartLooted=run.lootedTotal??0;run.peakThreat=0;run.waveStartHp=run.hp;run.waveStartArmor=run.armor;pathClock=0;pathField=null;searchFields.clear();bossPulse=0;noiseClock=0;const occupied=[run.player];for(let i=0;i<run.allies.length;i++){const ally=run.allies[i];const wanted={x:p.x-1-i*.45,y:p.y+1+i*.45};const placed=spacedSquadPosition(plan.map,wanted,occupied);ally.x=placed.x;ally.y=placed.y;occupied.push(ally);ally.anchor={x:ally.x,y:ally.y};ally.reviveProgress=0}spawnClock=0;allyClock=0;spawnInitial();save()}
 function newRun(){loadProfile();const kit=startingKit(profile);run={wave:1,credits:kit.credits,hp:100,armor:kit.armor,mag:kit.loadout.primary?.mag??0,reserve:kit.ammo.rifle,medkits:kit.medkits,weaponTier:1,damage:1,maxMag:kit.loadout.primary?.mag??0,player:{x:0,y:0},enemies:[],allies:kit.teammate==='none'?[]:[makeSquadmate(kit.teammate,'starter-01',0,0)],spawned:0,kills:0,bosses:0,cleared:0,seed:Math.floor(Math.random()*2000000000),stage:'fight',looted:[],grenades:emptyGrenades(),grenadeCooldown:0,wireFences:[],squadAmmo:kit.teammate==='none'?0:8,activeSlot:'primary',sideMag:kit.loadout.secondary?.mag??12,sideReserve:kit.ammo.light,reloadTimer:0,reloadSlot:null,playerDowned:0,playerDead:false,squadOrder:'follow',focusTarget:null,reviveProgress:0,killsTotal:0,lootedTotal:0,flawlessWaves:0,bestSquad:kit.teammate==='none'?0:1,waveHit:false,equipment:{loadout:kit.loadout,bag:[],ammo:kit.ammo,capacity:kit.capacity,rerolls:0}};buildFloor(run.seed,1);overlay.hidden=true;paused=false;notice('WAVE 1 · Reach the elevator before the horde overwhelms you')}
 function throwSelectedGrenade(type:GrenadeType){
  if(!run||!plan||paused||run.stage!=='fight'||(run.playerDowned??0)>0||run.playerDead)return;
@@ -290,7 +291,7 @@ function throwSelectedGrenade(type:GrenadeType){
  if(type==='wire'){
   // Lay the 1×3 strip perpendicular to the character's current facing.
   // Every tile must be free to place; the deployed wire itself is never solid.
-  const candidate=proposedWire(run.player,aim);
+  const candidate=proposedWire(run.player,placementFacing);
   const fences=run.wireFences??(run.wireFences=[]);
   if(!canDeployWire(candidate,(x,y)=>canOccupy(plan!.map,x,y),fences)){
    notice('BARBED WIRE · Need 3 clear tiles directly ahead');return;
@@ -1112,6 +1113,8 @@ shotCooldown=Math.max(0,shotCooldown-dt);noiseClock=Math.max(0,noiseClock-dt);if
  const readyWeapon=activeWeapon(run);
  if(readyWeapon&&weaponDefs[readyWeapon.model].ammo&&readyWeapon.mag===0&&!run.reloadTimer)reload();
  const p=run.player;let dx=0,dy=0;if(keys.has('KeyW')||keys.has('ArrowUp')||touch.has('up'))dy--;if(keys.has('KeyS')||keys.has('ArrowDown')||touch.has('down'))dy++;if(keys.has('KeyA')||keys.has('ArrowLeft')||touch.has('left'))dx--;if(keys.has('KeyD')||keys.has('ArrowRight')||touch.has('right'))dx++;const len=Math.hypot(dx,dy);if((run.playerDowned??0)===0){if(len)moveUnit(p,dx/len,dy/len,dt*(keys.has('ShiftLeft')?4:3));else if(moveAnalog.magnitude>0)moveUnit(p,moveAnalog.x,moveAnalog.y,dt*3)}
+ if(len>0)placementFacing={x:dx/len,y:dy/len};
+ else if(moveAnalog.magnitude>.13)placementFacing={x:moveAnalog.x,y:moveAnalog.y};
 rescueAction(dt,keys.has('KeyV')||touch.has('revive'));
 if((run.playerDowned??0)===0)triggerFloorEvents();
 // One-stick survival: aim and fire at the nearest hittable, explored infected.
@@ -1162,8 +1165,10 @@ for(const e of run.enemies){if(!e.alive)continue;
   e.wireTick=(e.wireTick??WIRE_TICK_SECONDS)-dt;
   if(e.wireTick<=0){
    e.wireTick+=WIRE_TICK_SECONDS;
-   strikeZombie(e,WIRE_TICK_DAMAGE,{x:0,y:0},false,true);
-   if(!e.alive)continue;
+   // Direct contact damage deliberately causes no knockback, stun or new pathing.
+   e.hp-=WIRE_TICK_DAMAGE*(e.boss||e.kind==='armored'?.65:1);
+   e.hitFlash=Math.max(e.hitFlash??0,.07);
+   if(e.hp<=0){defeat(e);continue;}
   }
  }else e.wireTick=WIRE_TICK_SECONDS;
  e.stagger=Math.max(0,(e.stagger??0)-dt);e.knockdown=Math.max(0,(e.knockdown??0)-dt);if((e.knockdown??0)>0){moveUnit(e,e.knockVx??0,e.knockVy??0,dt);e.knockVx=(e.knockVx??0)*.85;e.knockVy=(e.knockVy??0)*.85;continue}e.hitFlash=Math.max(0,(e.hitFlash??0)-dt);
