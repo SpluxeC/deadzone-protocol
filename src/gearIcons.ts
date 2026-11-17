@@ -20,8 +20,6 @@ export function grenadeIcon(type:'frag'|'impact'|'wire'|'lure'|'shock'|'incendia
   ?'<path d="M34 26L25 37H32L28 47L42 33H34Z" fill="#d7f7ff"/><path d="M22 31L17 35M44 40L49 44" stroke="#9ee8fa" stroke-width="2"/>'
   :type==='incendiary'
   ?'<path d="M32 25Q39 34 35 37Q43 33 40 43Q37 49 32 49Q22 46 24 38Q26 33 32 25Z" fill="#ffad49"/><path d="M32 33Q35 39 33 44Q29 45 29 41Z" fill="#ffe4a5"/>'
-  :type==='wire'
-  ?'<path d="M29 28L25 39H32L29 46L40 33H33L37 28Z" fill="#f1f6ed"/>'
   :type==='lure'
   ?'<circle cx="32" cy="36" r="5" fill="#f8d39b"/><path d="M22 29Q16 36 22 43M42 29Q48 36 42 43" fill="none" stroke="#ffd6a1" stroke-width="2"/>'
   :type==='frag'
