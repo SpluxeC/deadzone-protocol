@@ -9,13 +9,17 @@ export function gearIcon(id:string):string{
 }
 
 /** Compact, self-contained grenade illustrations sized like regular Armory gear icons. */
-export function grenadeIcon(type:'frag'|'impact'|'stun'|'lure'):string{
- const colors={frag:'#75866b',impact:'#b87951',stun:'#c8d5d1',lure:'#c66a4f'};
- const bands={frag:'#a8bb82',impact:'#e3b46c',stun:'#f1f6eb',lure:'#f3a078'};
+export function grenadeIcon(type:'frag'|'impact'|'stun'|'lure'|'shock'|'incendiary'):string{
+ const colors={frag:'#75866b',impact:'#b87951',stun:'#c8d5d1',lure:'#c66a4f',shock:'#668ba1',incendiary:'#b3512d'};
+ const bands={frag:'#a8bb82',impact:'#e3b46c',stun:'#f1f6eb',lure:'#f3a078',shock:'#b6e9fd',incendiary:'#ffbf69'};
  const body=type==='impact'
   ?'<path d="M14 21L22 15H42L50 21V46L43 52H21L14 46Z" fill="'+colors[type]+'" stroke="#182325" stroke-width="2.8"/><path d="M18 30H46M18 41H46" stroke="#302e28" stroke-width="3"/>'
   :'<rect x="19" y="19" width="26" height="34" rx="6" fill="'+colors[type]+'" stroke="#182325" stroke-width="2.8"/><path d="M24 25V47M39 25V47" stroke="#202c2a" stroke-width="2" opacity=".45"/>';
- const details=type==='stun'
+ const details=type==='shock'
+  ?'<path d="M34 26L25 37H32L28 47L42 33H34Z" fill="#d7f7ff"/><path d="M22 31L17 35M44 40L49 44" stroke="#9ee8fa" stroke-width="2"/>'
+  :type==='incendiary'
+  ?'<path d="M32 25Q39 34 35 37Q43 33 40 43Q37 49 32 49Q22 46 24 38Q26 33 32 25Z" fill="#ffad49"/><path d="M32 33Q35 39 33 44Q29 45 29 41Z" fill="#ffe4a5"/>'
+  :type==='stun'
   ?'<path d="M29 28L25 39H32L29 46L40 33H33L37 28Z" fill="#f1f6ed"/>'
   :type==='lure'
   ?'<circle cx="32" cy="36" r="5" fill="#f8d39b"/><path d="M22 29Q16 36 22 43M42 29Q48 36 42 43" fill="none" stroke="#ffd6a1" stroke-width="2"/>'
