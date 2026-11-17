@@ -218,7 +218,7 @@ async function runScenario(touch){
  assert.equal(await page.locator('#mobile-equipment').count(),1,'right thumb tactical tray is available');
  assert.equal(await page.locator('#hud-hp').count(),0,'top bar no longer displays player health');
  assert.equal(await page.locator('#hud-hp-text').count(),0,'top bar no longer displays health numbers');
- assert.ok(!/\\d+\\s*\\/\\s*\\d+/.test((await page.locator('#hud-weapon').textContent())??''),'top weapon label excludes ammo');
+ assert.ok(!/\d+\s*\/\s*\d+/.test((await page.locator('#hud-weapon').textContent())??''),'top weapon label excludes ammo');
  assert.equal(await page.locator('#mobile-equipment #mobile-actions #mobile-interact').count(),1,'Interact sits inside the right equipment stack');
  if(touch){
   const layout=await page.evaluate(()=>{
