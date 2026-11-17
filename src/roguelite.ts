@@ -28,12 +28,14 @@ import {spawnHoles,openHoleIndices,startBreachEvent,advanceBreachEvent,canExtrac
 import {GRENADE_TYPES,GRENADE_PRICE,inventoryCap,emptyGrenades,migrateGrenades,grantGrenade,grenadeCrateLoot,throwGrenade,advanceGrenade,blastDamage,type GrenadeType,type GrenadeInventory,type GrenadeFlight} from './grenades';
 import {proposedWire,canDeployWire,touchesWire,migrateWireFences,WIRE_TICK_SECONDS,WIRE_TICK_DAMAGE,WIRE_SLOW_FACTOR,type WireFence} from './barbWire';
 import {drawBarbedWire} from './barbWireVisuals';
+import {createGroundFire,advanceGroundFires,insideGroundFire,migrateGroundFires,MAX_GROUND_FIRES,type GroundFire} from './groundFire';
+import {drawGroundFire} from './groundFireVisuals';
 import './rogueliteTheme.css';
 import './style.css';
 
 type Unit={x:number;y:number;hp:number;maxHp:number;speed:number;attack:number;boss?:boolean;alive:boolean;kind?:ZombieKind;windup?:number;phase?:number;aggro?:number;suppressed?:number;scoutMarked?:number;bossTarget?:{x:number;y:number};bossOrigin?:{x:number;y:number};summoned?:boolean;bossRecover?:number;lastKnown?:{x:number;y:number}|null;searchClock?:number;alertMode?:ThreatKind;stagger?:number;hitFlash?:number;hitVx?:number;hitVy?:number;emerging?:number;armorIntegrity?:number;knockdown?:number;knockVx?:number;knockVy?:number;burnTime?:number;burnTick?:number;wireTick?:number};
 type Ally=Squadmate;
-type Run={wave:number;credits:number;hp:number;armor:number;mag:number;reserve:number;medkits:number;weaponTier:number;damage:number;maxMag:number;player:{x:number;y:number};enemies:Unit[];allies:Ally[];spawned:number;kills:number;bosses:number;cleared:number;seed:number;stage:'fight'|'shop';looted:number[];squadAmmo:number;activeSlot?:WeaponSlot;sideMag?:number;sideReserve?:number;reloadTimer?:number;reloadSlot?:WeaponSlot|null;playerDowned?:number;playerDead?:boolean;squadOrder?:SquadOrder;focusTarget?:number|null;reviveProgress?:number;equipment?:{loadout:Loadout;bag:Gear[];ammo:AmmoBank;capacity:number;rerolls:number;};killsTotal?:number;lootedTotal?:number;flawlessWaves?:number;bestSquad?:number;waveStartHp?:number;waveStartArmor?:number;waveHit?:boolean;explored?:number[];layoutVersion?:1|2|3;waveSeconds?:number;runSeconds?:number;waveStartKills?:number;waveStartLooted?:number;peakThreat?:number;triggeredEvents?:number[];secretOpened?:boolean;noiseEvent?:{x:number;y:number;radius:number;ttl:number}|null;sealedHoles?:number[];breachEvent?:BreachEvent|null;grenades?:GrenadeInventory;grenadeCooldown?:number;wireFences?:WireFence[];}
+type Run={wave:number;credits:number;hp:number;armor:number;mag:number;reserve:number;medkits:number;weaponTier:number;damage:number;maxMag:number;player:{x:number;y:number};enemies:Unit[];allies:Ally[];spawned:number;kills:number;bosses:number;cleared:number;seed:number;stage:'fight'|'shop';looted:number[];squadAmmo:number;activeSlot?:WeaponSlot;sideMag?:number;sideReserve?:number;reloadTimer?:number;reloadSlot?:WeaponSlot|null;playerDowned?:number;playerDead?:boolean;squadOrder?:SquadOrder;focusTarget?:number|null;reviveProgress?:number;equipment?:{loadout:Loadout;bag:Gear[];ammo:AmmoBank;capacity:number;rerolls:number;};killsTotal?:number;lootedTotal?:number;flawlessWaves?:number;bestSquad?:number;waveStartHp?:number;waveStartArmor?:number;waveHit?:boolean;explored?:number[];layoutVersion?:1|2|3;waveSeconds?:number;runSeconds?:number;waveStartKills?:number;waveStartLooted?:number;peakThreat?:number;triggeredEvents?:number[];secretOpened?:boolean;noiseEvent?:{x:number;y:number;radius:number;ttl:number}|null;sealedHoles?:number[];breachEvent?:BreachEvent|null;grenades?:GrenadeInventory;grenadeCooldown?:number;wireFences?:WireFence[];groundFires?:GroundFire[];}
 type Profile=ProfileV5;
 const root=document.querySelector<HTMLDivElement>('#app')!;
 root.innerHTML=`<div id="rogue" style="height:100dvh;display:flex;flex-direction:column;background:#0c1416;color:#eaf0eb;font:14px system-ui;overflow:hidden">
@@ -160,7 +162,7 @@ function activeWeapon(r:Run):Weapon|null{return ensureEquipment(r).loadout[r.act
 function inventorySummary(r:Run){const eq=ensureEquipment(r);return usedSlots(eq.bag,eq.ammo,r.medkits)+'/'+eq.capacity}
 function gearId(r:Run):string{return 'gear-'+r.wave+'-'+r.kills+'-'+Math.floor(Math.random()*1e9)}
 
-function loadRun(){try{const r=JSON.parse(localStorage.getItem(store('run'))||'null') as Run|null;if(!r||!Number.isFinite(r.wave)||!['fight','shop'].includes(r.stage))return false;run=r;run.grenades=migrateGrenades(run.grenades);run.wireFences=migrateWireFences(run.wireFences);run.grenadeCooldown??=0;run.layoutVersion??=1;plan=makeWave(run.seed,run.wave,run.layoutVersion);run.triggeredEvents??=[];run.noiseEvent??=null;run.sealedHoles??=[];run.breachEvent??=null;if(run.secretOpened&&plan.map.secret){const d=plan.map.secret.door;plan.map.tiles[d.y*plan.map.width+d.x]=0}run.looted??=[];run.squadAmmo??=run.allies.length*8;run.maxMag??=12;run.weaponTier??=1;run.damage??=1;run.activeSlot??='primary';run.sideMag??=12;run.sideReserve??=48;run.reloadTimer??=0;run.reloadSlot??=null;run.killsTotal??=0;run.lootedTotal??=0;run.flawlessWaves??=0;run.bestSquad??=run.allies.length;run.waveHit??=false;run.playerDowned??=0;run.playerDead??=false;run.squadOrder??='follow';run.focusTarget??=null;run.reviveProgress??=0;run.waveSeconds??=0;run.runSeconds??=0;run.waveStartKills??=run.killsTotal??0;run.waveStartLooted??=run.lootedTotal??0;run.peakThreat??=0;run.allies=(run.allies||[]).map((a,i)=>migrateSquadmate(a,i));
+function loadRun(){try{const r=JSON.parse(localStorage.getItem(store('run'))||'null') as Run|null;if(!r||!Number.isFinite(r.wave)||!['fight','shop'].includes(r.stage))return false;run=r;run.grenades=migrateGrenades(run.grenades);run.wireFences=migrateWireFences(run.wireFences);run.groundFires=migrateGroundFires(run.groundFires);run.grenadeCooldown??=0;run.layoutVersion??=1;plan=makeWave(run.seed,run.wave,run.layoutVersion);run.triggeredEvents??=[];run.noiseEvent??=null;run.sealedHoles??=[];run.breachEvent??=null;if(run.secretOpened&&plan.map.secret){const d=plan.map.secret.door;plan.map.tiles[d.y*plan.map.width+d.x]=0}run.looted??=[];run.squadAmmo??=run.allies.length*8;run.maxMag??=12;run.weaponTier??=1;run.damage??=1;run.activeSlot??='primary';run.sideMag??=12;run.sideReserve??=48;run.reloadTimer??=0;run.reloadSlot??=null;run.killsTotal??=0;run.lootedTotal??=0;run.flawlessWaves??=0;run.bestSquad??=run.allies.length;run.waveHit??=false;run.playerDowned??=0;run.playerDead??=false;run.squadOrder??='follow';run.focusTarget??=null;run.reviveProgress??=0;run.waveSeconds??=0;run.runSeconds??=0;run.waveStartKills??=run.killsTotal??0;run.waveStartLooted??=run.lootedTotal??0;run.peakThreat??=0;run.allies=(run.allies||[]).map((a,i)=>migrateSquadmate(a,i));
  run.player=nearestWalkable(plan.map,run.player);
  const occupied=[run.player];
  for(const a of run.allies){const p=nearestWalkable(plan.map,a);const placed=spacedSquadPosition(plan.map,p,occupied);a.x=placed.x;a.y=placed.y;occupied.push(a);}
@@ -282,8 +284,8 @@ function balanceSquadAmmo(r:Run){
   if(amount>0){bank[kind]-=amount;ally.magReserve+=amount}
  }
 }
-function buildFloor(seed:number,wave:number){gameAudio.stopBreach();meleeAttacks=[];combatFx=[];bloodFx=[];shellEffects=[];shotKick=0;bossEffects=[];lootPopups=[];grenadeFlights=[];grenadeBursts=[];poseCache=new WeakMap<object,CharacterMotion>();if(run)run.layoutVersion=3;plan=makeWave(seed,wave,3);if(!run)return;run.explored=[];run.triggeredEvents=[];run.secretOpened=false;run.noiseEvent=null;run.sealedHoles=[];run.breachEvent=null;run.wireFences=[];placementFacing={x:0,y:-1};fog=createFog(plan.map);const p=plan.map.entrance;run.player={x:p.x,y:p.y};run.enemies=[];run.spawned=0;run.kills=0;run.looted=[];run.stage='fight';run.reloadTimer=0;run.reloadSlot=null;ensureEquipment(run).rerolls=0;if(wave>1)balanceSquadAmmo(run);run.focusTarget=null;run.waveHit=false;run.waveSeconds=0;run.waveStartKills=run.killsTotal??0;run.waveStartLooted=run.lootedTotal??0;run.peakThreat=0;run.waveStartHp=run.hp;run.waveStartArmor=run.armor;pathClock=0;pathField=null;searchFields.clear();bossPulse=0;noiseClock=0;const occupied=[run.player];for(let i=0;i<run.allies.length;i++){const ally=run.allies[i];const wanted={x:p.x-1-i*.45,y:p.y+1+i*.45};const placed=spacedSquadPosition(plan.map,wanted,occupied);ally.x=placed.x;ally.y=placed.y;occupied.push(ally);ally.anchor={x:ally.x,y:ally.y};ally.reviveProgress=0}spawnClock=0;allyClock=0;spawnInitial();save()}
-function newRun(){loadProfile();const kit=startingKit(profile);run={wave:1,credits:kit.credits,hp:100,armor:kit.armor,mag:kit.loadout.primary?.mag??0,reserve:kit.ammo.rifle,medkits:kit.medkits,weaponTier:1,damage:1,maxMag:kit.loadout.primary?.mag??0,player:{x:0,y:0},enemies:[],allies:kit.teammate==='none'?[]:[makeSquadmate(kit.teammate,'starter-01',0,0)],spawned:0,kills:0,bosses:0,cleared:0,seed:Math.floor(Math.random()*2000000000),stage:'fight',looted:[],grenades:emptyGrenades(),grenadeCooldown:0,wireFences:[],squadAmmo:kit.teammate==='none'?0:8,activeSlot:'primary',sideMag:kit.loadout.secondary?.mag??12,sideReserve:kit.ammo.light,reloadTimer:0,reloadSlot:null,playerDowned:0,playerDead:false,squadOrder:'follow',focusTarget:null,reviveProgress:0,killsTotal:0,lootedTotal:0,flawlessWaves:0,bestSquad:kit.teammate==='none'?0:1,waveHit:false,equipment:{loadout:kit.loadout,bag:[],ammo:kit.ammo,capacity:kit.capacity,rerolls:0}};buildFloor(run.seed,1);overlay.hidden=true;paused=false;notice('WAVE 1 · Reach the elevator before the horde overwhelms you')}
+function buildFloor(seed:number,wave:number){gameAudio.stopBreach();meleeAttacks=[];combatFx=[];bloodFx=[];shellEffects=[];shotKick=0;bossEffects=[];lootPopups=[];grenadeFlights=[];grenadeBursts=[];poseCache=new WeakMap<object,CharacterMotion>();if(run)run.layoutVersion=3;plan=makeWave(seed,wave,3);if(!run)return;run.explored=[];run.triggeredEvents=[];run.secretOpened=false;run.noiseEvent=null;run.sealedHoles=[];run.breachEvent=null;run.wireFences=[];run.groundFires=[];placementFacing={x:0,y:-1};fog=createFog(plan.map);const p=plan.map.entrance;run.player={x:p.x,y:p.y};run.enemies=[];run.spawned=0;run.kills=0;run.looted=[];run.stage='fight';run.reloadTimer=0;run.reloadSlot=null;ensureEquipment(run).rerolls=0;if(wave>1)balanceSquadAmmo(run);run.focusTarget=null;run.waveHit=false;run.waveSeconds=0;run.waveStartKills=run.killsTotal??0;run.waveStartLooted=run.lootedTotal??0;run.peakThreat=0;run.waveStartHp=run.hp;run.waveStartArmor=run.armor;pathClock=0;pathField=null;searchFields.clear();bossPulse=0;noiseClock=0;const occupied=[run.player];for(let i=0;i<run.allies.length;i++){const ally=run.allies[i];const wanted={x:p.x-1-i*.45,y:p.y+1+i*.45};const placed=spacedSquadPosition(plan.map,wanted,occupied);ally.x=placed.x;ally.y=placed.y;occupied.push(ally);ally.anchor={x:ally.x,y:ally.y};ally.reviveProgress=0}spawnClock=0;allyClock=0;spawnInitial();save()}
+function newRun(){loadProfile();const kit=startingKit(profile);run={wave:1,credits:kit.credits,hp:100,armor:kit.armor,mag:kit.loadout.primary?.mag??0,reserve:kit.ammo.rifle,medkits:kit.medkits,weaponTier:1,damage:1,maxMag:kit.loadout.primary?.mag??0,player:{x:0,y:0},enemies:[],allies:kit.teammate==='none'?[]:[makeSquadmate(kit.teammate,'starter-01',0,0)],spawned:0,kills:0,bosses:0,cleared:0,seed:Math.floor(Math.random()*2000000000),stage:'fight',looted:[],grenades:emptyGrenades(),grenadeCooldown:0,wireFences:[],groundFires:[],squadAmmo:kit.teammate==='none'?0:8,activeSlot:'primary',sideMag:kit.loadout.secondary?.mag??12,sideReserve:kit.ammo.light,reloadTimer:0,reloadSlot:null,playerDowned:0,playerDead:false,squadOrder:'follow',focusTarget:null,reviveProgress:0,killsTotal:0,lootedTotal:0,flawlessWaves:0,bestSquad:kit.teammate==='none'?0:1,waveHit:false,equipment:{loadout:kit.loadout,bag:[],ammo:kit.ammo,capacity:kit.capacity,rerolls:0}};buildFloor(run.seed,1);overlay.hidden=true;paused=false;notice('WAVE 1 · Reach the elevator before the horde overwhelms you')}
 function throwSelectedGrenade(type:GrenadeType){
  if(!run||!plan||paused||run.stage!=='fight'||(run.playerDowned??0)>0||run.playerDead)return;
  const inv=run.grenades??(run.grenades=emptyGrenades());
@@ -315,6 +317,12 @@ function grenadeBlast(g:GrenadeFlight){
  gameAudio.playGrenade(g.type,Math.hypot(g.x-run.player.x,g.y-run.player.y));
  if(g.type==='lure'){g.active=10;return}
  if(g.type==='wire')return;
+ if(g.type==='incendiary'){
+  const flames=run.groundFires??(run.groundFires=[]);
+  flames.push(createGroundFire(g.x,g.y,(run.seed^Math.round(g.x*71)^Math.round(g.y*109))>>>0));
+  if(flames.length>MAX_GROUND_FIRES)flames.splice(0,flames.length-MAX_GROUND_FIRES);
+  return; // No impact damage or immediate burn.
+ }
  run.noiseEvent={x:g.x,y:g.y,radius:g.type==='shock'?6:15,ttl:2};
  for(const z of run.enemies){const d=Math.hypot(z.x-g.x,z.y-g.y);
   if(!z.alive||d>(g.type==='shock'?3.5:3)||!canSee(g.x,g.y,z.x,z.y))continue;
@@ -322,11 +330,6 @@ function grenadeBlast(g:GrenadeFlight){
    z.stagger=Math.max(z.stagger??0,z.boss?1.3:3.5);
    z.suppressed=Math.max(z.suppressed??0,4);
    strikeZombie(z,z.boss?2:4,unit(z.x-g.x,z.y-g.y),false,true);
-   continue;
-  }
-  if(g.type==='incendiary'){
-   z.burnTime=Math.max(z.burnTime??0,z.boss?2:4);z.burnTick??=.45;
-   strikeZombie(z,z.boss?3:6,unit(z.x-g.x,z.y-g.y),false,true);
    continue;
   }
   strikeZombie(z,blastDamage(g.type,d),unit(z.x-g.x,z.y-g.y),false,true);
@@ -340,7 +343,7 @@ function tickGrenades(dt:number){
  run.grenadeCooldown=Math.max(0,(run.grenadeCooldown??0)-dt);
  for(const g of grenadeFlights){
   const oldX=g.x,oldY=g.y,step=advanceGrenade(g,dt,(x,y)=>canOccupy(plan!.map,x,y));
-  const hitZombie=g.type==='impact'&&!g.fired&&run.enemies.some(enemy=>enemy.alive&&
+  const hitZombie=(g.type==='impact'||g.type==='incendiary')&&!g.fired&&run.enemies.some(enemy=>enemy.alive&&
    Math.hypot(enemy.x-g.x,enemy.y-g.y)<.5&&
    Math.hypot(enemy.x-oldX,enemy.y-oldY)<1.2);
   if(hitZombie){g.fired=true;grenadeBlast(g)}
@@ -1103,6 +1106,7 @@ function update(dt:number){if(!run||!plan||paused||run.stage!=='fight'){gameAudi
   if(near.length){const z=near[Math.floor((run.waveSeconds??0)*7)%near.length];gameAudio.playZombie(z.kind??'shambler','growl',Math.hypot(z.x-run.player.x,z.y-run.player.y))}
  }
 combatFx=ageCombatFx(combatFx,dt);tickGrenades(dt);
+ run.groundFires=advanceGroundFires(run.groundFires??[],dt);
  for(const fence of run.wireFences??[])fence.age=Math.min(60,fence.age+dt);
  shellEffects=ageCasings(shellEffects,dt);shotKick=Math.max(0,shotKick-dt*1.9);
  bossEffects=bossEffects.filter(fx=>(fx.age+=dt)<(fx.death?1.15:.55));
@@ -1154,6 +1158,11 @@ pathClock-=dt;if(pathClock<=0||!pathField){pathField=distanceField(plan.map,run.
 for(const e of run.enemies){if(!e.alive)continue;
  e.emerging=Math.max(0,(e.emerging??0)-dt);
  e.bossRecover=Math.max(0,(e.bossRecover??0)-dt);
+ // Only zombies entering the persistent fire ignite; survivors never burn.
+ if((run.groundFires??[]).some(flame=>insideGroundFire(flame,e))){
+  e.burnTime=Math.max(e.burnTime??0,e.boss?2:4);
+  e.burnTick??=.45;
+ }
  if((e.burnTime??0)>0){
   e.burnTime=Math.max(0,(e.burnTime??0)-dt);
   e.burnTick=(e.burnTick??.45)-dt;
@@ -1337,6 +1346,7 @@ function draw(){
  ctx.save();if(fog)clipToExplored(ctx,m,v,fog);
  drawBloodFx(ctx,v,bloodFx,'ground');
  drawCasings(ctx,v,shellEffects);
+ for(const flame of r.groundFires??[])drawGroundFire(ctx,v,flame,now/1000);
  for(const b of grenadeBursts){
   const px=v.ox+b.x*v.tile,py=v.oy+b.y*v.tile,explosive=b.type==='frag'||b.type==='impact';
   const maxRadius=(b.type==='lure'?12:b.type==='shock'?3.5:3)*v.tile;
