@@ -216,6 +216,25 @@ async function runScenario(touch){
  assert.equal((await page.locator('[data-grenade="wire"] .grenade-count').textContent())?.trim(),'0/3','wire stock UI uses three-item capacity');
  assert.equal(await page.locator('#aim-stick').count(),0,'right aiming joystick is removed in auto-fire mode');
  assert.equal(await page.locator('#mobile-equipment').count(),1,'right thumb tactical tray is available');
+ assert.equal(await page.locator('#hud-hp').count(),0,'top bar no longer displays player health');
+ assert.equal(await page.locator('#hud-hp-text').count(),0,'top bar no longer displays health numbers');
+ assert.ok(!/\\d+\\s*\\/\\s*\\d+/.test((await page.locator('#hud-weapon').textContent())??''),'top weapon label excludes ammo');
+ assert.equal(await page.locator('#mobile-equipment #mobile-actions #mobile-interact').count(),1,'Interact sits inside the right equipment stack');
+ if(touch){
+  const layout=await page.evaluate(()=>{
+   const equip=document.querySelector('#mobile-equipment')?.getBoundingClientRect();
+   const grenade=document.querySelector('#mobile-squad')?.getBoundingClientRect();
+   const interact=document.querySelector('#mobile-interact')?.getBoundingClientRect();
+   const item=document.querySelector('#mobile-squad [data-grenade]')?.getBoundingClientRect();
+   const play=document.querySelector('#playarea')?.getBoundingClientRect();
+   return {equipX:equip?.x,center:play?play.x+play.width/2:0,grenadeBottom:grenade?.bottom,
+     interactTop:interact?.top,interactHeight:interact?.height,itemHeight:item?.height,interactWidth:interact?.width};
+  });
+  assert.ok(layout.equipX>layout.center,'equipment cluster must be right aligned: '+JSON.stringify(layout));
+  assert.ok(layout.interactTop>=layout.grenadeBottom-2,'Interact sits below grenade grid: '+JSON.stringify(layout));
+  assert.ok(layout.interactHeight>layout.itemHeight,'Interact is larger than throwables: '+JSON.stringify(layout));
+  assert.ok(layout.interactWidth>120,'Interact is a wide touch target: '+JSON.stringify(layout));
+ }
   assert.equal(await page.locator('[data-squad-order]').count(),0,'squad commands are removed from the touch HUD');
  assert.equal(await page.locator('#audio-dock').count(),1,'audio controls remain accessible in gameplay');
  if(touch){
