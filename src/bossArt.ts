@@ -111,8 +111,8 @@ export function drawBossArt(c:CanvasRenderingContext2D,v:View,kind:BossAttack,p:
   c.globalAlpha=.35+.22*Math.sin(t*9);
   c.beginPath();c.arc(0,0,size*.51,0,Math.PI*2);c.stroke();c.globalAlpha=1;
  }
- // +pi/2 keeps the same heading convention as the existing zombie sprite renderer.
- c.rotate(p.heading+Math.PI/2);
+ // Boss bodies stay upright on screen like players, squad NPCs and regular zombies.
+ // Heading is retained for attacks and targeting, not full-body rotation.
  const lift=kind==='shockwave'?Math.sin(t*3)*size*.045:Math.abs(stride)*size*.025;
  c.translate(0,-lift+wind*size*.10-recover*size*.045);
  const squash=kind==='charge'?wind*.15:kind==='slam'?wind*.08:-wind*.06;
