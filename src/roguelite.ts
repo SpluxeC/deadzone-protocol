@@ -33,7 +33,7 @@ import {drawGroundFire} from './groundFireVisuals';
 import './rogueliteTheme.css';
 import './style.css';
 
-type Unit={x:number;y:number;hp:number;maxHp:number;speed:number;attack:number;boss?:boolean;alive:boolean;kind?:ZombieKind;windup?:number;phase?:number;aggro?:number;suppressed?:number;scoutMarked?:number;bossTarget?:{x:number;y:number};bossOrigin?:{x:number;y:number};summoned?:boolean;bossRecover?:number;lastKnown?:{x:number;y:number}|null;searchClock?:number;alertMode?:ThreatKind;stagger?:number;hitFlash?:number;hitVx?:number;hitVy?:number;emerging?:number;armorIntegrity?:number;knockdown?:number;knockVx?:number;knockVy?:number;burnTime?:number;burnTick?:number;wireTick?:number;wireContact?:string};
+type Unit={x:number;y:number;hp:number;maxHp:number;speed:number;attack:number;boss?:boolean;alive:boolean;kind?:ZombieKind;windup?:number;phase?:number;aggro?:number;suppressed?:number;scoutMarked?:number;bossTarget?:{x:number;y:number};bossOrigin?:{x:number;y:number};summoned?:boolean;bossRecover?:number;lastKnown?:{x:number;y:number}|null;searchClock?:number;alertMode?:ThreatKind;stagger?:number;hitFlash?:number;hitVx?:number;hitVy?:number;emerging?:number;armorIntegrity?:number;knockdown?:number;knockVx?:number;knockVy?:number;burnTime?:number;burnTick?:number;wireTick?:number;wireContact?:string;attackPose?:number};
 type Ally=Squadmate;
 type Run={wave:number;credits:number;hp:number;armor:number;mag:number;reserve:number;medkits:number;weaponTier:number;damage:number;maxMag:number;player:{x:number;y:number};enemies:Unit[];allies:Ally[];spawned:number;kills:number;bosses:number;cleared:number;seed:number;stage:'fight'|'shop';looted:number[];squadAmmo:number;activeSlot?:WeaponSlot;sideMag?:number;sideReserve?:number;reloadTimer?:number;reloadSlot?:WeaponSlot|null;playerDowned?:number;playerDead?:boolean;squadOrder?:SquadOrder;focusTarget?:number|null;reviveProgress?:number;equipment?:{loadout:Loadout;bag:Gear[];ammo:AmmoBank;capacity:number;rerolls:number;};killsTotal?:number;lootedTotal?:number;flawlessWaves?:number;bestSquad?:number;waveStartHp?:number;waveStartArmor?:number;waveHit?:boolean;explored?:number[];layoutVersion?:1|2|3;waveSeconds?:number;runSeconds?:number;waveStartKills?:number;waveStartLooted?:number;peakThreat?:number;triggeredEvents?:number[];secretOpened?:boolean;noiseEvent?:{x:number;y:number;radius:number;ttl:number}|null;sealedHoles?:number[];breachEvent?:BreachEvent|null;grenades?:GrenadeInventory;grenadeCooldown?:number;wireFences?:WireFence[];groundFires?:GroundFire[];}
 type Profile=ProfileV5;
@@ -771,6 +771,8 @@ function meleeUpgradeLabel(model:WeaponId,tier:number):string{
  return '';
 }
 function shop(){if(!run)return;
+ const oldArmory=overlay.querySelector<HTMLElement>('.armory-screen');
+ const scroll=oldArmory?{page:overlay.scrollTop,panels:Array.from(oldArmory.querySelectorAll<HTMLElement>('.armory-section')).map(p=>p.scrollTop)}:null;
  paused=true;overlay.hidden=false;const r=run,eq=ensureEquipment(r);const baseOffers=armoryOffers(r.seed,r.wave,eq.rerolls);
  const offers=baseOffers.filter(o=>o.kind!=='recruit'||eligibleRecruit(profile,o.model as keyof typeof CLASS_INFO));
  if(!offers.some(o=>o.kind==='recruit'))offers.push({kind:'recruit',model:'rifleman',tier:1,price:CLASS_INFO.rifleman.cost});
@@ -789,6 +791,7 @@ function shop(){if(!run)return;
  </section><section data-mobile-panel="offers" class="armory-section armory-offers"><h2>Rotating Armory Offers</h2><p>Higher rarities become more common in later waves. Gear enters your backpack; use Inventory to equip, upgrade, attach or sell it.</p><div class="shop">${offerButtons}</div></section></div>
  </article>`;
  wireMobilePanels(overlay.querySelector<HTMLElement>('.armory-screen')!,armoryMobileTab,id=>{armoryMobileTab=id});
+ if(scroll){overlay.scrollTop=scroll.page;overlay.querySelectorAll<HTMLElement>('.armory-screen .armory-section').forEach((p,i)=>{p.scrollTop=scroll.panels[i]??0})}
  const bind=(id:string,cost:number,action:()=>boolean,allowed=true)=>{const el=overlay.querySelector<HTMLButtonElement>('#'+id)!;el.disabled=!allowed||r.credits<cost;el.onclick=()=>buySupply(cost,action)};
  for(const type of GRENADE_TYPES)bind('grenade-buy-'+type,GRENADE_PRICE[type],()=>{const inv=r.grenades??(r.grenades=emptyGrenades());if(inv[type]>=inventoryCap(type))return false;inv[type]++;return true},(r.grenades?.[type]??0)<inventoryCap(type));
  for(const type of ammoTypes){const info=ammoPack[type];bind('ammo-'+type,info.price,()=>{const count=addAmmo(eq.ammo,type,info.count,eq.bag,r.medkits,eq.capacity);if(count<info.count){eq.ammo[type]-=count;notice('Need room for the entire ammo pack');return false}return true})}
@@ -1195,17 +1198,10 @@ for(const e of run.enemies){if(!e.alive)continue;
  }
  e.stagger=Math.max(0,(e.stagger??0)-dt);e.knockdown=Math.max(0,(e.knockdown??0)-dt);if((e.knockdown??0)>0){moveUnit(e,e.knockVx??0,e.knockVy??0,dt);e.knockVx=(e.knockVx??0)*.85;e.knockVy=(e.knockVy??0)*.85;continue}e.hitFlash=Math.max(0,(e.hitFlash??0)-dt);
  e.suppressed=Math.max(0,(e.suppressed??0)-dt);e.scoutMarked=Math.max(0,(e.scoutMarked??0)-dt);const stats=zombieStats(e.kind??(e.boss?'boss':'shambler'));if(e.boss&&e.hp<e.maxHp*.5&&e.phase!==2){e.phase=2;notice(bossIdentity(run.wave).name+' · SECOND PHASE!');if(!e.summoned){e.summoned=true;for(let k=0;k<3;k++)spawnOne(false,false)}}
- const sight=Math.hypot(e.x-p.x,e.y-p.y);
- const vision=sight<1.5||(sight<(e.kind==='runner'?10:e.boss?17:7.5)&&canSee(e.x,e.y,p.x,p.y));
- const closestThreat=Math.min(Math.hypot(e.x-p.x,e.y-p.y),...run.allies.filter(a=>!a.dead&&a.downed<=0).map(a=>Math.hypot(e.x-a.x,e.y-a.y)));
-  const activeLures=grenadeFlights.filter(g=>g.type==='lure'&&g.fired&&g.active>0&&Math.hypot(g.x-e.x,g.y-e.y)<=12);
-  activeLures.sort((a,b)=>Math.hypot(a.x-e.x,a.y-e.y)-Math.hypot(b.x-e.x,b.y-e.y));
-  const lure=activeLures[0];
-  const lured=!!lure&&closestThreat>1.6&&(!e.boss||((run.wave+run.enemies.indexOf(e))%3===0));
-  const lureNoise=lured?{x:lure!.x,y:lure!.y,radius:12,ttl:.35}:null;
-  const senses=senseZombie({kind:e.kind??'shambler',position:e,player:p,canSeePlayer:vision&&!lured,noise:lureNoise??run.noiseEvent,lastKnown:e.lastKnown,memory:e.aggro??0,searchClock:e.searchClock??0,spawnIndex:run.enemies.indexOf(e)},dt);
- e.aggro=senses.memory;e.lastKnown=senses.lastKnown;e.searchClock=senses.searchClock;e.alertMode=senses.mode;
- e.attack=Math.max(0,e.attack-dt);
+ // Zombies constantly track the player without stealth, hearing or line-of-sight checks.
+  e.aggro=1;e.lastKnown={x:p.x,y:p.y};e.searchClock=0;e.alertMode='chase';
+  e.attackPose=Math.max(0,(e.attackPose??0)-dt);
+  e.attack=Math.max(0,e.attack-dt);
  if((e.emerging??0)>0)continue;
  if((e.windup??0)>0){e.windup=Math.max(0,(e.windup??0)-dt);if(e.windup===0){
  const ability=bossAttack(run.wave);
@@ -1228,7 +1224,7 @@ for(const e of run.enemies){if(!e.alive)continue;
  const nearestAlly=run.allies.filter(a=>a.hp>0&&!a.dead&&a.downed<=0).sort((a,b)=>Math.hypot(a.x-e.x,a.y-e.y)-Math.hypot(b.x-e.x,b.y-e.y))[0];
  const playerDist=Math.hypot(p.x-e.x,p.y-e.y);
  const allyDist=nearestAlly?Math.hypot(nearestAlly.x-e.x,nearestAlly.y-e.y):Infinity;
- const target=nearestAlly&&(allyDist+.35<playerDist||(run.playerDowned??0)>0)?nearestAlly:p,dist=Math.hypot(target.x-e.x,target.y-e.y);
+ const target=p,dist=playerDist;
  if(e.boss&&e.attack===0&&(run.playerDowned??0)===0&&playerDist<(bossAttack(run.wave)==='shockwave'?4.5:bossAttack(run.wave)==='charge'?6:3.7)){
  const identity=bossIdentity(run.wave);
  e.bossOrigin={x:e.x,y:e.y};e.bossTarget={x:p.x,y:p.y};
@@ -1237,26 +1233,10 @@ for(const e of run.enemies){if(!e.alive)continue;
  notice(identity.name+' · '+identity.ability.toUpperCase()+' INCOMING!');
  continue
 }
- if((e.stagger??0)<=0&&dist<=stats.reach&&e.attack===0&&((target!==p)||(run.playerDowned??0)===0)){gameAudio.playZombie(e.kind??'shambler','attack',Math.hypot(e.x-p.x,e.y-p.y));e.attack=stats.attackInterval;if(target===p){hurtPlayer(stats.damage)}else{const ally=target as Ally;hurtAlly(ally,stats.damage)}continue}
- if((e.aggro??0)>0&&(e.stagger??0)<=0){
-  // Squadmates can be attacked in close quarters, but lost player sightings are not omniscient.
-  const destination=target!==p&&dist<2.5?target:senses.target;
-  if(destination){
-   const goal=tacticalTarget(e.kind??'shambler',e,destination,run.enemies.indexOf(e),senses.mode);
-   const direct=canSee(e.x,e.y,goal.x,goal.y);
-   // Cache a handful of sound/last-sighting navigation fields per tick; never leak the
-   // live player's location into an enemy that only remembers an older sighting.
-   let waypoint=goal;
-   if(!direct){
-    if(senses.mode==='chase')waypoint=nextZombieWaypoint(plan.map,pathField!,e);
-    else {
-     const point=nearestWalkable(plan.map,goal);
-     const key=Math.round(point.x)+','+Math.round(point.y);
-     let field=searchFields.get(key);
-     if(!field&&searchFields.size<8){field=distanceField(plan.map,point);searchFields.set(key,field)}
-     if(field)waypoint=nextZombieWaypoint(plan.map,field,e);
-    }
-   }
+ if((e.stagger??0)<=0&&dist<=stats.reach&&e.attack===0&&((target!==p)||(run.playerDowned??0)===0)){gameAudio.playZombie(e.kind??'shambler','attack',Math.hypot(e.x-p.x,e.y-p.y));e.attack=stats.attackInterval;e.attackPose=.3;if(target===p){hurtPlayer(stats.damage)}else{const ally=target as Ally;hurtAlly(ally,stats.damage)}continue}
+ if((e.stagger??0)<=0){
+   // Pursue the player's live position through doors and around walls.
+   const waypoint=canSee(e.x,e.y,p.x,p.y)?p:nextZombieWaypoint(plan.map,pathField!,e);
    const vx=waypoint.x-e.x,vy=waypoint.y-e.y,len=Math.hypot(vx,vy);
    if(len>.12){
     const nearby=run.enemies.find(other=>other!==e&&other.alive&&Math.hypot(other.x-e.x,other.y-e.y)<.4);
@@ -1400,6 +1380,14 @@ function draw(){
   if((e.emerging??0)>0){ctx.save();ctx.beginPath();ctx.ellipse(v.ox+e.x*v.tile,v.oy+e.y*v.tile,v.tile*.57,v.tile*.38,0,0,Math.PI*2);ctx.clip();ctx.globalAlpha=Math.max(.28,1-(e.emerging??0)*.85)}
   if(boss)drawBossArt(ctx,v,boss.ability,{x:e.x,y:e.y,heading:motion.angle,stride:motion.phase,speed:motion.speed,time:now/1000,windup:e.windup?Math.max(0,1-(e.windup??0)/(boss.ability==='charge'?1.25:boss.ability==='shockwave'?1.45:1.05)):0,recover:Math.min(1,(e.bossRecover??0)/.55),enraged:e.phase===2});
   else drawSprite(ctx,kind,v,e.x,e.y,{angle:motion.angle+(e.hitFlash??0)*Math.sin(now/23)*.7,stride:motion.phase,motionSpeed:motion.speed,idleTime:now/1000,scale:kind==='bruiser'?1.32:kind==='runner'?.93:1.12,glow:(e.hitFlash??0)>0?'#ef7e65':undefined});
+   if((e.attackPose??0)>0&&!e.boss){
+    // Forward claw-swipe animation triggered on each melee hit.
+    const phase=1-(e.attackPose??0)/.3,reach=v.tile*(.3+Math.sin(phase*Math.PI)*.32);
+    ctx.save();ctx.translate(v.ox+e.x*v.tile+Math.cos(motion.angle)*reach,v.oy+e.y*v.tile+Math.sin(motion.angle)*reach);ctx.rotate(motion.angle);
+    ctx.strokeStyle='#d5b7a1';ctx.lineWidth=Math.max(2,v.tile*.075);ctx.lineCap='round';ctx.globalAlpha=Math.min(1,(e.attackPose??0)*7);
+    for(const side of [-1,1]){ctx.beginPath();ctx.moveTo(-v.tile*.13,side*v.tile*.23);ctx.quadraticCurveTo(v.tile*.04,side*v.tile*.34,v.tile*.23,side*v.tile*.1);ctx.stroke()}
+    ctx.restore();
+   }
 
   if((e.burnTime??0)>0){
    // Fleeting embers visibly mark burning infected.
