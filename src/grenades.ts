@@ -1,18 +1,23 @@
 /** Tactical grenade equipment: dedicated storage, deterministic supply loot, and flight physics. */
-export const GRENADE_TYPES=['frag','impact','stun','lure','shock','incendiary'] as const;
+export const GRENADE_TYPES=['frag','impact','wire','lure','shock','incendiary'] as const;
 export type GrenadeType=typeof GRENADE_TYPES[number];
 export type GrenadeInventory=Record<GrenadeType,number>;
-export const GRENADE_PRICE:Record<GrenadeType,number>={frag:60,impact:50,stun:45,lure:40,shock:70,incendiary:85};
-export const GRENADE_RADIUS:Record<GrenadeType,number>={frag:3,impact:3,stun:4,lure:12,shock:3.5,incendiary:3};
+export const GRENADE_PRICE:Record<GrenadeType,number>={frag:60,impact:50,wire:65,lure:40,shock:70,incendiary:85};
+export const GRENADE_RADIUS:Record<GrenadeType,number>={frag:3,impact:3,wire:0,lure:12,shock:3.5,incendiary:3};
 export const GRENADE_CAP=2;
-export const emptyGrenades=():GrenadeInventory=>({frag:0,impact:0,stun:0,lure:0,shock:0,incendiary:0});
+export const inventoryCap=(type:GrenadeType)=>type==='wire'?3:GRENADE_CAP;
+export const emptyGrenades=():GrenadeInventory=>({frag:0,impact:0,wire:0,lure:0,shock:0,incendiary:0});
 export function migrateGrenades(v?:Partial<GrenadeInventory>|null):GrenadeInventory{
  const result=emptyGrenades();
- for(const type of GRENADE_TYPES)result[type]=Math.min(GRENADE_CAP,Math.max(0,Math.floor(Number(v?.[type])||0)));
+ for(const type of GRENADE_TYPES){
+  const legacy=v as Record<string,unknown>|null|undefined;
+  const old=type==='wire'?(v?.wire??legacy?.stun):v?.[type];
+  result[type]=Math.min(inventoryCap(type),Math.max(0,Math.floor(Number(old)||0)));
+ }
  return result;
 }
 export function grantGrenade(inventory:GrenadeInventory,type:GrenadeType,amount:number):{added:number;credits:number}{
- const count=Math.max(0,Math.floor(amount)),added=Math.min(count,GRENADE_CAP-inventory[type]);
+ const count=Math.max(0,Math.floor(amount)),added=Math.min(count,inventoryCap(type)-inventory[type]);
  inventory[type]+=added;
  return {added,credits:(count-added)*Math.floor(GRENADE_PRICE[type]/2)};
 }
