@@ -34,7 +34,7 @@ test('wire affects actors in strip, never changes map or collision geometry',()=
  assert.ok(WIRE_TICK_DAMAGE>0&&WIRE_TICK_DAMAGE<3);
  assert.ok(WIRE_TICK_SECONDS>=.3);
  assert.equal(WIRE_CAP,3);
- assert.equal(WIRE_MAX_DURABILITY,8);
+ assert.equal(WIRE_MAX_DURABILITY,10);
 });
 test('wire fences safely restore from saves',()=>{
  const fence=proposedWire({x:4,y:4},{x:1,y:0});
@@ -42,7 +42,7 @@ test('wire fences safely restore from saves',()=>{
  assert.deepEqual(migrateWireFences(null),[]);
 });
 
-test('one charge per unique crossing and wire vanishes after eight zombies',()=>{
+test('one charge per unique crossing and wire vanishes after ten zombies',()=>{
  const fence=proposedWire({x:4,y:4},{x:1,y:0});
  let broken=false;
  for(let zombie=0;zombie<WIRE_MAX_DURABILITY;zombie++){
