@@ -1334,7 +1334,7 @@ function draw(){
  drawCasings(ctx,v,shellEffects);
  for(const b of grenadeBursts){
   const px=v.ox+b.x*v.tile,py=v.oy+b.y*v.tile,explosive=b.type==='frag'||b.type==='impact';
-  const maxRadius=(b.type==='lure'?12:b.type==='stun'?4:3)*v.tile;
+  const maxRadius=(b.type==='lure'?12:b.type==='shock'?3.5:3)*v.tile;
   const t=b.age;
   ctx.save();
   if(explosive){
