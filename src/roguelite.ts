@@ -29,7 +29,7 @@ import {GRENADE_TYPES,GRENADE_PRICE,emptyGrenades,migrateGrenades,grantGrenade,g
 import './rogueliteTheme.css';
 import './style.css';
 
-type Unit={x:number;y:number;hp:number;maxHp:number;speed:number;attack:number;boss?:boolean;alive:boolean;kind?:ZombieKind;windup?:number;phase?:number;aggro?:number;suppressed?:number;scoutMarked?:number;bossTarget?:{x:number;y:number};bossOrigin?:{x:number;y:number};summoned?:boolean;bossRecover?:number;lastKnown?:{x:number;y:number}|null;searchClock?:number;alertMode?:ThreatKind;stagger?:number;hitFlash?:number;hitVx?:number;hitVy?:number;emerging?:number;armorIntegrity?:number;knockdown?:number;knockVx?:number;knockVy?:number;burnTime?:number};
+type Unit={x:number;y:number;hp:number;maxHp:number;speed:number;attack:number;boss?:boolean;alive:boolean;kind?:ZombieKind;windup?:number;phase?:number;aggro?:number;suppressed?:number;scoutMarked?:number;bossTarget?:{x:number;y:number};bossOrigin?:{x:number;y:number};summoned?:boolean;bossRecover?:number;lastKnown?:{x:number;y:number}|null;searchClock?:number;alertMode?:ThreatKind;stagger?:number;hitFlash?:number;hitVx?:number;hitVy?:number;emerging?:number;armorIntegrity?:number;knockdown?:number;knockVx?:number;knockVy?:number;burnTime?:number;burnTick?:number};
 type Ally=Squadmate;
 type Run={wave:number;credits:number;hp:number;armor:number;mag:number;reserve:number;medkits:number;weaponTier:number;damage:number;maxMag:number;player:{x:number;y:number};enemies:Unit[];allies:Ally[];spawned:number;kills:number;bosses:number;cleared:number;seed:number;stage:'fight'|'shop';looted:number[];squadAmmo:number;activeSlot?:WeaponSlot;sideMag?:number;sideReserve?:number;reloadTimer?:number;reloadSlot?:WeaponSlot|null;playerDowned?:number;playerDead?:boolean;squadOrder?:SquadOrder;focusTarget?:number|null;reviveProgress?:number;equipment?:{loadout:Loadout;bag:Gear[];ammo:AmmoBank;capacity:number;rerolls:number;};killsTotal?:number;lootedTotal?:number;flawlessWaves?:number;bestSquad?:number;waveStartHp?:number;waveStartArmor?:number;waveHit?:boolean;explored?:number[];layoutVersion?:1|2|3;waveSeconds?:number;runSeconds?:number;waveStartKills?:number;waveStartLooted?:number;peakThreat?:number;triggeredEvents?:number[];secretOpened?:boolean;noiseEvent?:{x:number;y:number;radius:number;ttl:number}|null;sealedHoles?:number[];breachEvent?:BreachEvent|null;grenades?:GrenadeInventory;grenadeCooldown?:number;}
 type Profile=ProfileV5;
@@ -301,7 +301,7 @@ function grenadeBlast(g:GrenadeFlight){
    continue;
   }
   if(g.type==='incendiary'){
-   z.burnTime=Math.max(z.burnTime??0,z.boss?2:4);
+   z.burnTime=Math.max(z.burnTime??0,z.boss?2:4);z.burnTick??=.45;
    strikeZombie(z,z.boss?3:6,unit(z.x-g.x,z.y-g.y),false,true);
    continue;
   }
@@ -1127,7 +1127,11 @@ pathClock-=dt;if(pathClock<=0||!pathField){pathField=distanceField(plan.map,run.
 for(const e of run.enemies){if(!e.alive)continue;
  e.emerging=Math.max(0,(e.emerging??0)-dt);
  e.bossRecover=Math.max(0,(e.bossRecover??0)-dt);
- if((e.burnTime??0)>0){e.burnTime=Math.max(0,(e.burnTime??0)-dt);strikeZombie(e,dt*(e.boss?1.8:3.2),{x:0,y:-1},false,true);if(!e.alive)continue;}
+ if((e.burnTime??0)>0){
+  e.burnTime=Math.max(0,(e.burnTime??0)-dt);
+  e.burnTick=(e.burnTick??.45)-dt;
+  if(e.burnTick<=0){e.burnTick+=.5;strikeZombie(e,e.boss?.9:1.6,{x:0,y:-1},false,true);if(!e.alive)continue;}
+ }
  e.stagger=Math.max(0,(e.stagger??0)-dt);e.knockdown=Math.max(0,(e.knockdown??0)-dt);if((e.knockdown??0)>0){moveUnit(e,e.knockVx??0,e.knockVy??0,dt);e.knockVx=(e.knockVx??0)*.85;e.knockVy=(e.knockVy??0)*.85;continue}e.hitFlash=Math.max(0,(e.hitFlash??0)-dt);
  e.suppressed=Math.max(0,(e.suppressed??0)-dt);e.scoutMarked=Math.max(0,(e.scoutMarked??0)-dt);const stats=zombieStats(e.kind??(e.boss?'boss':'shambler'));if(e.boss&&e.hp<e.maxHp*.5&&e.phase!==2){e.phase=2;notice(bossIdentity(run.wave).name+' · SECOND PHASE!');if(!e.summoned){e.summoned=true;for(let k=0;k<3;k++)spawnOne(false,false)}}
  const sight=Math.hypot(e.x-p.x,e.y-p.y);
@@ -1334,6 +1338,20 @@ function draw(){
   if(boss)drawBossArt(ctx,v,boss.ability,{x:e.x,y:e.y,heading:motion.angle,stride:motion.phase,speed:motion.speed,time:now/1000,windup:e.windup?Math.max(0,1-(e.windup??0)/(boss.ability==='charge'?1.25:boss.ability==='shockwave'?1.45:1.05)):0,recover:Math.min(1,(e.bossRecover??0)/.55),enraged:e.phase===2});
   else drawSprite(ctx,kind,v,e.x,e.y,{angle:motion.angle+(e.hitFlash??0)*Math.sin(now/23)*.7,stride:motion.phase,motionSpeed:motion.speed,idleTime:now/1000,scale:kind==='bruiser'?1.32:kind==='runner'?.93:1.12,glow:(e.hitFlash??0)>0?'#ef7e65':undefined});
 
+  if((e.burnTime??0)>0){
+   // Fleeting embers visibly mark burning infected.
+   const px=v.ox+e.x*v.tile,py=v.oy+e.y*v.tile,t=now/1000;
+   ctx.save();
+   for(let i=0;i<4;i++){
+    const a=t*5+i*2.4;
+    const bx=px+Math.sin(a)*v.tile*(.12+i*.03);
+    const by=py-v.tile*(.20+i*.09+(t*.6+i*.23)%.4);
+    ctx.globalAlpha=Math.min(.85,(e.burnTime??0)*.25);
+    ctx.fillStyle=i%2?'#ffbc55':'#f06c35';
+    ctx.beginPath();ctx.ellipse(bx,by,v.tile*.05,v.tile*.085,Math.sin(a)*.2,0,Math.PI*2);ctx.fill();
+   }
+   ctx.restore();
+  }
   if((e.emerging??0)>0)ctx.restore();
   // Natural armor wear: fractures and exposed flesh become visible when plating breaks.
   if((e.boss||e.kind==='armored')&&(e.armorIntegrity??0)<(e.boss?120:38)){
