@@ -1246,7 +1246,6 @@ for(const e of run.enemies){if(!e.alive)continue;
    }
   }
  }
-}
 bossPulse=Math.max(0,bossPulse-dt);
 if((run.playerDowned??0)>0&&run.allies.every(a=>a.dead||a.downed>0)){run.playerDead=true;death();return}
 if((run.playerDowned??0)>0){run.playerDowned=Math.max(0,(run.playerDowned??0)-dt);if(run.playerDowned===0&&run.hp<=0){run.playerDead=true;death();return}}
