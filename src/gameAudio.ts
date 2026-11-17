@@ -239,7 +239,7 @@ class GameAudio{
   // The closing bolt is slightly heavier at the end of the timed reload.
   if(complete)this.burst(.045,.07,{delay:.08,highpass:640,lowpass:3200});
  }
- playGrenade(type:'frag'|'impact'|'stun'|'lure',distance=0):void{
+ playGrenade(type:'frag'|'impact'|'stun'|'lure'|'shock'|'incendiary',distance=0):void{
   if(!this.canPlay('grenade-'+type,type==='lure'?.3:.06))return;
   // Original synthesized layered impulses avoid missing external files on mobile.
   if(type==='frag'||type==='impact'){
@@ -247,6 +247,12 @@ class GameAudio{
    this.burst(.11,.31,{highpass:400,lowpass:6500,delay:.015});
    this.tone(type==='frag'?68:94,type==='frag'?.38:.25,.19,{type:'sawtooth',endFreq:33});
    this.burst(.13,.14,{highpass:1250,lowpass:7800,delay:.1});
+  }else if(type==='incendiary'){
+   this.burst(.3,.46,{lowpass:1400});
+   this.burst(.28,.22,{highpass:900,lowpass:7200,delay:.08});
+  }else if(type==='shock'){
+   this.tone(170,.23,.13,{type:'sawtooth',endFreq:830});
+   this.burst(.12,.37,{highpass:1700,lowpass:9100,delay:.04});
   }else if(type==='stun'){
    this.burst(.14,.61,{highpass:800,lowpass:11500});
    this.tone(1900,.22,.065,{type:'sine',endFreq:2450,delay:.08});
