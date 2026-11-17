@@ -29,7 +29,7 @@ import {GRENADE_TYPES,GRENADE_PRICE,emptyGrenades,migrateGrenades,grantGrenade,g
 import './rogueliteTheme.css';
 import './style.css';
 
-type Unit={x:number;y:number;hp:number;maxHp:number;speed:number;attack:number;boss?:boolean;alive:boolean;kind?:ZombieKind;windup?:number;phase?:number;aggro?:number;suppressed?:number;scoutMarked?:number;bossTarget?:{x:number;y:number};bossOrigin?:{x:number;y:number};summoned?:boolean;bossRecover?:number;lastKnown?:{x:number;y:number}|null;searchClock?:number;alertMode?:ThreatKind;stagger?:number;hitFlash?:number;hitVx?:number;hitVy?:number;emerging?:number;armorIntegrity?:number;knockdown?:number;knockVx?:number;knockVy?:number};
+type Unit={x:number;y:number;hp:number;maxHp:number;speed:number;attack:number;boss?:boolean;alive:boolean;kind?:ZombieKind;windup?:number;phase?:number;aggro?:number;suppressed?:number;scoutMarked?:number;bossTarget?:{x:number;y:number};bossOrigin?:{x:number;y:number};summoned?:boolean;bossRecover?:number;lastKnown?:{x:number;y:number}|null;searchClock?:number;alertMode?:ThreatKind;stagger?:number;hitFlash?:number;hitVx?:number;hitVy?:number;emerging?:number;armorIntegrity?:number;knockdown?:number;knockVx?:number;knockVy?:number;burnTime?:number};
 type Ally=Squadmate;
 type Run={wave:number;credits:number;hp:number;armor:number;mag:number;reserve:number;medkits:number;weaponTier:number;damage:number;maxMag:number;player:{x:number;y:number};enemies:Unit[];allies:Ally[];spawned:number;kills:number;bosses:number;cleared:number;seed:number;stage:'fight'|'shop';looted:number[];squadAmmo:number;activeSlot?:WeaponSlot;sideMag?:number;sideReserve?:number;reloadTimer?:number;reloadSlot?:WeaponSlot|null;playerDowned?:number;playerDead?:boolean;squadOrder?:SquadOrder;focusTarget?:number|null;reviveProgress?:number;equipment?:{loadout:Loadout;bag:Gear[];ammo:AmmoBank;capacity:number;rerolls:number;};killsTotal?:number;lootedTotal?:number;flawlessWaves?:number;bestSquad?:number;waveStartHp?:number;waveStartArmor?:number;waveHit?:boolean;explored?:number[];layoutVersion?:1|2|3;waveSeconds?:number;runSeconds?:number;waveStartKills?:number;waveStartLooted?:number;peakThreat?:number;triggeredEvents?:number[];secretOpened?:boolean;noiseEvent?:{x:number;y:number;radius:number;ttl:number}|null;sealedHoles?:number[];breachEvent?:BreachEvent|null;grenades?:GrenadeInventory;grenadeCooldown?:number;}
 type Profile=ProfileV5;
@@ -292,10 +292,19 @@ function grenadeBlast(g:GrenadeFlight){
  grenadeBursts.push({x:g.x,y:g.y,type:g.type,age:0});
  gameAudio.playGrenade(g.type,Math.hypot(g.x-run.player.x,g.y-run.player.y));
  if(g.type==='lure'){g.active=10;return}
- run.noiseEvent={x:g.x,y:g.y,radius:g.type==='stun'?6:15,ttl:2};
+ run.noiseEvent={x:g.x,y:g.y,radius:g.type==='stun'||g.type==='shock'?6:15,ttl:2};
  for(const z of run.enemies){const d=Math.hypot(z.x-g.x,z.y-g.y);
-  if(!z.alive||d>(g.type==='stun'?4:3)||!canSee(g.x,g.y,z.x,z.y))continue;
-  if(g.type==='stun'){z.stagger=Math.max(z.stagger??0,z.boss?1:4);continue}
+  if(!z.alive||d>(g.type==='stun'?4:g.type==='shock'?3.5:3)||!canSee(g.x,g.y,z.x,z.y))continue;
+  if(g.type==='stun'||g.type==='shock'){
+   z.stagger=Math.max(z.stagger??0,g.type==='shock'?(z.boss?1.3:3.5):(z.boss?1:4));
+   if(g.type==='shock'){z.suppressed=Math.max(z.suppressed??0,4);strikeZombie(z,z.boss?2:4,unit(z.x-g.x,z.y-g.y),false,true)}
+   continue;
+  }
+  if(g.type==='incendiary'){
+   z.burnTime=Math.max(z.burnTime??0,z.boss?2:4);
+   strikeZombie(z,z.boss?3:6,unit(z.x-g.x,z.y-g.y),false,true);
+   continue;
+  }
   strikeZombie(z,blastDamage(g.type,d),unit(z.x-g.x,z.y-g.y),false,true);
   if(z.alive){const power=z.boss?.1:z.kind==='armored'?2.5:7;
    z.knockVx=(z.x-g.x)/(d||1)*power;z.knockVy=(z.y-g.y)/(d||1)*power;
@@ -1118,6 +1127,7 @@ pathClock-=dt;if(pathClock<=0||!pathField){pathField=distanceField(plan.map,run.
 for(const e of run.enemies){if(!e.alive)continue;
  e.emerging=Math.max(0,(e.emerging??0)-dt);
  e.bossRecover=Math.max(0,(e.bossRecover??0)-dt);
+ if((e.burnTime??0)>0){e.burnTime=Math.max(0,(e.burnTime??0)-dt);strikeZombie(e,dt*(e.boss?1.8:3.2),{x:0,y:-1},false,true);if(!e.alive)continue;}
  e.stagger=Math.max(0,(e.stagger??0)-dt);e.knockdown=Math.max(0,(e.knockdown??0)-dt);if((e.knockdown??0)>0){moveUnit(e,e.knockVx??0,e.knockVy??0,dt);e.knockVx=(e.knockVx??0)*.85;e.knockVy=(e.knockVy??0)*.85;continue}e.hitFlash=Math.max(0,(e.hitFlash??0)-dt);
  e.suppressed=Math.max(0,(e.suppressed??0)-dt);e.scoutMarked=Math.max(0,(e.scoutMarked??0)-dt);const stats=zombieStats(e.kind??(e.boss?'boss':'shambler'));if(e.boss&&e.hp<e.maxHp*.5&&e.phase!==2){e.phase=2;notice(bossIdentity(run.wave).name+' · SECOND PHASE!');if(!e.summoned){e.summoned=true;for(let k=0;k<3;k++)spawnOne(false,false)}}
  const sight=Math.hypot(e.x-p.x,e.y-p.y);
@@ -1294,12 +1304,12 @@ function draw(){
    ctx.beginPath();ctx.ellipse(px,py,1.15*v.tile,.76*v.tile,0,0,Math.PI*2);ctx.fill();
   }
   ctx.globalAlpha=Math.max(0,(explosive?.92:.72)*(1-t));
-  ctx.strokeStyle=b.type==='stun'?'#f8ffff':b.type==='lure'?'#f27c56':'#ffbc73';
+  ctx.strokeStyle=b.type==='shock'?'#9fe8ff':b.type==='incendiary'?'#ff753d':b.type==='stun'?'#f8ffff':b.type==='lure'?'#f27c56':'#ffbc73';
   ctx.lineWidth=Math.max(2,v.tile*(.17-t*.1));
   ctx.beginPath();ctx.arc(px,py,Math.min(maxRadius,t*maxRadius*5),0,Math.PI*2);ctx.stroke();
   if(t<.45&&b.type!=='lure'){
    ctx.globalAlpha=Math.max(0,(1-t/.45)*(b.type==='stun'?.82:.6));
-   ctx.fillStyle=b.type==='stun'?'#ffffff':'#ffc76a';
+   ctx.fillStyle=b.type==='stun'||b.type==='shock'?'#ffffff':'#ffc76a';
    ctx.beginPath();ctx.arc(px,py,Math.max(0,(.8-t)*v.tile),0,Math.PI*2);ctx.fill();
   }
   if(explosive)for(let k=0;k<22;k++){
@@ -1312,7 +1322,7 @@ function draw(){
   }
   ctx.restore();
  }
- for(const g of grenadeFlights){ctx.save();ctx.fillStyle=g.type==='lure'?'#fa5c43':g.type==='stun'?'#f5ffff':'#657a63';ctx.beginPath();ctx.arc(v.ox+g.x*v.tile,v.oy+(g.y-g.altitude)*v.tile,v.tile*.16,0,Math.PI*2);ctx.fill();ctx.restore()}
+ for(const g of grenadeFlights){ctx.save();ctx.fillStyle=g.type==='lure'?'#fa5c43':g.type==='shock'?'#8bcfe4':g.type==='incendiary'?'#cc6534':g.type==='stun'?'#f5ffff':'#657a63';ctx.beginPath();ctx.arc(v.ox+g.x*v.tile,v.oy+(g.y-g.altitude)*v.tile,v.tile*.16,0,Math.PI*2);ctx.fill();ctx.restore()}
  for(const fx of bossEffects){if(fx.death)drawBossDeath(ctx,v,fx.kind,fx.x,fx.y,fx.heading??0,fx.age);else drawBossImpact(ctx,v,fx.kind,fx.x,fx.y,fx.age)}
  ctx.restore();
  for(const e of r.enemies){if(!e.alive||!isKnown(e.x,e.y))continue;const kind=(e.kind??(e.boss?'boss':'shambler')) as SpriteKind;
@@ -1439,7 +1449,7 @@ function draw(){
  document.querySelector('#hud-team')!.textContent='SQUAD '+r.allies.length+'/4'+(r.playerDowned?' · DOWN '+Math.ceil(r.playerDowned)+'s':'');
 }
 function frame(now:number){const dt=Math.min(.05,(now-last)/1000);last=now;update(dt);draw();const menuCanvas=overlay.hidden?null:overlay.querySelector<HTMLCanvasElement>('#menu-cinematic');if(menuCanvas)renderMenuCinematic(menuCanvas,now,window.matchMedia('(prefers-reduced-motion: reduce)').matches);if(noticeUntil<now)toastEl.textContent='';requestAnimationFrame(frame)}
-window.addEventListener('keydown',e=>{if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code))e.preventDefault();keys.add(e.code);if(e.repeat)return;if(e.code==='Digit1')equip('primary');if(e.code==='Digit2')equip('secondary');if(e.code==='Digit3')equip('melee');if(e.code==='KeyR')reload();if(e.code==='KeyH')heal();if(e.code==='KeyI'&&run&&run.stage==='fight')inventory();if(e.code==='KeyF')throwSelectedGrenade('frag');if(e.code==='KeyG')throwSelectedGrenade('impact');if(e.code==='KeyB')throwSelectedGrenade('stun');if(e.code==='KeyL')throwSelectedGrenade('lure');if(e.code==='KeyT')squadPanel();if(e.code==='KeyE')interact();if(e.code==='Escape'){if(overlay.querySelector('.settings-screen'))overlay.querySelector<HTMLButtonElement>('#settings-back')?.click();else if(overlay.hidden)showSettings();else if(run?.stage==='shop')showSettings(shop);else if(run?.stage==='fight')showSettings();else menu()}});window.addEventListener('keyup',e=>keys.delete(e.code));window.addEventListener('blur',()=>{keys.clear();mouseAimActive=false;touch.clear();resetAnalogs()});document.addEventListener('visibilitychange',()=>{if(document.hidden)resetAnalogs()});
+window.addEventListener('keydown',e=>{if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code))e.preventDefault();keys.add(e.code);if(e.repeat)return;if(e.code==='Digit1')equip('primary');if(e.code==='Digit2')equip('secondary');if(e.code==='Digit3')equip('melee');if(e.code==='KeyR')reload();if(e.code==='KeyH')heal();if(e.code==='KeyI'&&run&&run.stage==='fight')inventory();if(e.code==='KeyF')throwSelectedGrenade('frag');if(e.code==='KeyG')throwSelectedGrenade('impact');if(e.code==='KeyB')throwSelectedGrenade('stun');if(e.code==='KeyL')throwSelectedGrenade('lure');if(e.code==='KeyJ')throwSelectedGrenade('shock');if(e.code==='KeyK')throwSelectedGrenade('incendiary');if(e.code==='KeyT')squadPanel();if(e.code==='KeyE')interact();if(e.code==='Escape'){if(overlay.querySelector('.settings-screen'))overlay.querySelector<HTMLButtonElement>('#settings-back')?.click();else if(overlay.hidden)showSettings();else if(run?.stage==='shop')showSettings(shop);else if(run?.stage==='fight')showSettings();else menu()}});window.addEventListener('keyup',e=>keys.delete(e.code));window.addEventListener('blur',()=>{keys.clear();mouseAimActive=false;touch.clear();resetAnalogs()});document.addEventListener('visibilitychange',()=>{if(document.hidden)resetAnalogs()});
 /** Independent pointer capture lets both thumbs move and aim at once. */
 function resetAnalogs(){moveAnalog=zeroStick();document.querySelectorAll<HTMLElement>('.analog-knob').forEach(node=>{node.style.transform='translate(-50%,-50%)'})}
 function bindAnalog(id:string,update:(v:StickVector)=>void){
