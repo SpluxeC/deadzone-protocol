@@ -24,7 +24,7 @@ export function makeWave(seed:number,wave:number,layoutVersion:LayoutVersion=3):
  return {wave:n,map,total,initial,reinforcements:total-initial,boss:n%5===0,spawnPoints:spawnPoints.length?spawnPoints:[map.extraction]};
 }
 /** Fixed credits per kill, independent of wave difficulty. */
-export function killPayout(_wave:number,boss=false):number{return boss?100:6}
+export function killPayout(_wave:number,boss=false):number{return boss?100:8}
 export function clearPayout(wave:number):number{return 90+Math.max(1,wave)*25+(wave%5===0?250:0)}
 export function canExit(total:number,spawned:number,killed:number):boolean{return spawned>=total&&killed>=total}
 export function permanentPayout(clearedWaves:number,bosses:number):number{return Math.max(0,clearedWaves)*4+Math.max(0,bosses)*20}
