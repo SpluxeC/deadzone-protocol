@@ -313,6 +313,7 @@ function grenadeBlast(g:GrenadeFlight){
  grenadeBursts.push({x:g.x,y:g.y,type:g.type,age:0});
  gameAudio.playGrenade(g.type,Math.hypot(g.x-run.player.x,g.y-run.player.y));
  if(g.type==='lure'){g.active=10;return}
+ if(g.type==='wire')return;
  run.noiseEvent={x:g.x,y:g.y,radius:g.type==='shock'?6:15,ttl:2};
  for(const z of run.enemies){const d=Math.hypot(z.x-g.x,z.y-g.y);
   if(!z.alive||d>(g.type==='shock'?3.5:3)||!canSee(g.x,g.y,z.x,z.y))continue;
