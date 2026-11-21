@@ -1,4 +1,6 @@
 import {drawSprite,type View} from './rogueliteVisuals.ts';
+import {normalizeStick,stickKnob} from './mobileControls.ts';
+import {makeAttackFx,ageCombatFx,drawCombatFx,type CombatFx} from './combatFx.ts';
 
 type Point={x:number;y:number};
 type Kind='wall'|'wire'|'fire'|'mine'|'shock'|'turret';
@@ -17,12 +19,14 @@ export function beginRadioDefense(host:HTMLElement,onExit:()=>void):void{
  let active=true,playing=false,shopOpen=true,placing:Kind|null=null;
  let wave=1,credits=250,radioHp=300,hp=100,armor=40,elapsed=0,spawnClock=0,spawnNumber=0,shotClock=0;
  let kills=0,player:Point={x:CENTER+2,y:CENTER+2},enemies:Enemy[]=[],defenses:Defense[]=[];
+ let zoom=1,aimAngle=-Math.PI/2,recoil=0,shotEffects:CombatFx[]=[];
+ let stick={x:0,y:0,magnitude:0};
  const root=document.createElement('section');
  root.id='radio-defense';
  root.setAttribute('aria-label','Radio Defense');
  root.innerHTML='<div class="rd-hud"><strong>RADIO DEFENSE</strong><span id="rd-wave">WAVE 1</span><span id="rd-hp">RADIO 300/300</span><span id="rd-credits">₡250</span><span id="rd-life">HP 100</span><button id="rd-shop">RADIO SHOP (E)</button><button id="rd-exit">EXIT</button></div>'+
  '<canvas id="rd-canvas" aria-label="Four-door radio defense arena"></canvas>'+
- '<div id="rd-direction"><button data-move="left">◀</button><button data-move="up">▲</button><button data-move="down">▼</button><button data-move="right">▶</button></div>'+
+ '<div id="rd-move-stick" role="group" aria-label="Movement joystick"><div class="rd-stick-ring"><div id="rd-stick-knob"></div></div><span>MOVE</span></div>'+
  '<div id="rd-panel" class="rd-panel"><h2>RADIO SUPPLY TERMINAL</h2><p>Enemies are paused while shopping or placing. Build a winding route, but leave a path from every entrance to the radio.</p><p id="rd-message">Choose a defense, then tap an empty floor tile to place it.</p><div id="rd-items"></div><button id="rd-resume">RESUME DEFENSE</button></div>'+
  '<div id="rd-placement" hidden><strong id="rd-placing-label"></strong><button id="rd-placement-done">DONE / RESUME</button><button id="rd-placement-back">BACK TO SHOP</button></div>'+
  '<div id="rd-result" hidden></div>';
@@ -34,12 +38,24 @@ export function beginRadioDefense(host:HTMLElement,onExit:()=>void):void{
  '.rd-panel h2{font-size:18px;margin:0} .rd-panel p{line-height:1.4;color:#c6d5cc} #rd-items{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin:10px 0} #rd-items button{min-height:56px}'+
  '#rd-placement{position:absolute;top:56px;left:50%;transform:translateX(-50%);z-index:5;background:#162e2af5;padding:7px;border:1px solid #a5baa3;border-radius:6px;display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:center}#rd-placement[hidden],#rd-result[hidden],#rd-panel[hidden]{display:none!important}'+
  '#rd-result{position:absolute;inset:0;z-index:8;background:#071211ed;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;text-align:center;padding:20px}'+
- '#rd-direction{position:absolute;left:12px;bottom:12px;z-index:4;display:grid;grid-template-columns:repeat(2,48px);gap:5px}#rd-direction button{font-size:20px;height:48px;padding:0;background:#213b37c9}@media(pointer:fine){#rd-direction{opacity:.42}}';
+ '#rd-move-stick{position:absolute;left:clamp(14px,4vw,42px);bottom:clamp(18px,6vh,50px);z-index:4;width:124px;height:142px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;touch-action:none;user-select:none;-webkit-user-select:none}'+
+ '#rd-move-stick .rd-stick-ring{position:relative;width:114px;height:114px;border:2px solid #8da9a4b8;border-radius:50%;background:#1c3538ac;box-shadow:inset 0 0 24px #030b10c9,0 0 8px #0009;touch-action:none}'+
+ '#rd-stick-knob{position:absolute;top:50%;left:50%;width:51px;height:51px;transform:translate(-50%,-50%);border:2px solid #c7e4cd;border-radius:50%;box-sizing:border-box;background:#688e7ed9;box-shadow:0 2px 11px #0009;pointer-events:none}'+
+ '#rd-move-stick span{font-size:11px;color:#d5e7df;text-shadow:0 2px 3px #000}@media(pointer:fine){#rd-move-stick{opacity:.8}}';
  host.appendChild(style);host.appendChild(root);
  const $=<T extends HTMLElement>(id:string)=>root.querySelector<T>('#'+id)!;
  const cvs=$<HTMLCanvasElement>('rd-canvas'),ctx=cvs.getContext('2d')!;
  let last=performance.now(),raf=0,view:View={tile:20,ox:0,oy:0,width:0,height:0,minX:0,maxX:SIZE,minY:0,maxY:SIZE};
- const keys=new Set<string>(),held=new Set<string>();
+ const keys=new Set<string>();
+ const stickBase=$<HTMLElement>('rd-move-stick'),stickRing=stickBase.querySelector<HTMLElement>('.rd-stick-ring')!,stickKnob=$<HTMLElement>('rd-stick-knob');
+ let stickPointer:number|null=null;
+ const pointers=new Map<number,{x:number;y:number}>();
+ let pinchStart=0,pinchZoom=1,pinchMoved=false;
+ function releaseStick(){stickPointer=null;stick={x:0,y:0,magnitude:0};stickKnob.style.transform='translate(-50%,-50%)'}
+ function updateStick(e:PointerEvent){const rect=stickRing.getBoundingClientRect(),dx=e.clientX-(rect.left+rect.width/2),dy=e.clientY-(rect.top+rect.height/2),radius=rect.width*.34;stick=normalizeStick(dx,dy,radius);const pos=stickKnob(dx,dy,radius);stickKnob.style.transform='translate(calc(-50% + '+pos.x+'px),calc(-50% + '+pos.y+'px))'}
+ stickBase.addEventListener('pointerdown',e=>{if(e.button!==0||stickPointer!==null)return;e.preventDefault();e.stopPropagation();stickPointer=e.pointerId;stickBase.setPointerCapture(e.pointerId);updateStick(e)});
+ stickBase.addEventListener('pointermove',e=>{if(stickPointer!==e.pointerId)return;e.preventDefault();updateStick(e)});
+ for(const name of ['pointerup','pointercancel','lostpointercapture'] as const)stickBase.addEventListener(name,e=>{if(stickPointer===e.pointerId)releaseStick()});
  const wall=(x:number,y:number)=>defenses.some(a=>a.kind==='wall'&&a.x===x&&a.y===y);
  const inside=(x:number,y:number)=>x>=1&&y>=1&&x<SIZE-1&&y<SIZE-1;
  const reserved=(x:number,y:number)=>Math.abs(x-CENTER)<=1&&Math.abs(y-CENTER)<=1||doors.some(p=>d(p,{x,y})<=1.5);
@@ -94,8 +110,8 @@ export function beginRadioDefense(host:HTMLElement,onExit:()=>void):void{
  }
  function damage(e:Enemy,n:number){if(!enemies.includes(e))return;e.hp-=n;e.flash=.15;if(e.hp<=0){credits+=8;kills++;enemies.splice(enemies.indexOf(e),1);hud()}}
  function move(dt:number){
-  const vx=Number(keys.has('KeyD')||keys.has('ArrowRight')||held.has('right'))-Number(keys.has('KeyA')||keys.has('ArrowLeft')||held.has('left'));
-  const vy=Number(keys.has('KeyS')||keys.has('ArrowDown')||held.has('down'))-Number(keys.has('KeyW')||keys.has('ArrowUp')||held.has('up'));
+  const vx=Number(keys.has('KeyD')||keys.has('ArrowRight'))-Number(keys.has('KeyA')||keys.has('ArrowLeft'))+stick.x;
+  const vy=Number(keys.has('KeyS')||keys.has('ArrowDown'))-Number(keys.has('KeyW')||keys.has('ArrowUp'))+stick.y;
   const len=Math.hypot(vx,vy);if(len===0)return;
   const dx=vx/len*dt*3.2,dy=vy/len*dt*3.2;
   if(inside(player.x+dx,player.y)&&!wall(Math.round(player.x+dx),Math.round(player.y)))player.x+=dx;
@@ -103,13 +119,20 @@ export function beginRadioDefense(host:HTMLElement,onExit:()=>void):void{
  }
  function tick(dt:number){
   if(!playing)return;
+  shotEffects=ageCombatFx(shotEffects,dt);recoil=Math.max(0,recoil-dt*2.5);
   elapsed+=dt;const nextWave=1+Math.floor(elapsed/27);if(nextWave!==wave){wave=nextWave;credits+=40;hud()}
   const interval=Math.max(.38,2.2-wave*.115);
   spawnClock+=dt;
   while(spawnClock>=interval&&enemies.length<140){spawnClock-=interval;const batch=1+Math.floor((wave-1)/4);for(let i=0;i<batch&&enemies.length<140;i++)spawn()}
   move(dt);
   shotClock-=dt;
-  if(shotClock<=0){const nearest=enemies.filter(e=>d(e,player)<7).sort((a,b)=>d(a,player)-d(b,player))[0];if(nearest){damage(nearest,26);shotClock=.29}}
+  if(shotClock<=0){const nearest=enemies.filter(e=>d(e,player)<7).sort((a,b)=>d(a,player)-d(b,player))[0];if(nearest){
+   const dx=nearest.x-player.x,dy=nearest.y-player.y,length=Math.hypot(dx,dy)||1;
+   aimAngle=Math.atan2(dy,dx);
+   shotEffects.push(...makeAttackFx('carbine',player.x,player.y,dx/length,dy/length,length,undefined,true));
+   if(shotEffects.length>100)shotEffects.splice(0,shotEffects.length-100);
+   recoil=.24;damage(nearest,26);shotClock=.29
+  }}
   for(const defense of defenses)defense.cooldown=Math.max(0,defense.cooldown-dt);
   for(const e of [...enemies]){
    e.flash=Math.max(0,e.flash-dt);e.hit=Math.max(0,e.hit-dt);
@@ -145,8 +168,13 @@ export function beginRadioDefense(host:HTMLElement,onExit:()=>void):void{
  function render(){
   const ratio=Math.min(2,devicePixelRatio||1),width=Math.max(320,Math.floor(cvs.clientWidth*ratio)),height=Math.max(180,Math.floor(cvs.clientHeight*ratio));
   if(cvs.width!==width||cvs.height!==height){cvs.width=width;cvs.height=height}
-  const tile=Math.min((width-18)/SIZE,(height-18)/SIZE);
-  view={tile,ox:(width-SIZE*tile)/2,oy:(height-SIZE*tile)/2,width,height,minX:0,maxX:SIZE,minY:0,maxY:SIZE};
+  const tile=Math.min((width-18)/SIZE,(height-18)/SIZE)*zoom;
+  // Zoom around the active survivor and clamp camera to the arena when possible.
+  const worldSize=SIZE*tile;
+  const centerX=(player.x+.5)*tile,centerY=(player.y+.5)*tile;
+  const ox=worldSize>width?clamp(width/2-centerX,width-worldSize,0):(width-worldSize)/2;
+  const oy=worldSize>height?clamp(height/2-centerY,height-worldSize,0):(height-worldSize)/2;
+  view={tile,ox,oy,width,height,minX:0,maxX:SIZE,minY:0,maxY:SIZE};
   ctx.fillStyle='#080f12';ctx.fillRect(0,0,width,height);
   ctx.fillStyle='#293b39';ctx.fillRect(view.ox,view.oy,SIZE*tile,SIZE*tile);
   for(let y=0;y<SIZE;y++)for(let x=0;x<SIZE;x++){
@@ -172,24 +200,46 @@ export function beginRadioDefense(host:HTMLElement,onExit:()=>void):void{
   ctx.fillStyle='#b3f5b7';ctx.beginPath();ctx.arc(rx+tile*.5,ry+tile*.32,tile*.15,0,Math.PI*2);ctx.fill();
   ctx.font='bold '+Math.max(10,tile*.57)+'px system-ui';ctx.textAlign='center';ctx.fillStyle='#d7f5dc';ctx.fillText('RADIO',rx+tile*.5,ry-tile*.52);
   for(const e of enemies){drawSprite(ctx,e.kind,view,e.x,e.y,{scale:e.kind==='bruiser'?1.25:1.02,stride:elapsed*7,motionSpeed:e.speed,glow:e.flash>0?'#e1785f':undefined})}
-  drawSprite(ctx,'player',view,player.x,player.y,{scale:1.12,stride:elapsed*8,motionSpeed:keys.size||held.size?3:0,weapon:'carbine',aimAngle:0});
+  drawSprite(ctx,'player',view,player.x,player.y,{scale:1.12,stride:elapsed*8,motionSpeed:keys.size||stick.magnitude>.13?3:0,weapon:'carbine',aimAngle,recoil:0,weaponRecoil:recoil});
+  drawCombatFx(ctx,view,shotEffects);
   const bar=width*.43;ctx.fillStyle='#1a2427dd';ctx.fillRect((width-bar)/2,height-17,bar,9);ctx.fillStyle=radioHp>90?'#69bc83':'#c86655';ctx.fillRect((width-bar)/2,height-17,bar*radioHp/300,9);
  }
  function animation(now:number){if(!active)return;const dt=Math.min(.05,(now-last)/1000);last=now;tick(dt);render();raf=requestAnimationFrame(animation)}
  function keyDown(e:KeyboardEvent){if(!active)return;if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code))e.preventDefault();keys.add(e.code);if(e.repeat)return;if(e.code==='KeyE'){if(d(player,{x:CENTER,y:CENTER})<3||shopOpen)openShop();else message('Move closer to the radio')}if(e.code==='Escape'){if(placing)openShop();else if(shopOpen)resume();else openShop()}}
  function keyUp(e:KeyboardEvent){keys.delete(e.code)}
  window.addEventListener('keydown',keyDown);window.addEventListener('keyup',keyUp);
- for(const b of Array.from(root.querySelectorAll<HTMLButtonElement>('[data-move]'))){
-  const dir=b.dataset.move!;
-  b.onpointerdown=e=>{e.preventDefault();held.add(dir);b.setPointerCapture(e.pointerId)};
-  b.onpointerup=()=>held.delete(dir);b.onpointercancel=()=>held.delete(dir);b.onlostpointercapture=()=>held.delete(dir);
+ // The canvas accepts two-finger zoom in play and build mode. A pinch never places a wall.
+ cvs.addEventListener('pointerdown',e=>{
+  if(e.pointerType!=='touch')return;
+  e.preventDefault();pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(pointers.size===2){const [a,b]=[...pointers.values()];pinchStart=Math.hypot(a.x-b.x,a.y-b.y);pinchZoom=zoom;pinchMoved=true}
+ });
+ cvs.addEventListener('pointermove',e=>{
+  if(!pointers.has(e.pointerId))return;
+  e.preventDefault();pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(pointers.size===2&&pinchStart>0){const [a,b]=[...pointers.values()];zoom=clamp(pinchZoom*Math.hypot(a.x-b.x,a.y-b.y)/pinchStart,1,3.5)}
+ });
+ function endCanvasPointer(e:PointerEvent){
+  const point=pointers.get(e.pointerId);
+  if(e.pointerType==='touch'&&!point)return;
+  if(e.pointerType==='touch'){e.preventDefault();pointers.delete(e.pointerId)}
+  if(e.type==='pointercancel'){pinchMoved=false;return}
+  if(pointers.size===0)pinchStart=0;
+  if(pinchMoved){if(pointers.size===0)pinchMoved=false;return}
+  if(!placing)return;
+  const rect=cvs.getBoundingClientRect();
+  const px=(e.clientX-rect.left)/rect.width*cvs.width,py=(e.clientY-rect.top)/rect.height*cvs.height;
+  const x=Math.round((px-view.ox)/view.tile-.5),y=Math.round((py-view.oy)/view.tile-.5);
+  place(x,y);
  }
- cvs.addEventListener('pointerdown',e=>{if(!placing)return;e.preventDefault();const rect=cvs.getBoundingClientRect(),x=Math.round(((e.clientX-rect.left)/rect.width*cvs.width-view.ox)/view.tile-.5),y=Math.round(((e.clientY-rect.top)/rect.height*cvs.height-view.oy)/view.tile-.5);place(x,y)});
+ cvs.addEventListener('pointerup',endCanvasPointer);
+ cvs.addEventListener('pointercancel',endCanvasPointer);
  $('rd-shop').onclick=()=>{if(d(player,{x:CENTER,y:CENTER})<3||shopOpen)openShop();else {const p=$('rd-result');p.hidden=false;p.innerHTML='<p>Move within 3 tiles of the radio to use its shop.</p><button id="rd-close-notice">OK</button>';p.querySelector<HTMLButtonElement>('#rd-close-notice')!.onclick=()=>{p.hidden=true}}};
  $('rd-exit').onclick=()=>{cleanup();onExit()};
  $('rd-resume').onclick=resume;
  $('rd-placement-done').onclick=resume;
  $('rd-placement-back').onclick=openShop;
- function cleanup(){active=false;cancelAnimationFrame(raf);window.removeEventListener('keydown',keyDown);window.removeEventListener('keyup',keyUp);style.remove();root.remove()}
+ function cleanup(){active=false;releaseStick();pointers.clear();cancelAnimationFrame(raf);window.removeEventListener('keydown',keyDown);window.removeEventListener('keyup',keyUp);window.removeEventListener('blur',releaseStick);style.remove();root.remove()}
+ window.addEventListener('blur',releaseStick);
  renderShop();render();raf=requestAnimationFrame(animation);
 }
