@@ -40,7 +40,6 @@ export function beginRadioDefense(host:HTMLElement,onExit:()=>void):void{
  const cvs=$<HTMLCanvasElement>('rd-canvas'),ctx=cvs.getContext('2d')!;
  let last=performance.now(),raf=0,view:View={tile:20,ox:0,oy:0,width:0,height:0,minX:0,maxX:SIZE,minY:0,maxY:SIZE};
  const keys=new Set<string>(),held=new Set<string>();
- const get=(kind:Kind,x:number,y:number)=>defenses.find(a=>a.kind===kind&&a.x===x&&a.y===y);
  const wall=(x:number,y:number)=>defenses.some(a=>a.kind==='wall'&&a.x===x&&a.y===y);
  const inside=(x:number,y:number)=>x>=1&&y>=1&&x<SIZE-1&&y<SIZE-1;
  const reserved=(x:number,y:number)=>Math.abs(x-CENTER)<=1&&Math.abs(y-CENTER)<=1||doors.some(p=>d(p,{x,y})<=1.5);
@@ -49,7 +48,7 @@ export function beginRadioDefense(host:HTMLElement,onExit:()=>void):void{
   for(let i=0;i<queue.length;i++){const p=queue[i],n=dist[cell(p)]+1;for(const [dx,dy] of dirs){const x=p.x+dx,y=p.y+dy;if(!inside(x,y)||wall(x,y))continue;const k=y*SIZE+x;if(n<dist[k]){dist[k]=n;queue.push({x,y})}}}return dist;
  }
  let route=field();
- function validPaths(){const f=field();return doors.every(p=>dirs.some(([dx,dy])=>f[clamp(p.y+dy,1,SIZE-2)*SIZE+clamp(p.x+dx,1,SIZE-2)]<9999));}
+ function validPaths(){const f=field();return [{x:CENTER,y:1},{x:SIZE-2,y:CENTER},{x:CENTER,y:SIZE-2},{x:1,y:CENTER}].every(p=>f[cell(p)]<9999);}
  function message(t:string){$('rd-message').textContent=t;}
  function hud(){
   $('rd-wave').textContent='WAVE '+wave+' · '+kills+' KILLS';
@@ -93,7 +92,7 @@ export function beginRadioDefense(host:HTMLElement,onExit:()=>void):void{
   const base=kind==='runner'?23:kind==='armored'?78:kind==='bruiser'?125:40;
   enemies.push({x,y,hp:base+wave*3,maxHp:base+wave*3,speed:(kind==='runner'?1.28:kind==='bruiser'?.54:.70)*(1+wave*.065),hit:0,flash:0,kind});
  }
- function damage(e:Enemy,n:number){e.hp-=n;e.flash=.15;if(e.hp<=0){credits+=8;kills++;enemies.splice(enemies.indexOf(e),1);hud()}}
+ function damage(e:Enemy,n:number){if(!enemies.includes(e))return;e.hp-=n;e.flash=.15;if(e.hp<=0){credits+=8;kills++;enemies.splice(enemies.indexOf(e),1);hud()}}
  function move(dt:number){
   const vx=Number(keys.has('KeyD')||keys.has('ArrowRight')||held.has('right'))-Number(keys.has('KeyA')||keys.has('ArrowLeft')||held.has('left'));
   const vy=Number(keys.has('KeyS')||keys.has('ArrowDown')||held.has('down'))-Number(keys.has('KeyW')||keys.has('ArrowUp')||held.has('up'));
