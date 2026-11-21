@@ -117,7 +117,7 @@ export function beginRadioDefense(host:HTMLElement,onExit:()=>void):void{
    const tileX=clamp(Math.round(e.x),1,SIZE-2),tileY=clamp(Math.round(e.y),1,SIZE-2);
    let speed=e.speed;
    for(const trap of [...defenses]){
-    if(trap.kind==='wall'||d(e,trap)>trap.kind==='turret'?0:0){} // no-op, selection is handled below
+    if(trap.kind==='wall'||trap.kind==='turret')continue;
     const dist=d(e,trap);
     if(trap.kind==='wire'&&dist<.8){speed*=.42;if(trap.cooldown===0){damage(e,3);trap.life--;trap.cooldown=.28;if(trap.life<=0)defenses.splice(defenses.indexOf(trap),1)}}
     if(trap.kind==='fire'&&dist<.85&&trap.cooldown===0){damage(e,6);trap.cooldown=.35;trap.life-=.35;if(trap.life<=0)defenses.splice(defenses.indexOf(trap),1)}
@@ -186,7 +186,7 @@ export function beginRadioDefense(host:HTMLElement,onExit:()=>void):void{
   b.onpointerup=()=>held.delete(dir);b.onpointercancel=()=>held.delete(dir);b.onlostpointercapture=()=>held.delete(dir);
  }
  cvs.addEventListener('pointerdown',e=>{if(!placing)return;e.preventDefault();const rect=cvs.getBoundingClientRect(),x=Math.round(((e.clientX-rect.left)/rect.width*cvs.width-view.ox)/view.tile-.5),y=Math.round(((e.clientY-rect.top)/rect.height*cvs.height-view.oy)/view.tile-.5);place(x,y)});
- $('rd-shop').onclick=()=>openShop();
+ $('rd-shop').onclick=()=>{if(d(player,{x:CENTER,y:CENTER})<3||shopOpen)openShop();else {const p=$('rd-result');p.hidden=false;p.innerHTML='<p>Move within 3 tiles of the radio to use its shop.</p><button id="rd-close-notice">OK</button>';p.querySelector<HTMLButtonElement>('#rd-close-notice')!.onclick=()=>{p.hidden=true}}};
  $('rd-exit').onclick=()=>{cleanup();onExit()};
  $('rd-resume').onclick=resume;
  $('rd-placement-done').onclick=resume;
