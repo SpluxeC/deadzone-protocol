@@ -1,5 +1,5 @@
 import {drawSprite,type View} from './rogueliteVisuals.ts';
-import {normalizeStick,stickKnob} from './mobileControls.ts';
+import {normalizeStick,stickKnob as calculateStickKnob} from './mobileControls.ts';
 import {makeAttackFx,ageCombatFx,drawCombatFx,type CombatFx} from './combatFx.ts';
 
 type Point={x:number;y:number};
@@ -52,7 +52,7 @@ export function beginRadioDefense(host:HTMLElement,onExit:()=>void):void{
  const pointers=new Map<number,{x:number;y:number}>();
  let pinchStart=0,pinchZoom=1,pinchMoved=false;
  function releaseStick(){stickPointer=null;stick={x:0,y:0,magnitude:0};stickKnob.style.transform='translate(-50%,-50%)'}
- function updateStick(e:PointerEvent){const rect=stickRing.getBoundingClientRect(),dx=e.clientX-(rect.left+rect.width/2),dy=e.clientY-(rect.top+rect.height/2),radius=rect.width*.34;stick=normalizeStick(dx,dy,radius);const pos=stickKnob(dx,dy,radius);stickKnob.style.transform='translate(calc(-50% + '+pos.x+'px),calc(-50% + '+pos.y+'px))'}
+ function updateStick(e:PointerEvent){const rect=stickRing.getBoundingClientRect(),dx=e.clientX-(rect.left+rect.width/2),dy=e.clientY-(rect.top+rect.height/2),radius=rect.width*.34;stick=normalizeStick(dx,dy,radius);const pos=calculateStickKnob(dx,dy,radius);stickKnob.style.transform='translate(calc(-50% + '+pos.x+'px),calc(-50% + '+pos.y+'px))'}
  stickBase.addEventListener('pointerdown',e=>{if(e.button!==0||stickPointer!==null)return;e.preventDefault();e.stopPropagation();stickPointer=e.pointerId;stickBase.setPointerCapture(e.pointerId);updateStick(e)});
  stickBase.addEventListener('pointermove',e=>{if(stickPointer!==e.pointerId)return;e.preventDefault();updateStick(e)});
  for(const name of ['pointerup','pointercancel','lostpointercapture'] as const)stickBase.addEventListener(name,e=>{if(stickPointer===e.pointerId)releaseStick()});
