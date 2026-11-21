@@ -7,7 +7,7 @@ type Kind='wall'|'wire'|'fire'|'mine'|'shock'|'turret';
 type Defense={x:number;y:number;kind:Kind;cooldown:number;life:number};
 type Enemy={x:number;y:number;hp:number;maxHp:number;speed:number;hit:number;kind:'shambler'|'runner'|'armored'|'bruiser';flash:number};
 type Item=Kind|'medkit'|'armor';
-const SIZE=29,CENTER=14;
+const SIZE=29,CENTER=14,MAX_ZOOM=2;
 const doors:Point[]=[{x:14,y:0},{x:28,y:14},{x:14,y:28},{x:0,y:14}];
 const prices:Record<Item,number>={wall:35,wire:60,fire:90,mine:110,shock:120,turret:175,medkit:80,armor:100};
 const names:Record<Item,string>={wall:'Concrete Wall',wire:'Barbed Wire',fire:'Incendiary Trap',mine:'Frag Mine',shock:'Shock Trap',turret:'Sentry Turret',medkit:'Medkit +35 HP',armor:'Armor +30'};
@@ -169,7 +169,7 @@ export function beginRadioDefense(host:HTMLElement,onExit:()=>void):void{
   const ratio=Math.min(2,devicePixelRatio||1),width=Math.max(320,Math.floor(cvs.clientWidth*ratio)),height=Math.max(180,Math.floor(cvs.clientHeight*ratio));
   if(cvs.width!==width||cvs.height!==height){cvs.width=width;cvs.height=height}
   const tile=Math.min((width-18)/SIZE,(height-18)/SIZE)*zoom;
-  // Zoom around the active survivor and clamp camera to the arena when possible.
+  // Limit zoom and clamp the camera at every arena edge; never follow the player beyond a border.
   const worldSize=SIZE*tile;
   const centerX=(player.x+.5)*tile,centerY=(player.y+.5)*tile;
   const ox=worldSize>width?clamp(width/2-centerX,width-worldSize,0):(width-worldSize)/2;
@@ -217,7 +217,7 @@ export function beginRadioDefense(host:HTMLElement,onExit:()=>void):void{
  cvs.addEventListener('pointermove',e=>{
   if(!pointers.has(e.pointerId))return;
   e.preventDefault();pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
-  if(pointers.size===2&&pinchStart>0){const [a,b]=[...pointers.values()];zoom=clamp(pinchZoom*Math.hypot(a.x-b.x,a.y-b.y)/pinchStart,1,3.5)}
+  if(pointers.size===2&&pinchStart>0){const [a,b]=[...pointers.values()];zoom=clamp(pinchZoom*Math.hypot(a.x-b.x,a.y-b.y)/pinchStart,1,MAX_ZOOM)}
  });
  function endCanvasPointer(e:PointerEvent){
   const point=pointers.get(e.pointerId);
