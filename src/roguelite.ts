@@ -125,7 +125,7 @@ function syncMenuChrome(){
 new MutationObserver(syncMenuChrome).observe(overlay,{attributes:true,attributeFilter:['hidden']});
 syncMenuChrome();
 const stats=document.querySelector<HTMLElement>('#stats')!,keys=new Set<string>(),touch=new Set<string>();
-let slot=1,profile:Profile=migrateProfile(null),run:Run|null=null,plan:WavePlan|null=null;
+let slot=1,profile:Profile=migrateProfile(null),run:Run|null=null,plan:WavePlan|null=null,radioModeActive=false;
 let last=performance.now(),lastSave=0,spawnClock=0,shotCooldown=0,allyClock=0,noticeUntil=0,breachBannerUntil=0,aim={x:1,y:0},paused=false;
 const zeroStick=():StickVector=>({x:0,y:0,magnitude:0});
 type LootPopup={x:number;y:number;model:string;label:string;start:number};
@@ -221,7 +221,7 @@ const sel=overlay.querySelector<HTMLSelectElement>('#slot-select')!;sel.value=St
 sel.onchange=()=>{slot=Number(sel.value);run=null;plan=null;refresh()};
 overlay.querySelector<HTMLButtonElement>('#continue-run')!.onclick=()=>{if(!loadRun()){notice('No valid run found');return}paused=false;if(run!.stage==='shop')shop();else overlay.hidden=true};
 overlay.querySelector<HTMLButtonElement>('#new-run')!.onclick=()=>{if(localStorage.getItem(store('run'))&&!confirm('Start a new run? Current run progress will be lost.'))return;preRun()};
-overlay.querySelector<HTMLButtonElement>('#radio-defense-start')!.onclick=()=>{paused=true;overlay.hidden=false;beginRadioDefense(overlay,menu)};
+overlay.querySelector<HTMLButtonElement>('#radio-defense-start')!.onclick=()=>{paused=true;overlay.hidden=false;radioModeActive=true;beginRadioDefense(overlay,()=>{radioModeActive=false;menu()})};
 overlay.querySelector<HTMLButtonElement>('#upgrades')!.onclick=()=>permanentShop();
 overlay.querySelector<HTMLButtonElement>('#main-settings')!.onclick=()=>showSettings(menu);
 }
@@ -1532,7 +1532,7 @@ function draw(){
  document.querySelector('#hud-team')!.textContent='SQUAD '+r.allies.length+'/4'+(r.playerDowned?' · DOWN '+Math.ceil(r.playerDowned)+'s':'');
 }
 function frame(now:number){const dt=Math.min(.05,(now-last)/1000);last=now;update(dt);draw();const menuCanvas=overlay.hidden?null:overlay.querySelector<HTMLCanvasElement>('#menu-cinematic');if(menuCanvas)renderMenuCinematic(menuCanvas,now,window.matchMedia('(prefers-reduced-motion: reduce)').matches);if(noticeUntil<now)toastEl.textContent='';requestAnimationFrame(frame)}
-window.addEventListener('keydown',e=>{if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code))e.preventDefault();keys.add(e.code);if(e.repeat)return;if(e.code==='Digit1')equip('primary');if(e.code==='Digit2')equip('secondary');if(e.code==='Digit3')equip('melee');if(e.code==='KeyR')reload();if(e.code==='KeyH')heal();if(e.code==='KeyI'&&run&&run.stage==='fight')inventory();if(e.code==='KeyF')throwSelectedGrenade('frag');if(e.code==='KeyG')throwSelectedGrenade('impact');if(e.code==='KeyB')throwSelectedGrenade('wire');if(e.code==='KeyL')throwSelectedGrenade('lure');if(e.code==='KeyJ')throwSelectedGrenade('shock');if(e.code==='KeyK')throwSelectedGrenade('incendiary');if(e.code==='KeyT')squadPanel();if(e.code==='KeyE')interact();if(e.code==='Escape'){if(overlay.querySelector('.settings-screen'))overlay.querySelector<HTMLButtonElement>('#settings-back')?.click();else if(overlay.hidden)showSettings();else if(run?.stage==='shop')showSettings(shop);else if(run?.stage==='fight')showSettings();else menu()}});window.addEventListener('keyup',e=>keys.delete(e.code));window.addEventListener('blur',()=>{keys.clear();mouseAimActive=false;touch.clear();resetAnalogs()});document.addEventListener('visibilitychange',()=>{if(document.hidden)resetAnalogs()});
+window.addEventListener('keydown',e=>{if(radioModeActive)return;if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code))e.preventDefault();keys.add(e.code);if(e.repeat)return;if(e.code==='Digit1')equip('primary');if(e.code==='Digit2')equip('secondary');if(e.code==='Digit3')equip('melee');if(e.code==='KeyR')reload();if(e.code==='KeyH')heal();if(e.code==='KeyI'&&run&&run.stage==='fight')inventory();if(e.code==='KeyF')throwSelectedGrenade('frag');if(e.code==='KeyG')throwSelectedGrenade('impact');if(e.code==='KeyB')throwSelectedGrenade('wire');if(e.code==='KeyL')throwSelectedGrenade('lure');if(e.code==='KeyJ')throwSelectedGrenade('shock');if(e.code==='KeyK')throwSelectedGrenade('incendiary');if(e.code==='KeyT')squadPanel();if(e.code==='KeyE')interact();if(e.code==='Escape'){if(overlay.querySelector('.settings-screen'))overlay.querySelector<HTMLButtonElement>('#settings-back')?.click();else if(overlay.hidden)showSettings();else if(run?.stage==='shop')showSettings(shop);else if(run?.stage==='fight')showSettings();else menu()}});window.addEventListener('keyup',e=>keys.delete(e.code));window.addEventListener('blur',()=>{keys.clear();mouseAimActive=false;touch.clear();resetAnalogs()});document.addEventListener('visibilitychange',()=>{if(document.hidden)resetAnalogs()});
 /** Independent pointer capture lets both thumbs move and aim at once. */
 function resetAnalogs(){moveAnalog=zeroStick();document.querySelectorAll<HTMLElement>('.analog-knob').forEach(node=>{node.style.transform='translate(-50%,-50%)'})}
 function bindAnalog(id:string,update:(v:StickVector)=>void){
