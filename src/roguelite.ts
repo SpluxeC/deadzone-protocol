@@ -30,6 +30,7 @@ import {proposedWire,canDeployWire,touchesWire,wireKey,wearWire,migrateWireFence
 import {drawBarbedWire} from './barbWireVisuals';
 import {createGroundFire,advanceGroundFires,insideGroundFire,migrateGroundFires,MAX_GROUND_FIRES,type GroundFire} from './groundFire';
 import {drawGroundFire} from './groundFireVisuals';
+import {beginRadioDefense} from './radioDefense.ts';
 import './rogueliteTheme.css';
 import './style.css';
 
@@ -209,6 +210,7 @@ function menu(){
    <nav class="menu-main-actions" aria-label="Main menu actions">
     <button id="continue-run" class="menu-continue">CONTINUE RUN</button>
     <button id="new-run" class="menu-deploy">NEW RUN</button>
+     <button id="radio-defense-start" class="menu-deploy">RADIO DEFENSE · NEW MODE</button>
     <button id="upgrades" class="menu-upgrades">PERMANENT UNLOCKS</button>
     <button id="main-settings" class="menu-upgrades">SETTINGS</button>
    </nav>
@@ -219,6 +221,7 @@ const sel=overlay.querySelector<HTMLSelectElement>('#slot-select')!;sel.value=St
 sel.onchange=()=>{slot=Number(sel.value);run=null;plan=null;refresh()};
 overlay.querySelector<HTMLButtonElement>('#continue-run')!.onclick=()=>{if(!loadRun()){notice('No valid run found');return}paused=false;if(run!.stage==='shop')shop();else overlay.hidden=true};
 overlay.querySelector<HTMLButtonElement>('#new-run')!.onclick=()=>{if(localStorage.getItem(store('run'))&&!confirm('Start a new run? Current run progress will be lost.'))return;preRun()};
+overlay.querySelector<HTMLButtonElement>('#radio-defense-start')!.onclick=()=>{paused=true;overlay.hidden=false;beginRadioDefense(overlay,menu)};
 overlay.querySelector<HTMLButtonElement>('#upgrades')!.onclick=()=>permanentShop();
 overlay.querySelector<HTMLButtonElement>('#main-settings')!.onclick=()=>showSettings(menu);
 }
