@@ -19,7 +19,7 @@ export function beginRadioDefense(host:HTMLElement,onExit:()=>void):void{
  let active=true,playing=false,shopOpen=true,placing:Kind|null=null;
  let wave=1,credits=250,radioHp=300,hp=100,armor=40,elapsed=0,spawnClock=0,spawnNumber=0,shotClock=0;
  let kills=0,player:Point={x:CENTER+2,y:CENTER+2},enemies:Enemy[]=[],defenses:Defense[]=[];
- let zoom=1,aimAngle=-Math.PI/2,recoil=0,shotEffects:CombatFx[]=[];
+ let zoom=1.7,displayZoom=1.7,buildingCamera=false,aimAngle=-Math.PI/2,recoil=0,shotEffects:CombatFx[]=[];
  let stick={x:0,y:0,magnitude:0};
  const root=document.createElement('section');
  root.id='radio-defense';
@@ -76,7 +76,7 @@ export function beginRadioDefense(host:HTMLElement,onExit:()=>void):void{
   if(credits<prices[item]){message('Not enough credits for '+names[item]);return}
   if(item==='medkit'){if(hp===100){message('Health already full');return}credits-=prices[item];hp=Math.min(100,hp+35);hud();renderShop();return}
   if(item==='armor'){if(armor>=100){message('Armor already full');return}credits-=prices[item];armor=Math.min(100,armor+30);hud();renderShop();return}
-  placing=item;shopOpen=false;$('rd-panel').hidden=true;$('rd-placement').hidden=false;
+  placing=item;shopOpen=false;buildingCamera=true;$('rd-panel').hidden=true;$('rd-placement').hidden=false;
   $('rd-placing-label').textContent=names[item]+' · ₡'+prices[item]+' — TAP FLOOR';
  }
  function renderShop(){
@@ -89,7 +89,7 @@ export function beginRadioDefense(host:HTMLElement,onExit:()=>void):void{
   shopOpen=true;playing=false;placing=null;$('rd-panel').hidden=false;$('rd-placement').hidden=true;
   message('Tap an item to buy or select a tile. The horde is frozen.');renderShop();
  }
- function resume(){shopOpen=false;placing=null;playing=true;$('rd-panel').hidden=true;$('rd-placement').hidden=true}
+ function resume(){shopOpen=false;placing=null;buildingCamera=false;playing=true;$('rd-panel').hidden=true;$('rd-placement').hidden=true}
  function place(x:number,y:number){
   if(!placing||credits<prices[placing])return;
   if(!inside(x,y)||reserved(x,y)||defenses.some(t=>t.x===x&&t.y===y)||d(player,{x,y})<.8||enemies.some(e=>d(e,{x,y})<.8)){message('Cannot place on occupied tiles, exits, or the radio');return}
@@ -168,12 +168,17 @@ export function beginRadioDefense(host:HTMLElement,onExit:()=>void):void{
  function render(){
   const ratio=Math.min(2,devicePixelRatio||1),width=Math.max(320,Math.floor(cvs.clientWidth*ratio)),height=Math.max(180,Math.floor(cvs.clientHeight*ratio));
   if(cvs.width!==width||cvs.height!==height){cvs.width=width;cvs.height=height}
-  const tile=Math.min((width-18)/SIZE,(height-18)/SIZE)*zoom;
-  // Limit zoom and clamp the camera at every arena edge; never follow the player beyond a border.
+  // Build mode zooms to the complete arena; combat restores the survivor-following camera.
+  // Ease the zoom without ever leaving the world border. Use the actual rendered view for placement taps.
+  const targetZoom=buildingCamera?1:zoom;
+  displayZoom+= (targetZoom-displayZoom)*Math.min(1,.22);
+  if(Math.abs(displayZoom-targetZoom)<.002)displayZoom=targetZoom;
+  const tile=Math.min((width-18)/SIZE,(height-18)/SIZE)*displayZoom;
+  // Center the full map during construction; otherwise follow the player within arena boundaries.
   const worldSize=SIZE*tile;
   const centerX=(player.x+.5)*tile,centerY=(player.y+.5)*tile;
-  const ox=worldSize>width?clamp(width/2-centerX,width-worldSize,0):(width-worldSize)/2;
-  const oy=worldSize>height?clamp(height/2-centerY,height-worldSize,0):(height-worldSize)/2;
+  const ox=buildingCamera?(width-worldSize)/2:worldSize>width?clamp(width/2-centerX,width-worldSize,0):(width-worldSize)/2;
+  const oy=buildingCamera?(height-worldSize)/2:worldSize>height?clamp(height/2-centerY,height-worldSize,0):(height-worldSize)/2;
   view={tile,ox,oy,width,height,minX:0,maxX:SIZE,minY:0,maxY:SIZE};
   ctx.fillStyle='#080f12';ctx.fillRect(0,0,width,height);
   ctx.fillStyle='#293b39';ctx.fillRect(view.ox,view.oy,SIZE*tile,SIZE*tile);
@@ -217,7 +222,7 @@ export function beginRadioDefense(host:HTMLElement,onExit:()=>void):void{
  cvs.addEventListener('pointermove',e=>{
   if(!pointers.has(e.pointerId))return;
   e.preventDefault();pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
-  if(pointers.size===2&&pinchStart>0){const [a,b]=[...pointers.values()];zoom=clamp(pinchZoom*Math.hypot(a.x-b.x,a.y-b.y)/pinchStart,1,MAX_ZOOM)}
+  if(pointers.size===2&&pinchStart>0&&!buildingCamera){const [a,b]=[...pointers.values()];zoom=clamp(pinchZoom*Math.hypot(a.x-b.x,a.y-b.y)/pinchStart,1,MAX_ZOOM)}
  });
  function endCanvasPointer(e:PointerEvent){
   const point=pointers.get(e.pointerId);
