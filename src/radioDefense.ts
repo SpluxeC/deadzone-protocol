@@ -20,7 +20,8 @@ export function beginRadioDefense(host:HTMLElement,onExit:()=>void):void{
  let active=true,playing=false,shopOpen=true,placing:Kind|null=null;
  let wave=1,credits=250,radioHp=300,hp=100,armor=40,elapsed=0,spawnClock=0,spawnNumber=0,shotClock=0;
  let kills=0,player:Point={x:CENTER+2,y:CENTER+2},enemies:Enemy[]=[],defenses:Defense[]=[];
- let zoom=1.7,displayZoom=1.7,buildingCamera=false,aimAngle=-Math.PI/2,recoil=0,shotEffects:CombatFx[]=[],trapBursts:TrapBurst[]=[];
+ let zoom=1.7,displayZoom=1.7,buildingCamera=false,buildPan={x:0,y:0},aimAngle=-Math.PI/2,recoil=0,shotEffects:CombatFx[]=[],trapBursts:TrapBurst[]=[];
+ const invalidWallTiles=new Set<number>();
  let stick={x:0,y:0,magnitude:0};
  const root=document.createElement('section');
  root.id='radio-defense';
@@ -29,7 +30,7 @@ export function beginRadioDefense(host:HTMLElement,onExit:()=>void):void{
  '<canvas id="rd-canvas" aria-label="Four-door radio defense arena"></canvas>'+
  '<div id="rd-move-stick" role="group" aria-label="Movement joystick"><div class="rd-stick-ring"><div id="rd-stick-knob"></div></div><span>MOVE</span></div>'+
  '<div id="rd-panel" class="rd-panel"><h2>RADIO SUPPLY TERMINAL</h2><p>Enemies are paused while shopping or placing. Build a winding route, but leave a path from every entrance to the radio.</p><p id="rd-message">Choose a defense, then tap an empty floor tile to place it.</p><div id="rd-items"></div><button id="rd-resume">RESUME DEFENSE</button></div>'+
- '<div id="rd-placement" hidden><strong id="rd-placing-label"></strong><button id="rd-placement-done">DONE / RESUME</button><button id="rd-placement-back">BACK TO SHOP</button></div>'+
+ '<div id="rd-placement" hidden><strong id="rd-placing-label"></strong><span class="rd-pan-hint">DRAG MAP TO PAN · TAP TO BUILD</span><button id="rd-placement-back">SHOP</button><button id="rd-placement-done">DONE</button></div>'+
  '<div id="rd-result" hidden></div>';
  const style=document.createElement('style');
  style.textContent='#radio-defense{position:absolute;inset:0;z-index:8;background:#0b1416;color:#edf4ed;font:600 13px system-ui;overflow:hidden;touch-action:none}'+
@@ -37,7 +38,7 @@ export function beginRadioDefense(host:HTMLElement,onExit:()=>void):void{
  '#radio-defense button:disabled{opacity:.42} .rd-hud{position:absolute;top:0;left:0;right:0;z-index:3;display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap;background:#111e1ded;padding:6px}'+
  '#rd-canvas{display:block;width:100%;height:100%;touch-action:none} .rd-panel{position:absolute;top:52px;right:10px;bottom:10px;z-index:5;overflow:auto;width:min(380px,92vw);box-sizing:border-box;padding:18px;background:#182b29f5;border:1px solid #9ebba2;border-radius:8px;box-shadow:0 10px 40px #000b}'+
  '.rd-panel h2{font-size:18px;margin:0} .rd-panel p{line-height:1.4;color:#c6d5cc} #rd-items{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin:10px 0} #rd-items button{min-height:56px}'+
- '#rd-placement{position:absolute;top:56px;left:50%;transform:translateX(-50%);z-index:5;background:#162e2af5;padding:7px;border:1px solid #a5baa3;border-radius:6px;display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:center}#rd-placement[hidden],#rd-result[hidden],#rd-panel[hidden]{display:none!important}'+
+ '#rd-placement{position:absolute;bottom:8px;right:8px;top:auto;left:auto;z-index:5;background:#162e2aef;padding:6px;border:1px solid #a5baa3;border-radius:6px;display:flex;max-width:min(62vw,360px);gap:5px;align-items:center;flex-wrap:wrap;justify-content:flex-end}#rd-placing-label{font-size:11px;flex-basis:100%;text-align:right}#rd-placement .rd-pan-hint{font-size:9px;color:#adbdba;margin-right:auto}#rd-placement button{padding:5px 8px;font-size:11px}#radio-defense.rd-building .rd-hud,#radio-defense.rd-building #rd-move-stick{display:none!important}#rd-placement[hidden],#rd-result[hidden],#rd-panel[hidden]{display:none!important}'+
  '#rd-result{position:absolute;inset:0;z-index:8;background:#071211ed;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;text-align:center;padding:20px}'+
  '#rd-move-stick{position:absolute;left:clamp(14px,4vw,42px);bottom:clamp(18px,6vh,50px);z-index:4;width:124px;height:142px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;touch-action:none;user-select:none;-webkit-user-select:none}'+
  '#rd-move-stick .rd-stick-ring{position:relative;width:114px;height:114px;border:2px solid #8da9a4b8;border-radius:50%;background:#1c3538ac;box-shadow:inset 0 0 24px #030b10c9,0 0 8px #0009;touch-action:none}'+
@@ -77,7 +78,8 @@ export function beginRadioDefense(host:HTMLElement,onExit:()=>void):void{
   if(credits<prices[item]){message('Not enough credits for '+names[item]);return}
   if(item==='medkit'){if(hp===100){message('Health already full');return}credits-=prices[item];hp=Math.min(100,hp+35);hud();renderShop();return}
   if(item==='armor'){if(armor>=100){message('Armor already full');return}credits-=prices[item];armor=Math.min(100,armor+30);hud();renderShop();return}
-  placing=item;shopOpen=false;buildingCamera=true;$('rd-panel').hidden=true;$('rd-placement').hidden=false;
+  placing=item;shopOpen=false;buildingCamera=true;buildPan={x:0,y:0};root.classList.add('rd-building');$('rd-panel').hidden=true;$('rd-placement').hidden=false;
+  if(item==='wall')refreshInvalidWalls();
   $('rd-placing-label').textContent=names[item]+' · ₡'+prices[item]+' — TAP FLOOR';
  }
  function renderShop(){
@@ -87,19 +89,34 @@ export function beginRadioDefense(host:HTMLElement,onExit:()=>void):void{
  }
  function openShop(){
   if(!active||radioHp<=0)return;
-  shopOpen=true;playing=false;placing=null;$('rd-panel').hidden=false;$('rd-placement').hidden=true;
+  shopOpen=true;playing=false;placing=null;buildingCamera=false;root.classList.remove('rd-building');$('rd-panel').hidden=false;$('rd-placement').hidden=true;
   message('Tap an item to buy or select a tile. The horde is frozen.');renderShop();
  }
- function resume(){shopOpen=false;placing=null;buildingCamera=false;playing=true;$('rd-panel').hidden=true;$('rd-placement').hidden=true}
+ function resume(){shopOpen=false;placing=null;buildingCamera=false;root.classList.remove('rd-building');playing=true;$('rd-panel').hidden=true;$('rd-placement').hidden=true}
+ function availableTile(x:number,y:number):boolean{
+  return inside(x,y)&&!reserved(x,y)&&!defenses.some(t=>t.x===x&&t.y===y)&&d(player,{x,y})>=.8&&!enemies.some(e=>d(e,{x,y})<.8);
+ }
+ function wallAllowed(x:number,y:number):boolean{
+  if(!availableTile(x,y))return false;
+  defenses.push({x,y,kind:'wall',cooldown:0,life:1});
+  const allowed=validPaths();defenses.pop();
+  return allowed;
+ }
+ function refreshInvalidWalls(){
+  invalidWallTiles.clear();
+  for(let y=0;y<SIZE;y++)for(let x=0;x<SIZE;x++)if(!wallAllowed(x,y))invalidWallTiles.add(y*SIZE+x);
+ }
  function place(x:number,y:number){
   if(!placing||credits<prices[placing])return;
-  if(!inside(x,y)||reserved(x,y)||defenses.some(t=>t.x===x&&t.y===y)||d(player,{x,y})<.8||enemies.some(e=>d(e,{x,y})<.8)){message('Cannot place on occupied tiles, exits, or the radio');return}
+  if(!availableTile(x,y))return;
+  if(placing==='wall'&&invalidWallTiles.has(y*SIZE+x))return;
   const candidate:Defense={x,y,kind:placing,cooldown:0,life:placing==='wire'?12:placing==='fire'?24:1,angle:placing==='turret'?-Math.PI/2:undefined,recoil:0};
   defenses.push(candidate);
   if(placing==='wall'&&!validPaths()){defenses.pop();message('Wall would block all paths from a door');return}
   credits-=prices[placing];route=field();hud();
+  if(placing==='wall')refreshInvalidWalls();
   $('rd-placing-label').textContent=names[placing]+' · ₡'+prices[placing]+' — '+(credits>=prices[placing]?'PLACE ANOTHER':'INSUFFICIENT CREDITS');
-  if(credits<prices[placing]){placing=null;$('rd-placing-label').textContent='No credits remaining — resume or return to shop'}
+  if(credits<prices[placing]){placing=null;invalidWallTiles.clear();$('rd-placing-label').textContent='No credits remaining — resume or return to shop'}
  }
  function spawn(){
   const index=spawnNumber++%4,door=doors[index],offset=(spawnNumber%3-1)*.24;
@@ -189,6 +206,21 @@ export function beginRadioDefense(host:HTMLElement,onExit:()=>void):void{
  // Stylized military sentry: low anchored tripod, armored receiver, twin barrel rails,
  // optical tracking lens and a short recoil stroke. Only the turret head rotates.
 
+ // Adjacent concrete blocks fuse into continuous barricades without visible inner seams.
+ function drawConcrete(c:CanvasRenderingContext2D,x:number,y:number,t:number,gx:number,gy:number){
+  const n=wall(gx,gy-1),e=wall(gx+1,gy),s=wall(gx,gy+1),w=wall(gx-1,gy);
+  c.fillStyle='#303d3f';c.fillRect(x+t*.02,y+t*.02,t*.96,t*.96);
+  c.fillStyle='#778587';c.fillRect(x+(w?0:t*.10),y+(n?0:t*.10),t*(1-(w?0:.10)-(e?0:.10)),t*(1-(n?0:.10)-(s?0:.10)));
+  c.fillStyle='#899592';c.fillRect(x+(w?0:t*.11),y+(n?0:t*.11),t*(1-(w?0:.11)-(e?0:.11)),Math.max(1,t*.10));
+  c.strokeStyle='rgba(27,39,42,.6)';c.lineWidth=Math.max(1,t*.035);c.beginPath();
+  if(!n){c.moveTo(x+t*.11,y+t*.11);c.lineTo(x+t*.89,y+t*.11)}
+  if(!s){c.moveTo(x+t*.11,y+t*.89);c.lineTo(x+t*.89,y+t*.89)}
+  if(!w){c.moveTo(x+t*.11,y+t*.11);c.lineTo(x+t*.11,y+t*.89)}
+  if(!e){c.moveTo(x+t*.89,y+t*.11);c.lineTo(x+t*.89,y+t*.89)}
+  c.stroke();
+  c.strokeStyle='rgba(44,54,55,.32)';c.lineWidth=Math.max(1,t*.025);
+  if((gx+gy)%2===0){c.beginPath();c.moveTo(x+t*.26,y+t*.44);c.lineTo(x+t*.74,y+t*.44);c.stroke()}
+ }
  // All trap art is drawn from canvas primitives so the shipped mode needs no new assets.
  // Static military hardware is paired with small, readable in-world activation cues.
  function drawTrap(c:CanvasRenderingContext2D,x:number,y:number,t:number,trap:Defense,time:number){
@@ -312,15 +344,15 @@ export function beginRadioDefense(host:HTMLElement,onExit:()=>void):void{
   if(cvs.width!==width||cvs.height!==height){cvs.width=width;cvs.height=height}
   // Build mode zooms to the complete arena; combat restores the survivor-following camera.
   // Ease the zoom without ever leaving the world border. Use the actual rendered view for placement taps.
-  const targetZoom=buildingCamera?1:zoom;
+  const targetZoom=buildingCamera?1.35:zoom;
   displayZoom+= (targetZoom-displayZoom)*Math.min(1,.22);
   if(Math.abs(displayZoom-targetZoom)<.002)displayZoom=targetZoom;
   const tile=Math.min((width-18)/SIZE,(height-18)/SIZE)*displayZoom;
   // Center the full map during construction; otherwise follow the player within arena boundaries.
   const worldSize=SIZE*tile;
   const centerX=(player.x+.5)*tile,centerY=(player.y+.5)*tile;
-  const ox=buildingCamera?(width-worldSize)/2:worldSize>width?clamp(width/2-centerX,width-worldSize,0):(width-worldSize)/2;
-  const oy=buildingCamera?(height-worldSize)/2:worldSize>height?clamp(height/2-centerY,height-worldSize,0):(height-worldSize)/2;
+  const ox=buildingCamera?worldSize>width?clamp((width-worldSize)/2+buildPan.x,width-worldSize,0):(width-worldSize)/2:worldSize>width?clamp(width/2-centerX,width-worldSize,0):(width-worldSize)/2;
+  const oy=buildingCamera?worldSize>height?clamp((height-worldSize)/2+buildPan.y,height-worldSize,0):(height-worldSize)/2:worldSize>height?clamp(height/2-centerY,height-worldSize,0):(height-worldSize)/2;
   view={tile,ox,oy,width,height,minX:0,maxX:SIZE,minY:0,maxY:SIZE};
   ctx.fillStyle='#080f12';ctx.fillRect(0,0,width,height);
   ctx.fillStyle='#293b39';ctx.fillRect(view.ox,view.oy,SIZE*tile,SIZE*tile);
@@ -344,10 +376,19 @@ export function beginRadioDefense(host:HTMLElement,onExit:()=>void):void{
     drawSentry(ctx,x+tile*.5,y+tile*.5,tile,b.angle??-Math.PI/2,b.recoil??0);
     continue;
    }
-   ctx.fillStyle=b.kind==='wall'?'#7a8685':b.kind==='wire'?'#9ca09a':b.kind==='fire'?'#ba6429':b.kind==='mine'?'#d0aa67':'#669db3';
-   ctx.fillRect(x+tile*.08,y+tile*.08,tile*.84,tile*.84);
-   if(b.kind==='wall'){ctx.strokeStyle='#364347';ctx.strokeRect(x+tile*.1,y+tile*.1,tile*.8,tile*.8)}
-   else{ctx.fillStyle='#141b1b';ctx.font='bold '+Math.max(8,tile*.65)+'px system-ui';ctx.textAlign='center';ctx.fillText(b.kind==='wire'?'#':b.kind==='fire'?'♨':b.kind==='mine'?'✹':'ϟ',x+tile*.5,y+tile*.76)}
+   drawConcrete(ctx,x,y,tile,b.x,b.y);
+  }
+  if(buildingCamera&&placing==='wall'){
+   ctx.save();ctx.lineCap='round';ctx.lineWidth=Math.max(1.1,tile*.085);
+   for(const index of invalidWallTiles){
+    const x=index%SIZE,y=Math.floor(index/SIZE),px=view.ox+x*tile,py=view.oy+y*tile;
+    if(px+tile<0||py+tile<0||px>width||py>height)continue;
+    ctx.fillStyle='rgba(120,22,20,.16)';ctx.fillRect(px+tile*.06,py+tile*.06,tile*.88,tile*.88);
+    ctx.strokeStyle='rgba(250,75,67,.85)';ctx.beginPath();
+    ctx.moveTo(px+tile*.29,py+tile*.29);ctx.lineTo(px+tile*.71,py+tile*.71);
+    ctx.moveTo(px+tile*.71,py+tile*.29);ctx.lineTo(px+tile*.29,py+tile*.71);ctx.stroke();
+   }
+   ctx.restore();
   }
   for(const burst of trapBursts)drawTrapBurst(ctx,view,burst);
   const rx=view.ox+CENTER*tile,ry=view.oy+CENTER*tile;
@@ -364,29 +405,38 @@ export function beginRadioDefense(host:HTMLElement,onExit:()=>void):void{
  function keyDown(e:KeyboardEvent){if(!active)return;if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code))e.preventDefault();keys.add(e.code);if(e.repeat)return;if(e.code==='KeyE'){if(d(player,{x:CENTER,y:CENTER})<3||shopOpen)openShop();else message('Move closer to the radio')}if(e.code==='Escape'){if(placing)openShop();else if(shopOpen)resume();else openShop()}}
  function keyUp(e:KeyboardEvent){keys.delete(e.code)}
  window.addEventListener('keydown',keyDown);window.addEventListener('keyup',keyUp);
- // The canvas accepts two-finger zoom in play and build mode. A pinch never places a wall.
+ // During placement drag one finger / mouse to pan; a short tap places.
+ // During combat, two-finger pinch still controls the player's zoom.
+ const gestureStart=new Map<number,{x:number;y:number;moved:boolean}>();
  cvs.addEventListener('pointerdown',e=>{
-  if(e.pointerType!=='touch')return;
+  if(e.pointerType!=='touch'&&!buildingCamera)return;
   e.preventDefault();pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  gestureStart.set(e.pointerId,{x:e.clientX,y:e.clientY,moved:false});
   if(pointers.size===2){const [a,b]=[...pointers.values()];pinchStart=Math.hypot(a.x-b.x,a.y-b.y);pinchZoom=zoom;pinchMoved=true}
  });
  cvs.addEventListener('pointermove',e=>{
-  if(!pointers.has(e.pointerId))return;
-  e.preventDefault();pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
-  if(pointers.size===2&&pinchStart>0&&!buildingCamera){const [a,b]=[...pointers.values()];zoom=clamp(pinchZoom*Math.hypot(a.x-b.x,a.y-b.y)/pinchStart,1,MAX_ZOOM)}
+  const old=pointers.get(e.pointerId),start=gestureStart.get(e.pointerId);if(!old||!start)return;
+  e.preventDefault();
+  const rect=cvs.getBoundingClientRect(),scaleX=cvs.width/rect.width,scaleY=cvs.height/rect.height;
+  if(Math.hypot(e.clientX-start.x,e.clientY-start.y)>7)start.moved=true;
+  if(buildingCamera&&pointers.size===1&&start.moved){buildPan.x+=(e.clientX-old.x)*scaleX;buildPan.y+=(e.clientY-old.y)*scaleY}
+  pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(!buildingCamera&&pointers.size===2&&pinchStart>0){
+   const [a,b]=[...pointers.values()];zoom=clamp(pinchZoom*Math.hypot(a.x-b.x,a.y-b.y)/pinchStart,1,MAX_ZOOM);
+  }
  });
  function endCanvasPointer(e:PointerEvent){
-  const point=pointers.get(e.pointerId);
-  if(e.pointerType==='touch'&&!point)return;
-  if(e.pointerType==='touch'){e.preventDefault();pointers.delete(e.pointerId)}
-  if(e.type==='pointercancel'){pinchMoved=false;return}
+  const start=gestureStart.get(e.pointerId);
+  if(e.pointerType==='touch'&&!start)return;
+  if(e.pointerType==='touch'||buildingCamera)e.preventDefault();
+  pointers.delete(e.pointerId);gestureStart.delete(e.pointerId);
+  if(e.type==='pointercancel'){if(pointers.size===0)pinchMoved=false;return}
   if(pointers.size===0)pinchStart=0;
   if(pinchMoved){if(pointers.size===0)pinchMoved=false;return}
-  if(!placing)return;
+  if(!placing||start?.moved)return;
   const rect=cvs.getBoundingClientRect();
   const px=(e.clientX-rect.left)/rect.width*cvs.width,py=(e.clientY-rect.top)/rect.height*cvs.height;
-  const x=Math.round((px-view.ox)/view.tile-.5),y=Math.round((py-view.oy)/view.tile-.5);
-  place(x,y);
+  place(Math.round((px-view.ox)/view.tile-.5),Math.round((py-view.oy)/view.tile-.5));
  }
  cvs.addEventListener('pointerup',endCanvasPointer);
  cvs.addEventListener('pointercancel',endCanvasPointer);
