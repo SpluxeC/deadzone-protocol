@@ -4,7 +4,8 @@ import {makeAttackFx,ageCombatFx,drawCombatFx,type CombatFx} from './combatFx.ts
 
 type Point={x:number;y:number};
 type Kind='wall'|'wire'|'fire'|'mine'|'shock'|'turret';
-type Defense={x:number;y:number;kind:Kind;cooldown:number;life:number;angle?:number;recoil?:number};
+type Defense={x:number;y:number;kind:Kind;cooldown:number;life:number;angle?:number;recoil?:number;flash?:number};
+type TrapBurst={x:number;y:number;kind:'mine'|'shock'|'fire'|'wire';age:number;duration:number};
 type Enemy={x:number;y:number;hp:number;maxHp:number;speed:number;hit:number;kind:'shambler'|'runner'|'armored'|'bruiser';flash:number};
 type Item=Kind|'medkit'|'armor';
 const SIZE=29,CENTER=14,MAX_ZOOM=2;
@@ -19,7 +20,7 @@ export function beginRadioDefense(host:HTMLElement,onExit:()=>void):void{
  let active=true,playing=false,shopOpen=true,placing:Kind|null=null;
  let wave=1,credits=250,radioHp=300,hp=100,armor=40,elapsed=0,spawnClock=0,spawnNumber=0,shotClock=0;
  let kills=0,player:Point={x:CENTER+2,y:CENTER+2},enemies:Enemy[]=[],defenses:Defense[]=[];
- let zoom=1.7,displayZoom=1.7,buildingCamera=false,aimAngle=-Math.PI/2,recoil=0,shotEffects:CombatFx[]=[];
+ let zoom=1.7,displayZoom=1.7,buildingCamera=false,aimAngle=-Math.PI/2,recoil=0,shotEffects:CombatFx[]=[],trapBursts:TrapBurst[]=[];
  let stick={x:0,y:0,magnitude:0};
  const root=document.createElement('section');
  root.id='radio-defense';
@@ -120,6 +121,9 @@ export function beginRadioDefense(host:HTMLElement,onExit:()=>void):void{
  function tick(dt:number){
   if(!playing)return;
   shotEffects=ageCombatFx(shotEffects,dt);recoil=Math.max(0,recoil-dt*2.5);
+  for(const burst of trapBursts)burst.age+=dt;
+  trapBursts=trapBursts.filter(b=>b.age<b.duration);
+  for(const trap of defenses)trap.flash=Math.max(0,(trap.flash??0)-dt);
   elapsed+=dt;const nextWave=1+Math.floor(elapsed/27);if(nextWave!==wave){wave=nextWave;credits+=40;hud()}
   const interval=Math.max(.38,2.2-wave*.115);
   spawnClock+=dt;
@@ -141,10 +145,10 @@ export function beginRadioDefense(host:HTMLElement,onExit:()=>void):void{
    for(const trap of [...defenses]){
     if(trap.kind==='wall'||trap.kind==='turret')continue;
     const dist=d(e,trap);
-    if(trap.kind==='wire'&&dist<.8){speed*=.42;if(trap.cooldown===0){damage(e,3);trap.life--;trap.cooldown=.28;if(trap.life<=0)defenses.splice(defenses.indexOf(trap),1)}}
-    if(trap.kind==='fire'&&dist<.85&&trap.cooldown===0){damage(e,6);trap.cooldown=.35;trap.life-=.35;if(trap.life<=0)defenses.splice(defenses.indexOf(trap),1)}
-    if(trap.kind==='shock'&&dist<1.15&&trap.cooldown===0){speed*=.2;damage(e,15);trap.cooldown=2.5}
-    if(trap.kind==='mine'&&dist<.8){for(const victim of [...enemies])if(d(victim,trap)<1.7)damage(victim,42);defenses.splice(defenses.indexOf(trap),1)}
+    if(trap.kind==='wire'&&dist<.8){speed*=.42;if(trap.cooldown===0){damage(e,3);trap.life--;trap.cooldown=.28;trap.flash=.24;if(trap.life<=0){trapBursts.push({x:trap.x,y:trap.y,kind:'wire',age:0,duration:.4});defenses.splice(defenses.indexOf(trap),1)}}}
+    if(trap.kind==='fire'&&dist<.85&&trap.cooldown===0){damage(e,6);trap.cooldown=.35;trap.life-=.35;trap.flash=.35;trapBursts.push({x:trap.x,y:trap.y,kind:'fire',age:0,duration:.35});if(trap.life<=0)defenses.splice(defenses.indexOf(trap),1)}
+    if(trap.kind==='shock'&&dist<1.15&&trap.cooldown===0){speed*=.2;damage(e,15);trap.cooldown=2.5;trap.flash=.45;trapBursts.push({x:trap.x,y:trap.y,kind:'shock',age:0,duration:.5})}
+    if(trap.kind==='mine'&&dist<.8){trapBursts.push({x:trap.x,y:trap.y,kind:'mine',age:0,duration:.64});for(const victim of [...enemies])if(d(victim,trap)<1.7)damage(victim,42);defenses.splice(defenses.indexOf(trap),1)}
    }
    if(!enemies.includes(e))continue;
    if(d(e,{x:CENTER,y:CENTER})<.85){if(e.hit<=0){radioHp=Math.max(0,radioHp-(e.kind==='bruiser'?16:8));e.hit=.8;hud();if(radioHp<=0){finish();return}}continue}
@@ -184,6 +188,96 @@ export function beginRadioDefense(host:HTMLElement,onExit:()=>void):void{
  }
  // Stylized military sentry: low anchored tripod, armored receiver, twin barrel rails,
  // optical tracking lens and a short recoil stroke. Only the turret head rotates.
+
+ // All trap art is drawn from canvas primitives so the shipped mode needs no new assets.
+ // Static military hardware is paired with small, readable in-world activation cues.
+ function drawTrap(c:CanvasRenderingContext2D,x:number,y:number,t:number,trap:Defense,time:number){
+  const flash=trap.flash??0;
+  c.save();c.translate(x,y);
+  c.fillStyle='rgba(2,8,10,.42)';c.beginPath();c.ellipse(0,t*.23,t*.39,t*.15,0,0,Math.PI*2);c.fill();
+  if(trap.kind==='wire'){
+   // Three tensioned razor-wire coils between battered steel support stakes.
+   for(const side of [-1,1]){
+    c.fillStyle='#354346';c.fillRect(side*t*.33-t*.036,-t*.29,t*.072,t*.52);
+    c.fillStyle='#a7aaa3';c.fillRect(side*t*.33-t*.035,-t*.29,t*.065,t*.07);
+   }
+   c.strokeStyle='#adb9b7';c.lineWidth=Math.max(1,t*.043);
+   for(let row=0;row<3;row++){
+    const y0=(row-1)*t*.16;
+    c.beginPath();
+    for(let i=0;i<=20;i++){
+     const px=(i/20-.5)*t*.64,py=y0+Math.sin(i*Math.PI*.65+time*.38)*t*.09;
+     if(i===0)c.moveTo(px,py);else c.lineTo(px,py);
+    }c.stroke();
+   }
+   c.strokeStyle='#d4d8cd';c.lineWidth=Math.max(1,t*.022);
+   for(let i=0;i<7;i++){const xx=(i/6-.5)*t*.6;c.beginPath();c.moveTo(xx,-t*.21);c.lineTo(xx+t*.07,-t*.34);c.moveTo(xx,t*.12);c.lineTo(xx-t*.06,t*.24);c.stroke()}
+   if(flash>0){c.globalAlpha=flash/.24;c.strokeStyle='#f6a36c';c.lineWidth=t*.07;c.beginPath();c.arc(0,0,t*.38,0,Math.PI*2);c.stroke()}
+  }else if(trap.kind==='fire'){
+   // Low armored incendiary canister, pilot vents and animated combustion.
+   c.fillStyle='#273333';c.beginPath();c.roundRect(-t*.34,-t*.24,t*.68,t*.49,t*.085);c.fill();
+   c.strokeStyle='#89937f';c.lineWidth=Math.max(1,t*.034);c.stroke();
+   c.fillStyle='#766a43';c.fillRect(-t*.26,-t*.08,t*.52,t*.10);
+   for(let i=-1;i<=1;i++){
+    c.fillStyle='#151e21';c.fillRect(i*t*.18-t*.045,-t*.20,t*.09,t*.12);
+    const pulse=.5+.5*Math.sin(time*10+i*2.6);
+    c.fillStyle='#ff8a34';c.beginPath();c.ellipse(i*t*.18,-t*.18,t*.045,t*(.045+pulse*.045),0,0,Math.PI*2);c.fill();
+   }
+   const burn=Math.max(0,flash/.35);
+   if(burn>0){
+    c.globalAlpha=.75*burn;
+    for(let i=0;i<5;i++){const px=(i-2)*t*.14,sway=Math.sin(time*14+i)*t*.07,ht=t*(.25+.15*Math.sin(time*11+i)**2);
+     c.fillStyle=i%2?'#ffc467':'#ed5b25';c.beginPath();c.moveTo(px-t*.09,t*.10);c.quadraticCurveTo(px+sway,-ht*.4,px+sway*.55,-ht);c.quadraticCurveTo(px+t*.1,-ht*.2,px+t*.08,t*.10);c.fill();
+    }
+   }
+  }else if(trap.kind==='mine'){
+   // Circular pressure mine with stepped casing, recessed pressure pad and warning paint.
+   c.fillStyle='#161f21';c.beginPath();c.ellipse(0,t*.06,t*.33,t*.29,0,0,Math.PI*2);c.fill();
+   c.fillStyle='#687267';c.beginPath();c.ellipse(0,-t*.015,t*.30,t*.24,0,0,Math.PI*2);c.fill();
+   c.strokeStyle='#adb19f';c.lineWidth=Math.max(1,t*.035);c.stroke();
+   c.fillStyle='#303f3e';c.beginPath();c.ellipse(0,-t*.035,t*.20,t*.15,0,0,Math.PI*2);c.fill();
+   c.strokeStyle='#d0ae5a';c.lineWidth=Math.max(1,t*.04);c.beginPath();c.arc(0,-t*.035,t*.23,.23,Math.PI-.23);c.stroke();
+   c.fillStyle='#b0b8aa';c.beginPath();c.arc(0,-t*.045,t*.065,0,Math.PI*2);c.fill();
+   const light=.5+.5*Math.sin(time*3.3);
+   c.fillStyle='rgba(236,99,69,'+(.4+.6*light)+')';c.beginPath();c.arc(t*.12,-t*.11,Math.max(1,t*.03),0,Math.PI*2);c.fill();
+  }else if(trap.kind==='shock'){
+   // Reinforced emitter plate, copper contacts, capacitor and charged blue coil.
+   c.fillStyle='#273337';c.beginPath();c.roundRect(-t*.35,-t*.32,t*.7,t*.65,t*.07);c.fill();
+   c.strokeStyle='#718d96';c.lineWidth=Math.max(1,t*.04);c.stroke();
+   for(const side of [-1,1]){
+    c.fillStyle='#9f7c45';c.fillRect(side*t*.22-t*.04,-t*.19,t*.08,t*.40);
+    c.fillStyle='#b5cbc8';c.beginPath();c.arc(side*t*.22,-t*.18,t*.065,0,Math.PI*2);c.fill();
+   }
+   c.strokeStyle='#71bed2';c.lineWidth=Math.max(1,t*.054);c.beginPath();
+   for(let i=0;i<=12;i++){const xx=(i/12-.5)*t*.32,yy=Math.sin(time*8+i*1.4)*t*.065;if(i===0)c.moveTo(xx,yy);else c.lineTo(xx,yy)}c.stroke();
+   c.fillStyle='#a7efff';c.beginPath();c.arc(0,0,t*.055,0,Math.PI*2);c.fill();
+   if(flash>0){c.strokeStyle='rgba(126,223,255,'+(flash/.45)+')';c.lineWidth=Math.max(1,t*.04);c.beginPath();c.arc(0,0,t*(.24+(.45-flash)*.62),0,Math.PI*2);c.stroke()}
+  }
+  c.restore();
+ }
+ function drawTrapBurst(c:CanvasRenderingContext2D,v:View,burst:TrapBurst){
+  const t=v.tile,p=clamp(burst.age/burst.duration,0,1),fade=(1-p);
+  c.save();c.translate(v.ox+(burst.x+.5)*t,v.oy+(burst.y+.5)*t);
+  if(burst.kind==='mine'){
+   const r=t*(.18+p*1.55);
+   const glow=c.createRadialGradient(0,0,0,0,0,r);
+   glow.addColorStop(0,'rgba(255,237,159,'+(.78*fade)+')');
+   glow.addColorStop(.35,'rgba(240,121,51,'+(.53*fade)+')');
+   glow.addColorStop(1,'rgba(87,86,75,0)');
+   c.fillStyle=glow;c.beginPath();c.arc(0,0,r,0,Math.PI*2);c.fill();
+   c.strokeStyle='rgba(252,200,112,'+(.85*fade)+')';c.lineWidth=Math.max(1,t*.08*fade);c.beginPath();c.arc(0,0,r*.78,0,Math.PI*2);c.stroke();
+   for(let i=0;i<9;i++){const a=i*Math.PI*2/9+burst.x,rad=r*(.6+.2*(i%3));c.strokeStyle='rgba(232,215,175,'+fade+')';c.lineWidth=Math.max(1,t*.045*fade);c.beginPath();c.moveTo(Math.cos(a)*rad*.2,Math.sin(a)*rad*.2);c.lineTo(Math.cos(a)*rad,Math.sin(a)*rad);c.stroke()}
+  }else if(burst.kind==='shock'){
+   c.strokeStyle='rgba(125,226,255,'+fade+')';c.lineWidth=Math.max(1,t*.07*fade);c.beginPath();c.arc(0,0,t*(.25+p*1.15),0,Math.PI*2);c.stroke();
+   for(let i=0;i<5;i++){const a=i*Math.PI*2/5+p*2,r=t*(.24+p*.92);c.beginPath();c.moveTo(Math.cos(a)*r*.3,Math.sin(a)*r*.3);c.lineTo(Math.cos(a+.26)*r*.62,Math.sin(a+.26)*r*.62);c.lineTo(Math.cos(a)*r,Math.sin(a)*r);c.stroke()}
+  }else if(burst.kind==='fire'){
+   c.fillStyle='rgba(245,113,47,'+(.20*fade)+')';c.beginPath();c.ellipse(0,0,t*(.25+p*.85),t*(.2+p*.52),0,0,Math.PI*2);c.fill();
+  }else{
+   c.strokeStyle='rgba(205,216,203,'+(.7*fade)+')';c.lineWidth=Math.max(1,t*.035);c.beginPath();c.arc(0,0,t*(.2+p*.5),0,Math.PI*2);c.stroke();
+  }
+  c.restore();
+ }
+
  function drawSentry(c:CanvasRenderingContext2D,x:number,y:number,tile:number,angle:number,recoil:number){
   c.save();c.translate(x,y);
   c.fillStyle='rgba(0,0,0,.44)';c.beginPath();c.ellipse(0,tile*.29,tile*.38,tile*.15,0,0,Math.PI*2);c.fill();
@@ -243,6 +337,9 @@ export function beginRadioDefense(host:HTMLElement,onExit:()=>void):void{
   }
   for(const b of defenses){
    const x=view.ox+b.x*tile,y=view.oy+b.y*tile;
+   if(b.kind==='wire'||b.kind==='fire'||b.kind==='mine'||b.kind==='shock'){
+    drawTrap(ctx,x+tile*.5,y+tile*.5,tile,b,elapsed);continue;
+   }
    if(b.kind==='turret'){
     drawSentry(ctx,x+tile*.5,y+tile*.5,tile,b.angle??-Math.PI/2,b.recoil??0);
     continue;
@@ -252,6 +349,7 @@ export function beginRadioDefense(host:HTMLElement,onExit:()=>void):void{
    if(b.kind==='wall'){ctx.strokeStyle='#364347';ctx.strokeRect(x+tile*.1,y+tile*.1,tile*.8,tile*.8)}
    else{ctx.fillStyle='#141b1b';ctx.font='bold '+Math.max(8,tile*.65)+'px system-ui';ctx.textAlign='center';ctx.fillText(b.kind==='wire'?'#':b.kind==='fire'?'♨':b.kind==='mine'?'✹':'ϟ',x+tile*.5,y+tile*.76)}
   }
+  for(const burst of trapBursts)drawTrapBurst(ctx,view,burst);
   const rx=view.ox+CENTER*tile,ry=view.oy+CENTER*tile;
   ctx.fillStyle='#171f21';ctx.fillRect(rx-tile*.48,ry-tile*.4,tile*1.95,tile*1.95);
   ctx.fillStyle='#6d8a73';ctx.fillRect(rx,ry,tile,tile);
