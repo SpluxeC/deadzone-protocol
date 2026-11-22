@@ -339,6 +339,60 @@ export function beginRadioDefense(host:HTMLElement,onExit:()=>void):void{
   }
   c.restore();c.restore();
  }
+ // Armored military relay station: skid platform, antenna mast, status screen and health alerts.
+ function drawRadioRelay(c:CanvasRenderingContext2D,x:number,y:number,t:number,hp:number,time:number){
+  const ratio=clamp(hp/300,0,1),critical=ratio<=.3,damaged=ratio<=.65;
+  const pulse=.5+.5*Math.sin(time*3),color=critical?'#ef6156':damaged?'#e4b45c':'#7be6aa';
+  c.save();c.translate(x,y);
+  // Drop shadow and anchored steel skid.
+  c.fillStyle='rgba(0,0,0,.43)';c.beginPath();c.ellipse(0,t*.6,t*.87,t*.3,0,0,Math.PI*2);c.fill();
+  c.fillStyle='#172326';c.beginPath();c.roundRect(-t*.81,-t*.58,t*1.62,t*1.28,t*.12);c.fill();
+  c.strokeStyle='#84958a';c.lineWidth=Math.max(1,t*.04);c.stroke();
+  c.fillStyle='#455851';c.beginPath();c.roundRect(-t*.69,-t*.48,t*1.38,t*1.03,t*.07);c.fill();
+  c.fillStyle='#222e2d';c.fillRect(-t*.68,t*.38,t*1.36,t*.13);
+  for(const side of [-1,1]){
+   c.fillStyle='#253638';c.fillRect(side*t*.65-t*.065,-t*.43,t*.13,t*.87);
+   for(const yy of [-.34,.35]){c.fillStyle='#b6bba9';c.beginPath();c.arc(side*t*.65,yy*t,Math.max(1,t*.033),0,Math.PI*2);c.fill()}
+  }
+  // Aerial mast with cross brace, receiver tip, and blinking beacon.
+  c.strokeStyle='#192629';c.lineWidth=Math.max(2,t*.1);c.beginPath();c.moveTo(t*.47,-t*.14);c.lineTo(t*.47,-t*1.30);c.stroke();
+  c.strokeStyle='#a5b4ae';c.lineWidth=Math.max(1,t*.039);c.beginPath();c.moveTo(t*.47,-t*.16);c.lineTo(t*.47,-t*1.32);c.stroke();
+  c.strokeStyle='#6c8179';c.lineWidth=Math.max(1,t*.025);c.beginPath();c.moveTo(t*.14,-t*.16);c.lineTo(t*.47,-t*.83);c.lineTo(t*.72,-t*.22);c.stroke();
+  c.fillStyle='#b1bbac';c.fillRect(t*.38,-t*1.11,t*.18,t*.075);
+  c.globalAlpha=.45+.55*pulse;c.fillStyle=color;c.beginPath();c.arc(t*.47,-t*1.35,t*.08,0,Math.PI*2);c.fill();c.globalAlpha=1;
+  // Weatherproof radio cabinet and its armored bolted cover.
+  c.fillStyle='#142021';c.beginPath();c.roundRect(-t*.54,-t*.50,t*.99,t*.88,t*.09);c.fill();
+  c.strokeStyle='#a3ad9f';c.lineWidth=Math.max(1,t*.04);c.stroke();
+  c.fillStyle='#485d55';c.beginPath();c.roundRect(-t*.49,-t*.44,t*.88,t*.73,t*.055);c.fill();
+  c.fillStyle='#75887b';c.fillRect(-t*.45,-t*.4,t*.80,t*.09);
+  // Vented heat sink and control knobs.
+  c.strokeStyle='#1e292a';c.lineWidth=Math.max(1,t*.031);
+  for(let i=0;i<5;i++){const yy=-t*.14+i*t*.075;c.beginPath();c.moveTo(t*.18,yy);c.lineTo(t*.35,yy);c.stroke()}
+  for(let i=0;i<2;i++){c.fillStyle='#1e282a';c.beginPath();c.arc(-t*.37,-t*.12+i*t*.23,t*.063,0,Math.PI*2);c.fill();c.fillStyle='#b8c0b2';c.beginPath();c.arc(-t*.37,-t*.12+i*t*.23,t*.025,0,Math.PI*2);c.fill()}
+  // Backlit transmission monitor with sweep animation.
+  c.fillStyle='#0b1719';c.beginPath();c.roundRect(-t*.25,-t*.34,t*.39,t*.35,t*.035);c.fill();
+  c.fillStyle=critical?'#4c211f':damaged?'#3b3520':'#12382d';c.fillRect(-t*.21,-t*.30,t*.31,t*.27);
+  c.save();c.beginPath();c.rect(-t*.21,-t*.30,t*.31,t*.27);c.clip();
+  c.strokeStyle=color;c.globalAlpha=.5+.3*pulse;c.lineWidth=Math.max(1,t*.02);
+  const line=-t*.3+(time*.13%1)*t*.27;c.beginPath();c.moveTo(-t*.21,line);c.lineTo(t*.1,line);c.stroke();
+  c.beginPath();c.arc(-t*.055,-t*.16,t*.08,0,Math.PI*2);c.stroke();c.restore();
+  // Signal controls and status beacon respond to objective damage.
+  c.fillStyle=critical&&Math.sin(time*12)<0?'#26342f':color;
+  c.beginPath();c.arc(t*.25,t*.18,t*.053,0,Math.PI*2);c.fill();
+  c.fillStyle='#b2c5b5';c.beginPath();c.arc(t*.06,t*.18,t*.041,0,Math.PI*2);c.fill();
+  c.fillStyle='#bdad67';c.fillRect(-t*.44,t*.22,t*.20,t*.045);
+  if(damaged){c.strokeStyle='#263132';c.lineWidth=Math.max(1,t*.03);c.beginPath();c.moveTo(-t*.51,t*.10);c.lineTo(-t*.42,-t*.01);c.lineTo(-t*.47,-t*.13);c.stroke()}
+  // Soft signal halo, or red flashing warning and electrical sparking under heavy damage.
+  const phase=time*.62%1;
+  c.globalAlpha=.12*(1-phase);c.strokeStyle=color;c.lineWidth=Math.max(1,t*.03);
+  c.beginPath();c.arc(t*.47,-t*1.35,t*(.2+phase*.42),0,Math.PI*2);c.stroke();c.globalAlpha=1;
+  if(critical&&Math.sin(time*17)>.72){
+   c.strokeStyle='#ffd9a0';c.lineWidth=Math.max(1,t*.032);c.beginPath();
+   c.moveTo(-t*.43,-t*.25);c.lineTo(-t*.59,-t*.41);c.lineTo(-t*.63,-t*.20);c.stroke();
+  }
+  c.restore();
+ }
+
  function render(){
   const ratio=Math.min(2,devicePixelRatio||1),width=Math.max(320,Math.floor(cvs.clientWidth*ratio)),height=Math.max(180,Math.floor(cvs.clientHeight*ratio));
   if(cvs.width!==width||cvs.height!==height){cvs.width=width;cvs.height=height}
@@ -391,11 +445,7 @@ export function beginRadioDefense(host:HTMLElement,onExit:()=>void):void{
    ctx.restore();
   }
   for(const burst of trapBursts)drawTrapBurst(ctx,view,burst);
-  const rx=view.ox+CENTER*tile,ry=view.oy+CENTER*tile;
-  ctx.fillStyle='#171f21';ctx.fillRect(rx-tile*.48,ry-tile*.4,tile*1.95,tile*1.95);
-  ctx.fillStyle='#6d8a73';ctx.fillRect(rx,ry,tile,tile);
-  ctx.fillStyle='#b3f5b7';ctx.beginPath();ctx.arc(rx+tile*.5,ry+tile*.32,tile*.15,0,Math.PI*2);ctx.fill();
-  ctx.font='bold '+Math.max(10,tile*.57)+'px system-ui';ctx.textAlign='center';ctx.fillStyle='#d7f5dc';ctx.fillText('RADIO',rx+tile*.5,ry-tile*.52);
+  drawRadioRelay(ctx,view.ox+(CENTER+.5)*tile,view.oy+(CENTER+.5)*tile,tile,radioHp,performance.now()*.001);
   for(const e of enemies){drawSprite(ctx,e.kind,view,e.x,e.y,{scale:e.kind==='bruiser'?1.25:1.02,stride:elapsed*7,motionSpeed:e.speed,glow:e.flash>0?'#e1785f':undefined})}
   drawSprite(ctx,'player',view,player.x,player.y,{scale:1.12,stride:elapsed*8,motionSpeed:keys.size||stick.magnitude>.13?3:0,weapon:'carbine',aimAngle,weaponRecoil:recoil});
   drawCombatFx(ctx,view,shotEffects);
