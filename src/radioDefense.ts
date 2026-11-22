@@ -4,7 +4,7 @@ import {makeAttackFx,ageCombatFx,drawCombatFx,type CombatFx} from './combatFx.ts
 
 type Point={x:number;y:number};
 type Kind='wall'|'wire'|'fire'|'mine'|'shock'|'turret';
-type Defense={x:number;y:number;kind:Kind;cooldown:number;life:number};
+type Defense={x:number;y:number;kind:Kind;cooldown:number;life:number;angle?:number;recoil?:number};
 type Enemy={x:number;y:number;hp:number;maxHp:number;speed:number;hit:number;kind:'shambler'|'runner'|'armored'|'bruiser';flash:number};
 type Item=Kind|'medkit'|'armor';
 const SIZE=29,CENTER=14,MAX_ZOOM=2;
@@ -93,7 +93,7 @@ export function beginRadioDefense(host:HTMLElement,onExit:()=>void):void{
  function place(x:number,y:number){
   if(!placing||credits<prices[placing])return;
   if(!inside(x,y)||reserved(x,y)||defenses.some(t=>t.x===x&&t.y===y)||d(player,{x,y})<.8||enemies.some(e=>d(e,{x,y})<.8)){message('Cannot place on occupied tiles, exits, or the radio');return}
-  const candidate:Defense={x,y,kind:placing,cooldown:0,life:placing==='wire'?12:placing==='fire'?24:1};
+  const candidate:Defense={x,y,kind:placing,cooldown:0,life:placing==='wire'?12:placing==='fire'?24:1,angle:placing==='turret'?-Math.PI/2:undefined,recoil:0};
   defenses.push(candidate);
   if(placing==='wall'&&!validPaths()){defenses.pop();message('Wall would block all paths from a door');return}
   credits-=prices[placing];route=field();hud();
@@ -133,7 +133,7 @@ export function beginRadioDefense(host:HTMLElement,onExit:()=>void):void{
    if(shotEffects.length>100)shotEffects.splice(0,shotEffects.length-100);
    recoil=.24;damage(nearest,26);shotClock=.29
   }}
-  for(const defense of defenses)defense.cooldown=Math.max(0,defense.cooldown-dt);
+  for(const defense of defenses){defense.cooldown=Math.max(0,defense.cooldown-dt);if(defense.kind==='turret')defense.recoil=Math.max(0,(defense.recoil??0)-dt*2.4)}
   for(const e of [...enemies]){
    e.flash=Math.max(0,e.flash-dt);e.hit=Math.max(0,e.hit-dt);
    const tileX=clamp(Math.round(e.x),1,SIZE-2),tileY=clamp(Math.round(e.y),1,SIZE-2);
@@ -157,13 +157,61 @@ export function beginRadioDefense(host:HTMLElement,onExit:()=>void):void{
     if(inside(nx,ny)&&!wall(Math.round(nx),Math.round(ny))){e.x=nx;e.y=ny}
    }
   }
-  for(const turret of defenses.filter(x=>x.kind==='turret'&&x.cooldown===0)){const e=enemies.filter(e=>d(e,turret)<6).sort((a,b)=>d(a,turret)-d(b,turret))[0];if(e){damage(e,17);turret.cooldown=.5}}
+  // Mounted sentries acquire and track targets continuously, even while reloading.
+  // Rotate by the shortest arc; shots fire from the visible muzzle when aligned.
+  for(const turret of defenses.filter(t=>t.kind==='turret')){
+   const target=enemies.filter(e=>d(e,turret)<6).sort((a,b)=>d(a,turret)-d(b,turret))[0];
+   if(!target)continue;
+   const origin={x:turret.x+.5,y:turret.y+.5};
+   const dx=target.x-origin.x,dy=target.y-origin.y,range=Math.hypot(dx,dy)||1;
+   const desired=Math.atan2(dy,dx),angle=turret.angle??-Math.PI/2;
+   const delta=Math.atan2(Math.sin(desired-angle),Math.cos(desired-angle));
+   const step=clamp(delta,-dt*5,dt*5);
+   turret.angle=angle+step;
+   if(turret.cooldown>0||Math.abs(delta)>0.16)continue;
+   const muzzle={x:origin.x+Math.cos(turret.angle)*.38,y:origin.y+Math.sin(turret.angle)*.38};
+   const travel=Math.hypot(target.x-muzzle.x,target.y-muzzle.y);
+   shotEffects.push(...makeAttackFx('squadAutomatic',muzzle.x,muzzle.y,Math.cos(turret.angle),Math.sin(turret.angle),travel,undefined,true));
+   if(shotEffects.length>110)shotEffects.splice(0,shotEffects.length-110);
+   damage(target,17);turret.recoil=.20;turret.cooldown=.5;
+  }
  }
  function finish(){
   playing=false;shopOpen=false;placing=null;$('rd-panel').hidden=true;$('rd-placement').hidden=true;
   const result=$('rd-result');result.hidden=false;result.innerHTML='<h1>RADIO LOST</h1><p>Wave '+wave+' · '+kills+' zombies eliminated · '+Math.floor(elapsed)+' seconds defended</p><button id="rd-again">TRY AGAIN</button><button id="rd-main">MAIN MENU</button>';
   result.querySelector<HTMLButtonElement>('#rd-again')!.onclick=()=>{cleanup();beginRadioDefense(host,onExit)};
   result.querySelector<HTMLButtonElement>('#rd-main')!.onclick=()=>{cleanup();onExit()};
+ }
+ // Stylized military sentry: low anchored tripod, armored receiver, twin barrel rails,
+ // optical tracking lens and a short recoil stroke. Only the turret head rotates.
+ function drawSentry(c:CanvasRenderingContext2D,x:number,y:number,tile:number,angle:number,recoil:number){
+  c.save();c.translate(x,y);
+  c.fillStyle='rgba(0,0,0,.44)';c.beginPath();c.ellipse(0,tile*.29,tile*.38,tile*.15,0,0,Math.PI*2);c.fill();
+  c.lineCap='round';c.lineJoin='round';
+  for(const leg of [-2.6,-.55,1.52]){
+   c.strokeStyle='#192528';c.lineWidth=Math.max(2,tile*.105);
+   c.beginPath();c.moveTo(0,tile*.06);c.lineTo(Math.cos(leg)*tile*.34,Math.sin(leg)*tile*.19+tile*.12);c.stroke();
+   c.strokeStyle='#697876';c.lineWidth=Math.max(1,tile*.046);c.stroke();
+  }
+  c.fillStyle='#2b3b3d';c.beginPath();c.ellipse(0,0,tile*.23,tile*.18,0,0,Math.PI*2);c.fill();
+  c.strokeStyle='#99a7a1';c.lineWidth=Math.max(1,tile*.038);c.stroke();
+  c.save();c.rotate(angle);
+  const kick=(recoil/.2)*tile*.09;
+  c.fillStyle='#151e20';c.beginPath();c.roundRect(-tile*.25,-tile*.14,tile*.42,tile*.28,tile*.055);c.fill();
+  c.fillStyle='#536765';c.beginPath();c.roundRect(-tile*.20,-tile*.12,tile*.35,tile*.22,tile*.045);c.fill();
+  c.fillStyle='#8b9995';c.fillRect(-tile*.15,-tile*.085,tile*.19,tile*.03);
+  c.strokeStyle='#1a2426';c.lineWidth=Math.max(2,tile*.105);
+  for(const side of [-1,1]){c.beginPath();c.moveTo(tile*.08-kick,side*tile*.065);c.lineTo(tile*.42-kick,side*tile*.065);c.stroke()}
+  c.strokeStyle='#a9b4ac';c.lineWidth=Math.max(1,tile*.024);c.beginPath();c.moveTo(tile*.15-kick,-tile*.13);c.lineTo(tile*.33-kick,-tile*.13);c.stroke();
+  c.fillStyle='#2c3738';c.fillRect(tile*.37-kick,-tile*.095,tile*.08,tile*.19);
+  c.fillStyle='#182c30';c.beginPath();c.roundRect(-tile*.065,-tile*.16,tile*.16,tile*.13,tile*.032);c.fill();
+  c.fillStyle='#8ed3df';c.beginPath();c.arc(tile*.055,-tile*.11,Math.max(1,tile*.038),0,Math.PI*2);c.fill();
+  if(recoil>.025){
+   const alpha=clamp(recoil/.2,0,1);
+   c.fillStyle='rgba(247,153,67,'+(alpha*.27)+')';c.beginPath();c.ellipse(tile*.47-kick,0,tile*.25*alpha,tile*.14*alpha,0,0,Math.PI*2);c.fill();
+   c.fillStyle='rgba(255,225,158,'+alpha+')';c.beginPath();c.moveTo(tile*.38-kick,0);c.lineTo(tile*.56-kick,-tile*.075*alpha);c.lineTo(tile*.72-kick,0);c.lineTo(tile*.56-kick,tile*.075*alpha);c.fill();
+  }
+  c.restore();c.restore();
  }
  function render(){
   const ratio=Math.min(2,devicePixelRatio||1),width=Math.max(320,Math.floor(cvs.clientWidth*ratio)),height=Math.max(180,Math.floor(cvs.clientHeight*ratio));
@@ -193,11 +241,16 @@ export function beginRadioDefense(host:HTMLElement,onExit:()=>void):void{
    const x=view.ox+door.x*tile,y=view.oy+door.y*tile;
    ctx.fillStyle='#c67546';ctx.fillRect(x+tile*.15,y+tile*.15,tile*.7,tile*.7);
   }
-  for(const b of defenses){const x=view.ox+b.x*tile,y=view.oy+b.y*tile;
-   ctx.fillStyle=b.kind==='wall'?'#7a8685':b.kind==='wire'?'#9ca09a':b.kind==='fire'?'#ba6429':b.kind==='mine'?'#d0aa67':b.kind==='shock'?'#669db3':'#537d61';
+  for(const b of defenses){
+   const x=view.ox+b.x*tile,y=view.oy+b.y*tile;
+   if(b.kind==='turret'){
+    drawSentry(ctx,x+tile*.5,y+tile*.5,tile,b.angle??-Math.PI/2,b.recoil??0);
+    continue;
+   }
+   ctx.fillStyle=b.kind==='wall'?'#7a8685':b.kind==='wire'?'#9ca09a':b.kind==='fire'?'#ba6429':b.kind==='mine'?'#d0aa67':'#669db3';
    ctx.fillRect(x+tile*.08,y+tile*.08,tile*.84,tile*.84);
    if(b.kind==='wall'){ctx.strokeStyle='#364347';ctx.strokeRect(x+tile*.1,y+tile*.1,tile*.8,tile*.8)}
-   else{ctx.fillStyle='#141b1b';ctx.font='bold '+Math.max(8,tile*.65)+'px system-ui';ctx.textAlign='center';ctx.fillText(b.kind==='wire'?'#':b.kind==='fire'?'♨':b.kind==='mine'?'✹':b.kind==='shock'?'ϟ':'✦',x+tile*.5,y+tile*.76)}
+   else{ctx.fillStyle='#141b1b';ctx.font='bold '+Math.max(8,tile*.65)+'px system-ui';ctx.textAlign='center';ctx.fillText(b.kind==='wire'?'#':b.kind==='fire'?'♨':b.kind==='mine'?'✹':'ϟ',x+tile*.5,y+tile*.76)}
   }
   const rx=view.ox+CENTER*tile,ry=view.oy+CENTER*tile;
   ctx.fillStyle='#171f21';ctx.fillRect(rx-tile*.48,ry-tile*.4,tile*1.95,tile*1.95);
